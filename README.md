@@ -12,8 +12,8 @@ Basic Template with connection to MySql Database. Includes a database script tha
 ###### Install Node
 If you don't already have node 0.8.16 or higher, you can [download node](http://nodejs.org/download) or [install node from a package](https://github.com/joyent/node/wiki/Installing-Node.js-via-package-manager).
 
-###### Clone blueprint
-Clone the print repository to your local directory. You can use the following link: **TODO**
+###### Clone blueprint from bitbucket
+Clone the print repository to your local directory. You can use the following link: [https://jhollowell@bitbucket.org/dv-mobile/blueprint.git](https://jhollowell@bitbucket.org/dv-mobile/blueprint.git)
 
 ###### Instal Node Modules
 ```
