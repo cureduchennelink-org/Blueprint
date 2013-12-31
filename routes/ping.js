@@ -10,7 +10,7 @@ var _log = console.log;
 
 function ping( req, res, next){
 	var f = 'ping';
-	_log(f, req.params);
+	req.log.info(f, req.params);
 	res.send(200, 'hello '+req.params.name);
 	return next();
 }

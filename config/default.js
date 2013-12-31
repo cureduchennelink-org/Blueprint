@@ -3,10 +3,14 @@
  */
 
 module.exports = {
-		db : {
+		db: {
 			host: 'localhost'
 		},
 		api: {
 			port: 9500
+		},
+		log: {
+		    name: 'blueprint',
+		    level: 'debug'
 		}
 }
