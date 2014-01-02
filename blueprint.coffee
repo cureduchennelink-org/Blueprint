@@ -4,12 +4,13 @@
 #	- MySql 2.0.0-alpha9
 #	- Logging with Bunyan
 #	- CoffeeScript
-#	
+#
 #	TODO:
+#		Launch Script
+#			- Output log levels to separate files
 #		OAuth 2.0
 #		SSL Configuration
 #		Server Stats
-#		Domain Error Handling
 #
 #	Written for DV-Mobile by Jamie Hollowell. All rights reserved.
 #

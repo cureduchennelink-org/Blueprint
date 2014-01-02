@@ -5,6 +5,7 @@
 #
 
 Q= require 'q'
+E= require './error'
 
 _log= false
 odb= false
@@ -113,11 +114,11 @@ class Wrapper
 			if conn isnt null
 				conn.query 'ROLLBACK', (err)->
 					if err
-						req.log.warn f, 'destroy db conn (error rolling back transaction)'
+						req.log.warn f, 'destroy db conn (failed rollback)'
 						odb.core.destroy conn
 						req.log.error f, '.fail', err.stack
 					else
-						req.log.info f, 'release db conn (successful transaction rollback)'
+						req.log.info f, 'release db conn (successful rollback)'
 						odb.core.release conn
 			res.send err
 			next()

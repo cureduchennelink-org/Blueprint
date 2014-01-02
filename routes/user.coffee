@@ -8,6 +8,7 @@
 #
 
 Q= require 'q'
+E= require '../lib/error'
 
 odb= false
 
@@ -37,12 +38,12 @@ class User
 		f= 'User.createUser:'
 		_log.debug f, p
 		
+		throw new E.InvalidArg 'Invalid Email', param: 'email' if not p.email
+		throw new E.InvalidArg 'Invalid Password', param: 'password' if not p.password
+
 		Q.resolve()
 		.then ->
 
-			if not p.email or not p.password
-				throw new Error "Missing e-mail or password"
-			
 			odb.user.create conn, p.first_name, p.last_name, p.email, p.password
 		.then (success)->
 			_log.debug 'got create user success:', success
