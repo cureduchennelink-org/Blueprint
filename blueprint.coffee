@@ -2,6 +2,7 @@
 #	Blueprint - Template Node Server
 #	- Restify 2.6.0
 #	- MySql 2.0.0-alpha9
+# 	- MongoDB (Mongoose ~3.8.7)
 #	- Logging with Bunyan
 #	- CoffeeScript
 #
@@ -24,7 +25,7 @@ config= 	(require './lib/config')()
 log= bunyan.createLogger config.log
 
 # Create Database Objects
-{Db}=	require './lib/db'
+{Db}=		require './lib/db'
 db= new Db config.db, log
 
 # Library Modules
@@ -37,12 +38,14 @@ wrapper= 		new Wrapper db, pre_loader, log
 # Route Logic
 ping= require './routes/ping'
 {User}= require './routes/user'
+{Workout}= require './routes/workout'
 user= new User db, wrapper, log
+workout= new Workout db, wrapper, log
 
 # Create Server
 server= restify.createServer
 	log: log
-	
+
 # Setup Handlers
 server.use (req, res, next) ->
 	res.setHeader 'Access-Control-Allow-Credentials', 'true'
@@ -58,11 +61,13 @@ server.use (req, res, next) ->
 	req.log.info 'ROUTE:', req.url, req.method
 	req.log.info 'PARAMS:', req.params
 	return next()
-	
+
 # Setup Routes
 server.get	'/ping/:name',	ping
 server.get	'/User/:usid',	user.get
-server.post	'/User',		user.createUser
+server.post '/User',		user.createUser
+server.get	'/Workout',		workout.get
+server.post	'/Workout',		workout.createWorkout
 
 # Start the Server
 server.listen config.api.port, ()->

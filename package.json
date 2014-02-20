@@ -1,12 +1,13 @@
 {
-	"name": "blueprint",
-	"version": “0.0.0-131231”,
-	"private": "true",
-	"dependencies":{
-		"restify":"2.6.0",
-		"mysql":"2.0.x",
-		"generic-pool":"2.0.3",
-		"lodash":"2.2.1",
-		"bunyan" : "0.22.0"
-	}
+  "name": "blueprint",
+  "version": "0.0.0-131231",
+  "private": "true",
+  "dependencies": {
+    "restify": "2.6.0",
+    "mysql": "2.0.x",
+    "generic-pool": "2.0.3",
+    "lodash": "2.2.1",
+    "bunyan": "0.22.0",
+    "mongoose": "~3.8.7"
+  }
 }

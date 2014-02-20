@@ -6,9 +6,9 @@ mysql= require 'mysql'
 {Pool}= require 'generic-pool'
 Q= require 'q'
 
-class DbCore
+class SqlCore
 	constructor: (config, log)->
-		@pool= Pool 
+		@pool= Pool
 			name: 'mysql - Blueprint'
 			create: (cb)->
 				conn= mysql.createConnection(config);
@@ -29,4 +29,4 @@ class DbCore
 			.then (rows_n_cols) ->
 				rows_n_cols[0]
 
-exports.DbCore= DbCore
+exports.SqlCore= SqlCore
