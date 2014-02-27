@@ -4,17 +4,17 @@
 #	Include Resource Specific DB functions here
 
 class Db
-	constructor: (config, log) ->
+	constructor: (config, tokenMgr, log) ->
 
 		# MySql
 		if config.mysql.enable
-			log.debug 'Initializing MySql...'
+			log.info 'Initializing MySql...'
 			{MySql}= require './_mysql'
-			@mysql= new MySql config.mysql, log
+			@mysql= new MySql config.mysql, tokenMgr, log
 
 		# MongoDB
 		if config.mongo.enable
-			log.debug 'Initializing MongoDB...'
+			log.info 'Initializing MongoDB...'
 			{Mongo}= require './_mongo'
 			mongoose= require 'mongoose'
 			mongoose.connect config.mongo.options

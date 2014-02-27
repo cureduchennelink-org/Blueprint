@@ -42,15 +42,16 @@ class User
 		f= 'User.createUser:'
 		_log.debug f, p
 
-		throw new E.InvalidArg 'Invalid Email', param: 'email' if not p.email
-		throw new E.InvalidArg 'Invalid Password', param: 'password' if not p.password
+		throw new E.InvalidArg 'Invalid Email','email' if not p.email
+		throw new E.InvalidArg 'Invalid Password','password' if not p.password
 
 		Q.resolve()
 		.then ->
 
+			# Insert the User in to the Database. Validated for affectedRows=1
 			sdb.user.create conn, p.first_name, p.last_name, p.email, p.password
 		.then (db_result)->
-			_log.debug 'got create user success:', success
+
 			send: success: true
 
 exports.User= User

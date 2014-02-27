@@ -37,16 +37,16 @@ class Workout
 
 			odb.mcore.find odb.Workout, {}
 		.then (docs)->
-			send: success: true, workouts: docs
+			send: workouts: docs
 
 	_create: (conn, p, pre_loaded, _log)->
 		f= 'User.mongoCreate'
 		newWorkout= false
 		opts= name: p.workout_name, description: p.description, type: p.type
 
-		throw new E.InvalidArg 'Invalid Name', param: 'workout_name' if not p.workout_name
-		throw new E.InvalidArg 'Invalid Type', param: 'type' if not p.type
-		throw new E.InvalidArg 'Invalid Description', param: 'description' if not p.description
+		throw new E.InvalidArg 'Invalid Description','description' if not p.description
+		throw new E.InvalidArg 'Invalid Name','workout_name' if not p.workout_name
+		throw new E.InvalidArg 'Invalid Type','type' if not p.type
 
 		Q.resolve()
 		.then ->

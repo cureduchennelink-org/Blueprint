@@ -54,19 +54,14 @@
       f = 'User.createUser:';
       _log.debug(f, p);
       if (!p.email) {
-        throw new E.InvalidArg('Invalid Email', {
-          param: 'email'
-        });
+        throw new E.InvalidArg('Invalid Email', 'email');
       }
       if (!p.password) {
-        throw new E.InvalidArg('Invalid Password', {
-          param: 'password'
-        });
+        throw new E.InvalidArg('Invalid Password', 'password');
       }
       return Q.resolve().then(function() {
         return sdb.user.create(conn, p.first_name, p.last_name, p.email, p.password);
       }).then(function(db_result) {
-        _log.debug('got create user success:', success);
         return {
           send: {
             success: true

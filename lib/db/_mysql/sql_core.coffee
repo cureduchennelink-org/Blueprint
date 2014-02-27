@@ -24,9 +24,30 @@ class SqlCore
 		@destroy= (conn)-> @pool.destroy conn
 
 		@sqlQuery= (conn, sql, args)->
-			log.debug 'sqlQuery:', sql, args
+			log.debug 'sqlQuery:', sql
+			log.debug 'args:', args if args
 			(Q.ninvoke conn, 'query', sql, args)
 			.then (rows_n_cols) ->
 				rows_n_cols[0]
+
+	AcquireTxConn: ()=>
+		conn= false
+
+		@Acquire()
+		.then (c) =>
+			conn= c
+
+			# Initialize the transaction
+			sql= 'SET TRANSACTION ISOLATION LEVEL SERIALIZABLE'
+			@sqlQuery conn, sql
+		.then (db_result)=>
+
+			# Start the transaction
+			sql= 'START TRANSACTION'
+			@sqlQuery conn, sql
+		.then (db_result) ->
+
+			# Pass the conn
+			conn
 
 exports.SqlCore= SqlCore

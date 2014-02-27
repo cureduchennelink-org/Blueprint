@@ -11,7 +11,7 @@ class PreLoader
 		@log= log
 
 	load_user: (conn, usid)->
-		@log.debug 'PreLoader.load_user:'
+		@log.debug 'PreLoader.load_user:', usid
 		Q.resolve().then =>
 
 			sql= 'SELECT * FROM t1_users WHERE id= ? AND disposal= 0'

@@ -41,7 +41,6 @@
       }).then(function(docs) {
         return {
           send: {
-            success: true,
             workouts: docs
           }
         };
@@ -57,20 +56,14 @@
         description: p.description,
         type: p.type
       };
+      if (!p.description) {
+        throw new E.InvalidArg('Invalid Description', 'description');
+      }
       if (!p.workout_name) {
-        throw new E.InvalidArg('Invalid Name', {
-          param: 'workout_name'
-        });
+        throw new E.InvalidArg('Invalid Name', 'workout_name');
       }
       if (!p.type) {
-        throw new E.InvalidArg('Invalid Type', {
-          param: 'type'
-        });
-      }
-      if (!p.description) {
-        throw new E.InvalidArg('Invalid Description', {
-          param: 'description'
-        });
+        throw new E.InvalidArg('Invalid Type', 'type');
       }
       return Q.resolve().then(function() {
         return odb.Workout.FindByName(p.workout_name);
