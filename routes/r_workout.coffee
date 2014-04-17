@@ -3,8 +3,10 @@
 #
 # Author: Jamie Hollowell
 #
-# @param db
-# @param log
+# 	kit dependencies:
+#		db.[mysql,mongo]
+#		wrapper
+#		logger.log
 #
 
 Q= require 'q'
@@ -18,18 +20,18 @@ caller=
 	create: 	name: 'workout_create', auth_required: true
 
 class Workout
-	constructor: (db, wrapper, log)->
-		log.info 'Initializing Workout Routes...'
-		odb= db.mongo
-		sdb= db.mysql
+	constructor: (kit)->
+		kit.logger.log.info 'Initializing Workout Routes...'
+		odb= kit.db.mongo
+		sdb= kit.db.mysql
 
 		# Public I/F
-		@get= wrapper.read_wrap caller.get, @_get
-		@createWorkout= wrapper.update_wrap caller.create, @_create
+		@get= kit.wrapper.read_wrap caller.get, @_get
+		@createWorkout= kit.wrapper.update_wrap caller.create, @_create
 
 	# Private Logic
 	_get: (conn, p, pre_loaded, _log)->
-		f= route: 'workout_get'
+		f= 'Workout:_get:'
 		_log.debug f, p
 
 		Q.resolve()
@@ -40,7 +42,7 @@ class Workout
 			send: workouts: docs
 
 	_create: (conn, p, pre_loaded, _log)->
-		f= 'User.mongoCreate'
+		f= 'Workout:_create:'
 		newWorkout= false
 		opts= name: p.workout_name, description: p.description, type: p.type
 

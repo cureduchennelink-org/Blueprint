@@ -1,17 +1,20 @@
 #
 #	Route Pre-Loader
 #
+#	kit dependencies:
+#		db.mysql
+#		logger.log.[debug,info]
 
 Q= require 'q'
 
 class PreLoader
-	constructor: (db, log) ->
-		log.info 'Initializing Pre-Loader...'
-		@db= db
-		@log= log
+	constructor: (kit) ->
+		kit.logger.log.info 'Initializing Pre-Loader...'
+		@db= kit.db
+		@log= kit.logger.log
 
 	load_user: (conn, usid)->
-		@log.debug 'PreLoader.load_user:', usid
+		@log.debug 'PreLoader:load_user:', usid
 		Q.resolve().then =>
 
 			sql= 'SELECT * FROM t1_users WHERE id= ? AND disposal= 0'

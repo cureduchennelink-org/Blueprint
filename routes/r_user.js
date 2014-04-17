@@ -12,38 +12,35 @@
 
   caller = {
     get: {
-      name: 'user_get',
+      name: 'user:get',
       sql_conn: true,
       auth_required: true,
       load_user: true
     },
     create: {
-      name: 'user_create',
+      name: 'user:create',
       sql_conn: true,
       auth_required: true
     }
   };
 
   User = (function() {
-    function User(db, wrapper, log) {
-      log.info('Initializing User Routes...');
-      odb = db.mongo;
-      sdb = db.mysql;
-      this.get = wrapper.read_wrap(caller.get, this._get);
-      this.createUser = wrapper.update_wrap(caller.create, this._create);
+    function User(kit) {
+      kit.logger.log.info('Initializing User Routes...');
+      odb = kit.db.mongo;
+      sdb = kit.db.mysql;
+      this.get = kit.wrapper.read_wrap(caller.get, this._get);
+      this.createUser = kit.wrapper.update_wrap(caller.create, this._create);
     }
 
     User.prototype._get = function(conn, p, pre_loaded, _log) {
       var f;
-      f = {
-        route: 'user_get'
-      };
-      _log.debug(f, p);
+      f = 'User:_get:';
       return Q.resolve().then(function() {
         return {
           send: {
             success: true,
-            user: pre_loaded.user
+            users: [pre_loaded.user]
           }
         };
       });
@@ -51,8 +48,7 @@
 
     User.prototype._create = function(conn, p, pre_loaded, _log) {
       var f;
-      f = 'User.createUser:';
-      _log.debug(f, p);
+      f = 'User:_create:';
       if (!p.email) {
         throw new E.InvalidArg('Invalid Email', 'email');
       }

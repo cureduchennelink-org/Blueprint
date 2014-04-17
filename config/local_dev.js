@@ -1,5 +1,5 @@
 /**
- * Config File for MNC Server
+ * Config File for local blueprint development
  *
  */
 
@@ -23,5 +23,8 @@ module.exports = {
                 enable: true,
                 options: 'mongodb://localhost/workout_tracker'
             }
+		},
+		auth: {
+		    accessTokenExpiration : 60 * 60 // seconds (60 Minutes)
 		}
 }

@@ -5,11 +5,11 @@
 # 	- MongoDB (Mongoose ~3.8.7)
 #	- Logging with Bunyan
 #	- CoffeeScript
+#	- OAuth 2.0
 #
 #	TODO:
 #		Launch Script
 #			- Output log levels to separate files
-#		OAuth 2.0
 #		SSL Configuration
 #		Server Stats / Analytics
 #
@@ -17,72 +17,64 @@
 #
 #
 
-restify= 	require 'restify'
-bunyan= 	require 'bunyan'
-config= 	(require './lib/config')()
 
-# Logger
-log= bunyan.createLogger config.log
-
-# Token Manager
-{TokenMgr}=		require './lib/token_manager'
-tokenMgr= 		new TokenMgr log
-
-# Database Objects
-{Db}=	require './lib/db'
-db=		new Db config.db, tokenMgr, log
-
-# Route PreLoader
-{PreLoader}= 	require './lib/pre_loader'
-pre_loader= 	new PreLoader db, log
-
-# Route Wrappers
-{Wrapper}=		require './lib/route_wrapper'
-wrapper= 		new Wrapper db, pre_loader, log
-
-# Authorization Parser
-{AuthParser}=	require './lib/authorizationParser'
-authParser=		new AuthParser config.auth, tokenMgr, log
+# Library Modules and Services
+{Db}=			require  './lib/db'
+{Kit}=			require  './lib/kit'
+s_use=			require	 './lib/server_use'
+config= 		(require './lib/config')()
+{Logger}=		require  './lib/logger'
+{Wrapper}=		require  './lib/route_wrapper'
+{TokenMgr}=		require  './lib/token_manager'
+{PreLoader}= 	require  './lib/pre_loader'
+{AuthParser}=	require  './lib/authorizationParser'
 
 # Route Logic
-ping= require './routes/ping'
-{User}= require './routes/r_user'
-{Workout}= require './routes/r_workout'
-{AuthRoute}= require './routes/r_auth'
+{User}=			require './routes/r_user'
+{Workout}=		require './routes/r_workout'
+{AuthRoute}=	require './routes/r_auth'
 
-user= 		new User db, wrapper, log
-workout= 	new Workout db, wrapper, log
-auth= 		new AuthRoute config.auth, tokenMgr, db, wrapper, log
+# Create Kit
+kit= new Kit
+
+# Add Library Services to Kit
+kit.add_service 'config', 		config		# Config Object
+kit.new_service 'logger', 		Logger		# Bunyan Logger
+kit.new_service 'tokenMgr', 	TokenMgr	# Token Manager
+kit.new_service 'db', 			Db			# Database Object (MySQL, MongoDB)
+kit.new_service 'pre_loader', 	PreLoader	# Route Pre Loader
+kit.new_service 'wrapper', 		Wrapper		# Route Wrapper
+kit.new_service 'authParser', 	AuthParser	# Request Authorization Parser
+
+# Add Route Services to Kit
+kit.new_route_service 'auth', 		AuthRoute	# Authentication Route Logic
+kit.new_route_service 'user', 		User		# User Route Logic
+kit.new_route_service 'workout', 	Workout		# Workout Route Logic
 
 # Create Server
+restify= require 'restify'
+log= kit.services.logger.log
 server= restify.createServer
-	log: log
+	log: kit.services.logger.log
 
 # Setup Handlers
-server.use (req, res, next) ->
-	res.setHeader 'Access-Control-Allow-Credentials', 'true'
-	res.setHeader 'Access-Control-Allow-Origin',( req.headers.origin || '*')
-	return next()
-
+server.use s_use.set_response_headers
 server.use restify.queryParser()
 server.use restify.bodyParser()
 server.use restify.requestLogger()
-server.use authParser.parseAuthorization
+server.use kit.services.authParser.parseAuthorization
+server.use s_use.debug_request
 
-# Debug Line
-server.use (req, res, next) ->
-	req.log.info 'ROUTE:', req.url, req.method
-	req.log.info 'PARAM:', req.params[p] for p of req.params
-	return next()
+# Auth Routes
+server.post '/Auth',		kit.routes.auth.authenticate
 
-# Setup Routes
-server.get	'/ping/:name',	ping
+# User Routes
+server.get	'/User/:usid',	kit.routes.user.get
+server.post '/User',		kit.routes.user.createUser
 
-server.post '/Auth',		auth.authenticate
-server.get	'/User/:usid',	user.get
-server.post '/User',		user.createUser
-server.get	'/Workout',		workout.get
-server.post	'/Workout',		workout.createWorkout
+# Workout Routes
+server.get	'/Workout',		kit.routes.workout.get
+server.post	'/Workout',		kit.routes.workout.createWorkout
 
 # Start the Server
 server.listen config.api.port, ()->

@@ -3,8 +3,10 @@
 #
 # Author: Jamie Hollowell
 #
-# @param db
-# @param log
+# 	kit dependencies:
+#		db.[mysql,mongo]
+#		wrapper
+#		logger.log
 #
 
 Q= require 'q'
@@ -14,33 +16,31 @@ odb= false # Mongo DB
 sdb= false # MySql DB
 
 caller=
-	get:		name: 'user_get', 	 sql_conn: true, auth_required: true, load_user: true
-	create: 	name: 'user_create', sql_conn: true, auth_required: true
+	get:		name: 'user:get', 	 sql_conn: true, auth_required: true, load_user: true
+	create: 	name: 'user:create', sql_conn: true, auth_required: true
 
 class User
-	constructor: (db, wrapper, log)->
-		log.info 'Initializing User Routes...'
-		odb= db.mongo
-		sdb= db.mysql
+	constructor: (kit)->
+		kit.logger.log.info 'Initializing User Routes...'
+		odb= kit.db.mongo
+		sdb= kit.db.mysql
 
 		# Public I/F
-		@get= wrapper.read_wrap caller.get, @_get
-		@createUser= wrapper.update_wrap caller.create, @_create
+		@get= kit.wrapper.read_wrap caller.get, @_get
+		@createUser= kit.wrapper.update_wrap caller.create, @_create
 
 	# Private Logic
 	_get: (conn, p, pre_loaded, _log)->
-		f= route: 'user_get'
-		_log.debug f, p
+		f= 'User:_get:'
 
 		Q.resolve()
 		.then ->
 			send:
 				success: true
-				user: pre_loaded.user
+				users: [pre_loaded.user]
 
 	_create: (conn, p, pre_loaded, _log)->
-		f= 'User.createUser:'
-		_log.debug f, p
+		f= 'User:_create:'
 
 		throw new E.InvalidArg 'Invalid Email','email' if not p.email
 		throw new E.InvalidArg 'Invalid Password','password' if not p.password

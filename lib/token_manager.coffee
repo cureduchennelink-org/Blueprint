@@ -1,6 +1,9 @@
 #
 #	Token Manager
 #
+#	kit dependencies:
+#		logger.log.[debug,info]
+#
 
 Q= require 'q'
 E= require './error'
@@ -15,8 +18,9 @@ urlSafeBase64EncodeFix= (str)->
 	str.replace(/\+/g, '-').replace(/\//g, '_').replace(/\=/g, '')
 
 class TokenMgr
-	constructor: (log)->
-		@log= log
+	constructor: (kit)->
+		@log= kit.logger.log
+		@log.info 'Initializing Token Manager...'
 		@CreateToken= Q.nbind @createToken, @
 
 	createToken: (length, callback)->
@@ -46,5 +50,7 @@ class TokenMgr
 		token= JSON.parse (new Buffer (urlSafeBase64DecodeFix parts[0]), 'base64').toString 'utf8'
 		if isNaN token.exp or token.exp < moment().unix()
 			throw new E.OAuthError 401, 'invalid_token', 'Token Expired'
+
+		token: token
 
 exports.TokenMgr= TokenMgr

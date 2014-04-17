@@ -18,14 +18,14 @@
   sdb = false;
 
   AuthRoute = (function() {
-    function AuthRoute(config, tokenMgr, db, wrapper, log) {
-      this.config = config;
-      this.tokenMgr = tokenMgr;
-      this.log = log;
+    function AuthRoute(kit) {
       this._authenticate = __bind(this._authenticate, this);
-      this.log.info('Initializing Auth Route...');
-      sdb = db.mysql;
-      this.authenticate = wrapper.auth_wrap(this._authenticate);
+      kit.logger.log.info('Initializing Auth Route...');
+      this.config = kit.config.auth;
+      this.tokenMgr = kit.tokenMgr;
+      sdb = kit.db.mysql;
+      this.log = kit.logger.log;
+      this.authenticate = kit.wrapper.auth_wrap(this._authenticate);
     }
 
     AuthRoute.prototype._authenticate = function(conn, p, pre_loaded, _log) {

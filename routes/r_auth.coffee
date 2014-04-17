@@ -3,8 +3,12 @@
 #
 # Author: Jamie Hollowell
 #
-# @param db
-# @param log
+# 	kit dependencies:
+#		config.auth
+#		tokenMgr
+#		db
+#		wrapper
+#		logger.log.[info,debug]
 #
 
 Q= require 'q'
@@ -18,12 +22,15 @@ KEY_LENGTH= 32
 sdb= false # MySql DB
 
 class AuthRoute
-	constructor: (@config, @tokenMgr, db, wrapper, @log)->
-		@log.info 'Initializing Auth Route...'
-		sdb= db.mysql
+	constructor: (kit)->
+		kit.logger.log.info 'Initializing Auth Route...'
+		@config= kit.config.auth
+		@tokenMgr= kit.tokenMgr
+		sdb= kit.db.mysql
+		@log= kit.logger.log
 
 		# Public I/F
-		@authenticate= wrapper.auth_wrap @_authenticate
+		@authenticate= kit.wrapper.auth_wrap @_authenticate
 
 	_authenticate: (conn, p, pre_loaded, _log)=>
 		f= route: 'Auth', fn: 'authenticate'

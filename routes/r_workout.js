@@ -22,19 +22,17 @@
   };
 
   Workout = (function() {
-    function Workout(db, wrapper, log) {
-      log.info('Initializing Workout Routes...');
-      odb = db.mongo;
-      sdb = db.mysql;
-      this.get = wrapper.read_wrap(caller.get, this._get);
-      this.createWorkout = wrapper.update_wrap(caller.create, this._create);
+    function Workout(kit) {
+      kit.logger.log.info('Initializing Workout Routes...');
+      odb = kit.db.mongo;
+      sdb = kit.db.mysql;
+      this.get = kit.wrapper.read_wrap(caller.get, this._get);
+      this.createWorkout = kit.wrapper.update_wrap(caller.create, this._create);
     }
 
     Workout.prototype._get = function(conn, p, pre_loaded, _log) {
       var f;
-      f = {
-        route: 'workout_get'
-      };
+      f = 'Workout:_get:';
       _log.debug(f, p);
       return Q.resolve().then(function() {
         return odb.mcore.find(odb.Workout, {});
@@ -49,7 +47,7 @@
 
     Workout.prototype._create = function(conn, p, pre_loaded, _log) {
       var f, newWorkout, opts;
-      f = 'User.mongoCreate';
+      f = 'Workout:_create:';
       newWorkout = false;
       opts = {
         name: p.workout_name,

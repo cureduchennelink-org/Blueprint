@@ -1,12 +1,18 @@
 #
 #	Authorization Parser
 #
+#	kit dependencies:
+#		config.auth.key
 
 Q= require 'q'
 E= require './error'
 
 class AuthParser
-	constructor: (@config, @tokenMgr, @log)->
+	constructor: (kit)->
+		kit.logger.log.info 'Initializing Authorization Parser...'
+		@config= kit.config.auth
+		@tokenMgr= kit.tokenMgr
+		@log= kit.logger.log
 
 	parseAuthorization: (req, res, next)->
 		p= req.params

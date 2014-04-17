@@ -3,6 +3,10 @@
 #	- Pre Loader
 #	- Error Handler
 #
+#	kit dependencies:
+#		logger.log.[debug,info]
+#		db.[mysql,mongo]
+#		pre_loader
 
 Q= require 'q'
 E= require './error'
@@ -13,12 +17,12 @@ sdb= false
 pre_loader= false
 
 class Wrapper
-	constructor: (db, pl, log) ->
-		_log= log
-		_log.info 'Initializing Route Wrappers...'
-		odb= db.mongo
-		sdb= db.mysql
-		pre_loader= pl
+	constructor: (kit) ->
+		kit.logger.log.info 'Initializing Route Wrappers...'
+		_log= kit.logger.log
+		odb= kit.db.mongo
+		sdb= kit.db.mysql
+		pre_loader= kit.pre_loader
 
 	auth_wrap: (logic)->
 		auth_func= @auth
@@ -33,7 +37,7 @@ class Wrapper
 		return (q,s,n)-> update_func q, s, n, caller, logic
 
 	auth: (req, res, next, route_logic)->
-		f= wrapper: "Auth"
+		f= "Wrapper:auth"
 		conn= null
 		p= req.params
 		pre_loaded= {}
@@ -86,7 +90,7 @@ class Wrapper
 			next()
 
 	read: (req, res, next, caller, route_logic) ->
-		f= wrapper: "Read:#{caller.name}"
+		f= "Wrapper:read:#{caller.name}"
 		conn= null
 		p= req.params
 		pre_loaded= {}
@@ -112,7 +116,7 @@ class Wrapper
 		.then (result_hash) ->
 
 			# Release database conn; Respond to Client
-			odb.mysql.core.release conn if conn isnt null
+			sdb.core.release conn if conn isnt null
 			res.send result_hash.send
 			next()
 		.fail (err) ->
@@ -121,7 +125,7 @@ class Wrapper
 			next()
 
 	update: (req, res, next, caller, route_logic) ->
-		f= wrapper: 'update', caller: caller.name
+		f= "Wrapper:update:#{caller.name}"
 		conn= null
 		result= false
 		pre_loaded= {}
@@ -169,11 +173,11 @@ class Wrapper
 				conn.query 'ROLLBACK', (err)->
 					if err
 						req.log.warn f, 'destroy db conn (failed rollback)'
-						odb.mysql.core.destroy conn
+						sdb.core.destroy conn
 						req.log.error f, '.fail', err.stack
 					else
 						req.log.debug f, 'release db conn (successful rollback)'
-						odb.mysql.core.release conn
+						sdb.core.release conn
 			res.send err
 			next()
 

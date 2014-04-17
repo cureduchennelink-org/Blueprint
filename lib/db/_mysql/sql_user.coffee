@@ -5,12 +5,15 @@
 Q= require 'q'
 E= require '../../error'
 
+table= 't1_users'
+
 class SqlUser
 	constructor: (db, log)->
 		@db= db
 		@log= log
 
 	schema:
+		auth:	['id','password']
 		create: ['first_name','last_name','email','password']
 		update: ['first_name','last_name','email','password','disposal']
 
@@ -33,7 +36,7 @@ class SqlUser
 		.then =>
 
 			# Grab the User Credentials
-			sql= 'SELECT id, password FROM t1_users WHERE email= ? and disposal= 0'
+			sql= 'SELECT '+ (@schema.auth.join ',') + ' FROM ' + table + ' WHERE email= ? and disposal= 0'
 			@db.sqlQuery conn, sql, [username]
 		.then (db_rows)=>
 			if db_rows.length isnt 1 or not db_rows[0].password
@@ -53,7 +56,7 @@ class SqlUser
 			cols= []; qs= []; arg= []
 			for nm, val of new_values
 				cols.push nm; qs.push '?'; arg.push val
-			sql= 'INSERT INTO t1_users (' + (cols.join ',') + ') VALUES (' + (qs.join ',') + ')'
+			sql= 'INSERT INTO ' + table + ' (' + (cols.join ',') + ') VALUES (' + (qs.join ',') + ')'
 			@db.sqlQuery conn, sql, arg
 		.then (db_result)=>
 			@log.debug f, db_result
@@ -74,7 +77,7 @@ class SqlUser
 			for nm, val of new_values
 				cols.push nm + '= ?'; arg.push val
 			arg.push id
-			sql= 'UPDATE t1_users SET '+ (cols.join ',') + ' WHERE id= ?'
+			sql= 'UPDATE ' + table + ' SET '+ (cols.join ',') + ' WHERE id= ?'
 			@db.sqlQuery conn, sql, arg
 		.then (db_result)=>
 			@log.debug f, db_result

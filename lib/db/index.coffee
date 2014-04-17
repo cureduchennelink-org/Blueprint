@@ -2,23 +2,31 @@
 #	Database Object
 #
 #	Include Resource Specific DB functions here
+#
+#	kit dependencies:
+#		logger.log.[debug,info]
+#		config.db.[mysql,mongo]
+#		tokenMgr
+#
 
 class Db
-	constructor: (config, tokenMgr, log) ->
+	constructor: (kit) ->
+		log= kit.logger.log
+		config= kit.config
+		tokenMgr= kit.tokenMgr
 
 		# MySql
-		if config.mysql.enable
+		if config.db.mysql.enable
 			log.info 'Initializing MySql...'
 			{MySql}= require './_mysql'
-			@mysql= new MySql config.mysql, tokenMgr, log
+			@mysql= new MySql config.db.mysql, tokenMgr, log
 
 		# MongoDB
-		if config.mongo.enable
+		if config.db.mongo.enable
 			log.info 'Initializing MongoDB...'
 			{Mongo}= require './_mongo'
 			mongoose= require 'mongoose'
-			mongoose.connect config.mongo.options
-			@mongo= new Mongo config.mongo, log
+			mongoose.connect config.db.mongo.options
+			@mongo= new Mongo config.db.mongo, log
 
 exports.Db = Db
-
