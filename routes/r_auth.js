@@ -25,16 +25,30 @@
       this.tokenMgr = kit.tokenMgr;
       sdb = kit.db.mysql;
       this.log = kit.logger.log;
-      this.authenticate = kit.wrapper.auth_wrap(this._authenticate);
+      this.caller = {
+        authenticate: {
+          use: true,
+          wrap: 'auth_wrap',
+          version: {
+            any: this._authenticate
+          }
+        }
+      };
     }
 
     AuthRoute.prototype._authenticate = function(conn, p, pre_loaded, _log) {
-      var clearToken, f, result,
+      var clearToken, f, result, use_doc,
         _this = this;
-      f = {
-        route: 'Auth',
-        fn: 'authenticate'
+      use_doc = {
+        client_id: 'rS',
+        username: 'rS',
+        password: 'rS',
+        grant_type: 'S'
       };
+      if (conn === 'use') {
+        return use_doc;
+      }
+      f = 'Auth:_authenticate:';
       _log.debug(f, p, pre_loaded);
       clearToken = false;
       result = {};
@@ -43,10 +57,10 @@
           return false;
         }
         return _this._validateCredentials(conn, p.username, p.password, _log);
-      }).then(function(auth_user_id) {
-        _log.debug(f, 'got auth_user_id:', auth_user_id);
-        if (auth_user_id !== false) {
-          result.auth_user_id = auth_user_id;
+      }).then(function(auth_ident_id) {
+        _log.debug(f, 'got auth_ident_id:', auth_ident_id);
+        if (auth_ident_id !== false) {
+          result.auth_ident_id = auth_ident_id;
         }
         if (p.grant_type !== 'refresh_token') {
           return false;
@@ -59,19 +73,19 @@
           if (valid_token.length === 0) {
             throw new E.OAuthError(401, 'invalid_client');
           }
-          result.auth_user_id = valid_token[0].user_id;
+          result.auth_ident_id = valid_token[0].ident_id;
         }
         if (p.grant_type === 'refresh_token') {
           clearToken = p.refresh_token;
         }
         _log.debug('got clearToken:', clearToken);
         exp = (moment().add('seconds', _this.config.refreshTokenExpiration)).toDate();
-        return sdb.token.createRefreshToken(conn, result.auth_user_id, p.client_id, exp, clearToken);
+        return sdb.token.create_ident_token(conn, result.auth_ident_id, p.client_id, exp, clearToken);
       }).then(function(refreshToken) {
         var accessToken, exp;
         exp = moment().add('seconds', _this.config.accessTokenExpiration);
         accessToken = _this.tokenMgr.encode({
-          uid: result.auth_user_id
+          iid: result.auth_ident_id
         }, exp, _this.config.key);
         return {
           send: {
@@ -87,20 +101,17 @@
     AuthRoute.prototype._validateCredentials = function(conn, username, password, _log) {
       var creds, f,
         _this = this;
-      f = {
-        route: 'Auth',
-        fn: '_validateCredentials'
-      };
+      f = 'Auth:_validateCredentials:';
       if (!_log) {
         _log = this.log;
       }
       creds = false;
       return Q.resolve().then(function() {
-        return sdb.user.get_auth_credentials(conn, username);
+        return sdb.auth.get_auth_credentials(conn, username);
       }).then(function(credentials) {
         _log.debug('got credentials:', credentials);
         creds = credentials;
-        return _this._comparePassword(password, creds.password);
+        return _this._comparePassword(password, creds.pwd);
       }).then(function(a_match) {
         _log.debug('got a match:', a_match);
         if (!a_match) {
@@ -117,10 +128,7 @@
     AuthRoute.prototype._comparePassword = function(password, compareHash) {
       var f, parts,
         _this = this;
-      f = {
-        route: 'Auth',
-        fn: '_comparePassword'
-      };
+      f = 'Auth:_comparePassword:';
       parts = compareHash.split('.', 2);
       if (parts.length !== 2) {
         throw new E.ServerError('auth_error', 'Missing salt on password hash');

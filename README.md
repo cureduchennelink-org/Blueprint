@@ -2,7 +2,7 @@
 
 ## About
 
-This is a bare-bones node server that is integrated with a MySql database
+Blueprint is meant to be an out of the box template node server.
 
 ## Current Status
 
@@ -15,28 +15,34 @@ If you don't already have node 0.8.16 or higher, you can [download node](http://
 ###### Clone blueprint from bitbucket
 Clone the print repository to your local directory. You can use the following link: [https://jhollowell@bitbucket.org/dv-mobile/blueprint.git](https://jhollowell@bitbucket.org/dv-mobile/blueprint.git)
 
-###### Instal Node Modules
-```
-cd path/to/blueprint
-npm instal
-```
-
 ## Configuration
-### Application Configuration
-Modify the Server config file (Server/config.js) to work with the MySql database. Currently, only the DB settings are required for application setup.
+### Configuration Files
+When the Blueprint server first launches, it will load the configuration details in config/default.js and merge it with the config file that matches the local enviroment specified. Modify the default config file to affect all enviroments that the node server is launched in and modify the environment config file to only set options for that enviroment.
 
 ### Database Configuration
+The Blueprint server can be configured to talk to a MySQL database, MongoDB database or both. Enable either database in the default or environment config file. 
 
-You will need to set up a MySQL database. Choose a database name, such as **blueprint**, then log into MySQL and create the database using the mysql command line client or a tool such as MySQLWorkbench:
-
-```
-CREATE DATABASE blueprint
-  DEFAULT CHARACTER SET utf8
-  DEFAULT COLLATE utf8_general_ci;
-
-USE blueprint
-source db/schema.sql
-```
+	db : {
+        mysql: {
+            enable: false,
+            options: {
+                host: 'localhost',
+                port: 8889,
+                user: 'root',
+                password: 'root',
+                database: 'blueprint',
+                multipleStatements: true,
+                minConnections: 2,
+                maxConnections: 10,
+                idleTimeoutMillis: 60000
+            }
+        },
+        mongo: {
+            enable: false,
+            options: 'mongodb://localhost/mydb'
+        }
+    }
+   
 
 ## Running
 To run a blueprint from epic:  

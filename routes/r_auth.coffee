@@ -28,12 +28,14 @@ class AuthRoute
 		@tokenMgr= kit.tokenMgr
 		sdb= kit.db.mysql
 		@log= kit.logger.log
-
-		# Public I/F
-		@authenticate= kit.wrapper.auth_wrap @_authenticate
+		@caller=
+			authenticate: use: true, wrap: 'auth_wrap', version: any: @_authenticate
 
 	_authenticate: (conn, p, pre_loaded, _log)=>
-		f= route: 'Auth', fn: 'authenticate'
+		use_doc= client_id: 'rS', username: 'rS', password: 'rS', grant_type:'S'
+		return use_doc if conn is 'use'
+
+		f= 'Auth:_authenticate:'
 		_log.debug f, p, pre_loaded
 		clearToken= false
 		result= {}
@@ -44,9 +46,9 @@ class AuthRoute
 			# Validate Caller Credentials if requesting password
 			return false unless p.grant_type is 'password'
 			@_validateCredentials conn, p.username, p.password, _log
-		.then (auth_user_id)->
-			_log.debug f, 'got auth_user_id:', auth_user_id
-			result.auth_user_id= auth_user_id if auth_user_id isnt false
+		.then (auth_ident_id)->
+			_log.debug f, 'got auth_ident_id:', auth_ident_id
+			result.auth_ident_id= auth_ident_id if auth_ident_id isnt false
 
 			# Validate Refresh Token if requesting refresh_token
 			return false unless p.grant_type is 'refresh_token'
@@ -55,18 +57,18 @@ class AuthRoute
 			_log.debug f, 'got valid token:', valid_token
 			if valid_token isnt false
 				throw new E.OAuthError 401, 'invalid_client' if valid_token.length is 0
-				result.auth_user_id= valid_token[0].user_id
+				result.auth_ident_id= valid_token[0].ident_id
 
 			# Generate Refresh Token
 			clearToken= p.refresh_token if p.grant_type is 'refresh_token'
 			_log.debug 'got clearToken:', clearToken
 			exp= (moment().add 'seconds', @config.refreshTokenExpiration).toDate()
-			sdb.token.createRefreshToken conn, result.auth_user_id, p.client_id, exp, clearToken
+			sdb.token.create_ident_token conn, result.auth_ident_id, p.client_id, exp, clearToken
 		.then (refreshToken)=>
 
 			# Generate Access Token
 			exp= moment().add 'seconds', @config.accessTokenExpiration
-			accessToken= @tokenMgr.encode {uid: result.auth_user_id}, exp, @config.key
+			accessToken= @tokenMgr.encode {iid: result.auth_ident_id}, exp, @config.key
 
 			# Return back to Client
 			send:
@@ -76,7 +78,7 @@ class AuthRoute
 				refresh_token: refreshToken
 
 	_validateCredentials: (conn, username, password, _log)->
-		f= route: 'Auth', fn: '_validateCredentials'
+		f= 'Auth:_validateCredentials:'
 		_log= @log if not _log
 		creds= false
 
@@ -84,13 +86,13 @@ class AuthRoute
 		.then ->
 
 			# Grab User Credentials
-			sdb.user.get_auth_credentials conn, username
+			sdb.auth.get_auth_credentials conn, username
 		.then (credentials)=>
 			_log.debug 'got credentials:', credentials
 			creds= credentials
 
 			# Compare given password to stored hash password
-			@_comparePassword password, creds.password
+			@_comparePassword password, creds.pwd
 		.then (a_match)->
 			_log.debug 'got a match:', a_match
 			throw new E.OAuthError 401, 'invalid_client' if not a_match
@@ -100,7 +102,7 @@ class AuthRoute
 	_pbkdf2: (p,buf,IT,KL)-> (Q.ninvoke crypto, 'pbkdf2', p, buf, IT, KL)
 
 	_comparePassword: (password, compareHash)->
-		f= route: 'Auth', fn: '_comparePassword'
+		f= 'Auth:_comparePassword:'
 		parts= compareHash.split '.', 2
 		throw new E.ServerError 'auth_error','Missing salt on password hash' if parts.length isnt 2
 

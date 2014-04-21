@@ -19,14 +19,13 @@
 
 
 # Library Modules and Services
-{Db}=			require  './lib/db'
 {Kit}=			require  './lib/kit'
+{Db}=			require  './lib/db'
 s_use=			require	 './lib/server_use'
 config= 		(require './lib/config')()
 {Logger}=		require  './lib/logger'
 {Wrapper}=		require  './lib/route_wrapper'
 {TokenMgr}=		require  './lib/token_manager'
-{PreLoader}= 	require  './lib/pre_loader'
 {AuthParser}=	require  './lib/authorizationParser'
 
 # Route Logic
@@ -38,13 +37,12 @@ config= 		(require './lib/config')()
 kit= new Kit
 
 # Add Library Services to Kit
-kit.add_service 'config', 		config		# Config Object
-kit.new_service 'logger', 		Logger		# Bunyan Logger
-kit.new_service 'tokenMgr', 	TokenMgr	# Token Manager
-kit.new_service 'db', 			Db			# Database Object (MySQL, MongoDB)
-kit.new_service 'pre_loader', 	PreLoader	# Route Pre Loader
-kit.new_service 'wrapper', 		Wrapper		# Route Wrapper
-kit.new_service 'authParser', 	AuthParser	# Request Authorization Parser
+kit.add_service 'config', 		config					# Config Object
+kit.new_service 'logger', 		Logger					# Bunyan Logger
+kit.new_service 'tokenMgr', 	TokenMgr				# Token Manager
+kit.new_service 'db', 			Db						# Database Object (MySQL, MongoDB)
+kit.new_service 'authParser', 	AuthParser				# Request Authorization Parser
+kit.new_service 'wrapper', 		Wrapper, [kit.routes]	# Route Wrapper
 
 # Add Route Services to Kit
 kit.new_route_service 'auth', 		AuthRoute	# Authentication Route Logic
@@ -55,7 +53,7 @@ kit.new_route_service 'workout', 	Workout		# Workout Route Logic
 restify= require 'restify'
 log= kit.services.logger.log
 server= restify.createServer
-	log: kit.services.logger.log
+	log: log
 
 # Setup Handlers
 server.use s_use.set_response_headers
@@ -65,16 +63,38 @@ server.use restify.requestLogger()
 server.use kit.services.authParser.parseAuthorization
 server.use s_use.debug_request
 
+usage= {}
+alt_wrappers= {} # Example: user: kit.services.user_wrapper
+pfx= config.route_prefix.api
+
+add_route= (verb, route, mod, func)->
+	wrap= (alt_wrappers[mod] ? kit.services.wrapper).add mod, func
+	usage[mod]= {} unless usage[mod]
+	usage[mod][func]= {} unless usage[mod][func]
+	usage[mod][func][route]= wrap 'use'
+	verbs= [verb]
+	verbs.push 'post' if verb in ['del','put']
+	server[cmd] pfx + '' + route, wrap for cmd in verbs
+
 # Auth Routes
-server.post '/Auth',		kit.routes.auth.authenticate
+add_route 'post', 	'/Auth', 			'auth', 'authenticate'
 
 # User Routes
-server.get	'/User/:usid',	kit.routes.user.get
-server.post '/User',		kit.routes.user.createUser
+add_route 'post', 	'/User', 			'user', 'create'
+#add_route 'put', 	'/User/:usid', 		'user', 'update'
+add_route 'get', 	'/User/:usid', 		'user', 'get'
 
 # Workout Routes
-server.get	'/Workout',		kit.routes.workout.get
-server.post	'/Workout',		kit.routes.workout.createWorkout
+add_route 'post', 	'/Workout', 		'workout', 'create'
+add_route 'get', 	'/Workout', 		'workout', 'get'
+
+# API Usage
+server.get pfx, (q,r,n)-> r.send usage; n()
+
+# Static File Server
+server.get /.*/, restify.serveStatic
+	directory: './html_root',
+	default: 'index.html'
 
 # Start the Server
 server.listen config.api.port, ()->

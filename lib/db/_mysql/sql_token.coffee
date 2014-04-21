@@ -5,27 +5,34 @@
 Q= require 'q'
 E= require '../../error'
 
+table= 'ident_tokens'
+
 class SqlToken
 	constructor: (db, @tokenMgr, log)->
 		@log= log
 		@db= db
 
+	schema:
+		find: ['ident_id','client']
+		insert: ['token','ident_id','client','exp','cr']
+
 	find_token: (conn, token)->
-		sql = 'SELECT user_id, client_id FROM t1_refresh_tokens WHERE token = ? AND expires > CURDATE()'
+		sql= 'SELECT '+ (@schema.find.join ',') + ' FROM ' + table +
+			 ' WHERE token = ? AND exp > CURDATE()'
 		(@db.sqlQuery conn, sql, [token])
 		.then (db_rows)-> db_rows
 
 	insert_token: (conn, token, user_id, client_id, expires)->
-		sql = 'INSERT INTO t1_refresh_tokens (token,user_id,client_id,expires,created) VALUES (?,?,?,?,NULL)'
+		sql = 'INSERT INTO ' + table + ' ('+ (@schema.insert.join ',') + ') VALUES (?,?,?,?,NULL)'
 		(@db.sqlQuery conn, sql, [token, user_id, client_id, expires])
 		.then (db_result)->	db_result
 
 	delete_token: (conn, token)->
-		sql = 'DELETE FROM t1_refresh_tokens WHERE token = ?'
+		sql = 'DELETE FROM ' + table + ' WHERE token = ?'
 		(@db.sqlQuery conn, sql, [token])
 		.then (db_result)-> db_result
 
-	createRefreshToken: (conn, user_id, clientId, expires, currentRefreshToken)=>
+	create_ident_token: (conn, user_id, clientId, expires, current_ident_token)=>
 		new_token= false
 
 		Q.resolve()
@@ -37,8 +44,8 @@ class SqlToken
 			new_token= token
 
 			# Delete current refresh token if it exists
-			return false unless currentRefreshToken
-			@delete_token conn, currentRefreshToken
+			return false unless current_ident_token
+			@delete_token conn, current_ident_token
 		.then (db_result)=>
 
 			# Insert New Token

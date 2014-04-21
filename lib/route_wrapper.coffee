@@ -15,29 +15,37 @@ _log= false
 odb= false
 sdb= false
 pre_loader= false
+routes= false
 
 class Wrapper
-	constructor: (kit) ->
-		kit.logger.log.info 'Initializing Route Wrappers...'
-		_log= kit.logger.log
-		odb= kit.db.mongo
-		sdb= kit.db.mysql
-		pre_loader= kit.pre_loader
+	constructor: (kits, kit_routes) ->
+		kits.logger.log.info 'Initializing Route Wrappers...'
+		_log= kits.logger.log
+		odb= kits.db.mongo
+		sdb= kits.db.mysql
+		routes= kit_routes
 
-	auth_wrap: (logic)->
+	add: (mod, func)->
+		caller= routes[mod].caller[func]
+		caller.name= mod+':'+func
+		wrap= @[caller.wrap] caller #, mod, func
+
+	auth_wrap: (caller)->
 		auth_func= @auth
-		return (q,s,n)-> auth_func q, s, n, logic
+		return (q,s,n)-> auth_func q, s, n, caller
 
-	read_wrap: (caller, logic)->
+	read_wrap: (caller)->
 		read_func= @read
-		return (q,s,n)-> read_func q, s, n, caller, logic
+		return (q,s,n)-> read_func q, s, n, caller
 
-	update_wrap: (caller, logic)->
+	update_wrap: (caller)->
 		update_func= @update
-		return (q,s,n)-> update_func q, s, n, caller, logic
+		return (q,s,n)-> update_func q, s, n, caller
 
-	auth: (req, res, next, route_logic)->
+	auth: (req, res, next, caller)->
 		f= "Wrapper:auth"
+		route_logic= caller.version[req.params?.Version] ? caller.version.any
+		return (if caller.use isnt true then caller.use else route_logic req) if req is 'use'
 		conn= null
 		p= req.params
 		pre_loaded= {}
@@ -89,11 +97,16 @@ class Wrapper
 			res.send err
 			next()
 
-	read: (req, res, next, caller, route_logic) ->
+	read: (req, res, next, caller) ->
 		f= "Wrapper:read:#{caller.name}"
+		route_logic= caller.version[req.params?.Version] ? caller.version.any
+		return (if caller.use isnt true then caller.use else route_logic req) if req is 'use'
 		conn= null
 		p= req.params
 		pre_loaded= {}
+
+		if caller.auth_required
+			return next() if not req.auth.authorize()
 
 		Q.resolve()
 		.then ->
@@ -104,15 +117,20 @@ class Wrapper
 		.then (c) ->
 			conn= c if c isnt false
 
-			# Pre Load User
-			return false unless caller.load_user
-			pre_loader.load_user conn, p.usid
-		.then (user) ->
-			req.log.debug 'got pre_loaded user:', f, user
-			pre_loaded.user= user
+			# Loop through the caller's pre_load functions
+			q_result = Q.resolve true
+			for nm,func of caller.pre_load
+				do (nm,func) ->
+					q_result= q_result.then () ->
+						func conn, p
+					.then (pre_load_result) ->
+						_log.debug "got #{nm}:", pre_load_result
+						pre_loaded[nm]= pre_load_result
+			q_result
+		.then ->
 
 			# Call the Route Logic. Pass in pre_loaded variables
-			route_logic conn, req.params, pre_loaded, req.log
+			route_logic conn, p, pre_loaded, req.log
 		.then (result_hash) ->
 
 			# Release database conn; Respond to Client
@@ -124,10 +142,13 @@ class Wrapper
 			res.send err
 			next()
 
-	update: (req, res, next, caller, route_logic) ->
+	update: (req, res, next, caller) ->
 		f= "Wrapper:update:#{caller.name}"
+		route_logic= caller.version[req.params?.Version] ? caller.version.any
+		return (if caller.use isnt true then caller.use else route_logic req) if req is 'use'
 		conn= null
 		result= false
+		p= req.params
 		pre_loaded= {}
 
 		if caller.auth_required
@@ -142,15 +163,20 @@ class Wrapper
 		.then (c) ->
 			conn= c if c isnt false
 
-			# Pre Load User
-			return false unless caller.load_user
-			pre_loader.load_user conn, p.usid
-		.then (user) ->
-			req.log.debug f, 'got pre_loaded user:', user
-			pre_loaded.user= user
+			# Loop through the caller's pre_load functions
+			q_result = Q.resolve true
+			for nm,func of caller.pre_load
+				do (nm,func) ->
+					q_result= q_result.then () ->
+						func conn, p
+					.then (pre_load_result) ->
+						_log.debug "got #{nm}:", pre_load_result
+						pre_loaded[nm]= pre_load_result
+			q_result
+		.then ->
 
 			# Call the Route Logic. Pass in pre_loaded variables
-			route_logic conn, req.params, pre_loaded, req.log
+			route_logic conn, p, pre_loaded, req.log
 		.then (result_hash) ->
 			result= result_hash
 

@@ -15,22 +15,25 @@ E= require '../lib/error'
 odb= false # Mongo DB
 sdb= false # MySql DB
 
-caller=
-	get:		name: 'workout_get', 	 auth_required: true
-	create: 	name: 'workout_create', auth_required: true
 
 class Workout
 	constructor: (kit)->
 		kit.logger.log.info 'Initializing Workout Routes...'
 		odb= kit.db.mongo
 		sdb= kit.db.mysql
-
-		# Public I/F
-		@get= kit.wrapper.read_wrap caller.get, @_get
-		@createWorkout= kit.wrapper.update_wrap caller.create, @_create
+		@caller=
+			get:
+				use: true, wrap: 'read_wrap', version: any: @_get
+				auth_required: true
+			create:
+				use: true, wrap: 'update_wrap', version: any: @_create
+				auth_required: true
 
 	# Private Logic
 	_get: (conn, p, pre_loaded, _log)->
+		use_docs= {}
+		return use_docs if conn is 'use'
+
 		f= 'Workout:_get:'
 		_log.debug f, p
 
@@ -42,13 +45,16 @@ class Workout
 			send: workouts: docs
 
 	_create: (conn, p, pre_loaded, _log)->
+		use_docs= description: 'rS', workout_name: 'rS', type: 'rE:good,bad'
+		return use_docs if conn is 'use'
+
 		f= 'Workout:_create:'
 		newWorkout= false
 		opts= name: p.workout_name, description: p.description, type: p.type
 
-		throw new E.InvalidArg 'Invalid Description','description' if not p.description
-		throw new E.InvalidArg 'Invalid Name','workout_name' if not p.workout_name
-		throw new E.InvalidArg 'Invalid Type','type' if not p.type
+		throw new E.MissingArg 'description' if not p.description
+		throw new E.MissingArg 'workout_name' if not p.workout_name
+		throw new E.MissingArg 'type' if not p.type
 
 		Q.resolve()
 		.then ->

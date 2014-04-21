@@ -24,7 +24,12 @@ module.exports = {
         }
     },
     api: {
-        port: 9500
+        port: 9500,
+    },
+    route_prefix: {
+        assests: '/s',
+        api: '/api/:Version',
+        upload: '/upload'
     },
     log: {
         name: 'blueprint',

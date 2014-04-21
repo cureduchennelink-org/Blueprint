@@ -12,17 +12,15 @@ class Kit
 	add_service: (name, obj)->
 		@services[name]= obj
 
-	new_service: (name, constructor)->
+	new_service: (name, constructor, args)->
 		_services= @services
 		Obj= ->
-			constructor.apply this, [_services]
+			c_args=[_services]
+			c_args.push arg for arg in args ? []
+			constructor.apply this, c_args
 
 		Obj.prototype= constructor.prototype
 		@services[name]= new Obj
-
-# 	make_object: (name, fn, args)->
-# 		deps= (@services[nm] for nm in args)
-# 		@services[name]= fn.apply this, deps
 
 	new_route_service: (name, constructor)->
 		_services= @services

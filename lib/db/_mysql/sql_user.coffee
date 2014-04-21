@@ -13,7 +13,6 @@ class SqlUser
 		@log= log
 
 	schema:
-		auth:	['id','password']
 		create: ['first_name','last_name','email','password']
 		update: ['first_name','last_name','email','password','disposal']
 
@@ -23,25 +22,10 @@ class SqlUser
 		Q.resolve()
 		.then =>
 
-			sql= 'SELECT * FROM m1_users'
+			sql= 'SELECT * FROM ' + table
 			@db.sqlQuery conn, sql
 		.then (db_rows)->
 			db_rows
-
-	get_auth_credentials: (conn, username)->
-		f= 'DB.SqlUser.get_auth_credentials:'
-		@log.debug f, username
-
-		Q.resolve()
-		.then =>
-
-			# Grab the User Credentials
-			sql= 'SELECT '+ (@schema.auth.join ',') + ' FROM ' + table + ' WHERE email= ? and disposal= 0'
-			@db.sqlQuery conn, sql, [username]
-		.then (db_rows)=>
-			if db_rows.length isnt 1 or not db_rows[0].password
-				throw new E.OAuthError 401, 'invalid_client'
-			db_rows[0]
 
 	create: (conn, new_values)->
 		f= 'DB.SqlUser.create:'

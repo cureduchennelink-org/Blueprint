@@ -14,7 +14,7 @@ class AuthParser
 		@tokenMgr= kit.tokenMgr
 		@log= kit.logger.log
 
-	parseAuthorization: (req, res, next)->
+	parseAuthorization: (req, res, next)=>
 		p= req.params
 		h= req.headers
 		authHeader= false
@@ -33,7 +33,7 @@ class AuthParser
 		req.auth=
 			message: result.err
 			token: result.token
-			authId: if result.token then result.token.uid else null
+			authId: if result.token then result.token.iid else null
 			authorize: (dontSendResponse)->
 				if not req.auth.authId
 					if not dontSendResponse
