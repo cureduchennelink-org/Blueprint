@@ -94,9 +94,11 @@
 
   add_route('post', '/Auth', 'auth', 'authenticate');
 
-  add_route('post', '/User', 'user', 'create');
+  add_route('put', '/Auth/:auid/updatepassword', 'auth', 'update_password');
 
-  add_route('get', '/User/:usid', 'user', 'get');
+  add_route('get', '/User/:usid', 'user', 'view_profile');
+
+  add_route('put', '/User/:usid/updateprofile', 'user', 'update_profile');
 
   add_route('post', '/Workout', 'workout', 'create');
 

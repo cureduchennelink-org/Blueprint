@@ -13,17 +13,15 @@ CREATE TABLE ident (
 	,	cr		TIMESTAMP		DEFAULT 0 /* 'created' Must be first TIMESTAMP colum */
 	,	mo		TIMESTAMP		DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP /* 'modified' */
 
-	/* Common Values*/
+	/* Credentials*/
 	,	eml		VARCHAR( 128) UNIQUE DEFAULT NULL /* 'email' */
 	,	pwd		VARCHAR( 128) DEFAULT NULL /* 'password' */
-	,	fnm		VARCHAR( 128) DEFAULT NULL /* 'first_name' */
-	,	lnm		VARCHAR( 128) DEFAULT NULL /* 'last_name' */
 ) TYPE = INNODB ;
 
 /* Then insert some recs for testing: */
-INSERT INTO ident (id,fnm,lnm,cr) VALUES
-	 (99,'Timers', 'System', NULL)
-	,(98,'API', 'System', NULL)
+INSERT INTO ident (id,eml,cr) VALUES
+	 (99,'SYSTEM - TIMERS', NULL)
+	,(98,'SYSTEM - API', NULL)
 	/* Additional System Idents descend from here */
 	;
 

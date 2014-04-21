@@ -30,7 +30,38 @@ class AuthRoute
 		@log= kit.logger.log
 		@caller=
 			authenticate: use: true, wrap: 'auth_wrap', version: any: @_authenticate
+			update_password:
+				use: true, wrap: 'update_wrap', version: any: @_update_password
+				sql_conn: true, auth_required: true
 
+	# POST/PUT /Auth/:auid/updatepassword
+	_update_password: (conn, p, pre_loaded, _log)=>
+		use_doc= new_pwd: 'S'
+		return use_doc if conn is 'use'
+
+		# Verify p.usid is the same as the auth_id. Validate params.
+		throw new E.AccessDenied 'AUTH:UPDATE_PASSWORD:AUTH_ID' unless (Number p.auid) is pre_loaded.auth_id
+		throw new E.MissingArg 'new_pwd' if not p.new_pwd
+
+		f= 'User:_update_password:'
+
+		Q.resolve()
+		.then =>
+
+			# Encrypt the new password
+			@_encryptPassword p.new_pwd
+		.then (pwd_hash)->
+
+			# Update the ident password
+			sdb.auth.update_by_id conn, pre_loaded.auth_id, pwd: pwd_hash
+		.then (db_result)->
+			_log.debug f, 'got password update result:', db_result
+			throw new E.DbError 'AUTH:UPDATE_PASSWORD:AFFECTEDROWS' if db_result.affectedRows isnt 1
+
+			# Send back to Client
+			send: success: true
+
+	# POST /Auth
 	_authenticate: (conn, p, pre_loaded, _log)=>
 		use_doc= client_id: 'rS', username: 'rS', password: 'rS', grant_type:'S'
 		return use_doc if conn is 'use'

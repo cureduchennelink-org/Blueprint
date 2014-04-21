@@ -20,6 +20,7 @@
   AuthRoute = (function() {
     function AuthRoute(kit) {
       this._authenticate = __bind(this._authenticate, this);
+      this._update_password = __bind(this._update_password, this);
       kit.logger.log.info('Initializing Auth Route...');
       this.config = kit.config.auth;
       this.tokenMgr = kit.tokenMgr;
@@ -32,9 +33,53 @@
           version: {
             any: this._authenticate
           }
+        },
+        update_password: {
+          use: true,
+          wrap: 'update_wrap',
+          version: {
+            any: this._update_password
+          },
+          sql_conn: true,
+          auth_required: true
         }
       };
     }
+
+    AuthRoute.prototype._update_password = function(conn, p, pre_loaded, _log) {
+      var f, use_doc,
+        _this = this;
+      use_doc = {
+        new_pwd: 'S'
+      };
+      if (conn === 'use') {
+        return use_doc;
+      }
+      if ((Number(p.auid)) !== pre_loaded.auth_id) {
+        throw new E.AccessDenied('AUTH:UPDATE_PASSWORD:AUTH_ID');
+      }
+      if (!p.new_pwd) {
+        throw new E.MissingArg('new_pwd');
+      }
+      f = 'User:_update_password:';
+      return Q.resolve().then(function() {
+        return _this._encryptPassword(p.new_pwd);
+      }).then(function(pwd_hash) {
+        return sdb.auth.update_by_id(conn, pre_loaded.auth_id, {
+          pwd: pwd_hash
+        });
+      }).then(function(db_result) {
+        _log.debug(f, 'got password update result:', db_result);
+        if (db_result.affectedRows !== 1) {
+          throw new E.DbError('AUTH:UPDATE_PASSWORD:AFFECTEDROWS');
+        }
+        return {
+          send: {
+            success: true
+          }
+        };
+      });
+    };
 
     AuthRoute.prototype._authenticate = function(conn, p, pre_loaded, _log) {
       var clearToken, f, result, use_doc,

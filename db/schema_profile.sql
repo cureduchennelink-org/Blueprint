@@ -7,6 +7,8 @@ CREATE TABLE profile (
 	,	mo		TIMESTAMP		DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP /* 'modified' */
 	,	ident_id		INT(  10 )		NOT NULL
 
+	,	fnm				VARCHAR( 128) DEFAULT NULL /* 'first_name' */
+	,	lnm				VARCHAR( 128) DEFAULT NULL /* 'last_name' */
 	,	website			VARCHAR( 128) DEFAULT NULL /* 'website' */
 	,	avatar_thumb	TEXT		  DEFAULT NULL /* 'avatar' as a data-url */
 	,	avatar_path		VARCHAR( 128) DEFAULT NULL /* 'path to web resource' */
@@ -15,7 +17,7 @@ CREATE TABLE profile (
 ) TYPE = INNODB ;
 
 set @password := 'ACqX5b7oFXZHOozGZo809A==.wXrhYtmmqLFL8Hvr6LIo0XF+Xq1RMAhEoKF54Pw+5RA=';
-INSERT INTO ident (eml,pwd,fnm,lnm,cr) VALUES
-	 ('tulo@dv-mobile.com', @password, 'Troy', 'Tulowitzki', NULL)
-	,('todd@dv-mobile.com', @password, 'Todd', 'Helton', NULL)
+INSERT INTO ident (eml,pwd,cr) VALUES
+	 ('tulo@dv-mobile.com', @password, NULL)
+	,('todd@dv-mobile.com', @password, NULL)
 	;

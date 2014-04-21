@@ -45,15 +45,13 @@ OAuthError= (code, error, message)->
 util.inherits OAuthError, restify.RestError
 exports.OAuthError= OAuthError
 
+# token in the form 'MODULE:FUNCTION:CUSTOM_STRING'
 AccessDenied= (token)->
 	restify.RestError.call this,
 		statusCode: 403
-		restCode: 'AccessDenied'
-		message: message
 		body: {error: token}
 		constructorOpt: AccessDenied
 	this.name= 'Access Denied'
-
 util.inherits AccessDenied, restify.RestError
 exports.AccessDenied= AccessDenied
 

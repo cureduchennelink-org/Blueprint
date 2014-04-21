@@ -107,6 +107,7 @@ class Wrapper
 
 		if caller.auth_required
 			return next() if not req.auth.authorize()
+			pre_loaded.auth_id= req.auth.authId
 
 		Q.resolve()
 		.then ->
@@ -153,6 +154,7 @@ class Wrapper
 
 		if caller.auth_required
 			return next() if not req.auth.authorize()
+			pre_loaded.auth_id= req.auth.authId
 
 		Q.resolve()
 		.then ->

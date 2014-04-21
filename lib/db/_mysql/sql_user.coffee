@@ -1,11 +1,14 @@
 #
 #	User Database Functions
 #
+#	A User is the join between the ident table and the profile table.
+#
 
 Q= require 'q'
 E= require '../../error'
 
-table= 't1_users'
+ident_tbl= 'ident'
+table= 'profile'
 
 class SqlUser
 	constructor: (db, log)->
@@ -13,8 +16,12 @@ class SqlUser
 		@log= log
 
 	schema:
+		# ident i LEFT OUTER JOIN profile e
+		get_ident_id: ['i.id','i.eml',
+				'e.fnm','e.lnm','e.cr','e.mo',
+				'e.website','e.avatar_path','e.avatar_thumb','e.prog_lang','e.skill_lvl']
+		update_by_ident_id: ['fnm','lnm','website','avatar_path','avatar_thumb','prog_lang','skill_lvl']
 		create: ['first_name','last_name','email','password']
-		update: ['first_name','last_name','email','password','disposal']
 
 	get_all: (conn)->
 		f= 'DB.SqlUser.get_all:'
@@ -47,11 +54,11 @@ class SqlUser
 			throw new E.DbError 'User Insert Failed' if db_result.affectedRows isnt 1
 			db_result
 
-	update: (conn, id, new_values)->
+	update_by_ident_id: (conn, ident_id, new_values)->
 		f= 'DB.SqlUser.update:'
-		@log.debug f, id, new_values
+		@log.debug f, ident_id, new_values
 
-		for nm, val of new_values when nm not in @schema.create
+		for nm, val of new_values when nm not in @schema.update_by_ident_id
 			throw new E.DbError 'Invalid User Update Column', col: nm, value: val
 
 		Q.resolve()
@@ -60,12 +67,25 @@ class SqlUser
 			cols= []; arg=[]
 			for nm, val of new_values
 				cols.push nm + '= ?'; arg.push val
-			arg.push id
-			sql= 'UPDATE ' + table + ' SET '+ (cols.join ',') + ' WHERE id= ?'
+			arg.push ident_id
+			sql= 'UPDATE ' + table + ' SET '+ (cols.join ',') +
+				' WHERE ident_id= ? AND di= 0'
 			@db.sqlQuery conn, sql, arg
 		.then (db_result)=>
-			@log.debug f, db_result
-			throw new E.DbError 'User Update Failed' if db_result.affectedRows isnt 1
 			db_result
+
+	get_by_ident_id: (conn, ident_id)->
+		f= 'DB.SqlUser.get_by_ident_id:'
+		@log.debug f, ident_id
+
+		Q.resolve()
+		.then =>
+
+			sql= 'SELECT '+ (@schema.get_ident_id.join ',') +
+				' FROM ' + ident_tbl + ' i LEFT OUTER JOIN ' + table + ' e' +
+				' ON i.id= e.ident_id WHERE i.id= ? AND i.di= 0 AND (e.di= 0 OR e.id IS NULL)'
+			@db.sqlQuery conn, sql, [ident_id]
+		.then (db_rows) ->
+			db_rows
 
 exports.SqlUser= SqlUser

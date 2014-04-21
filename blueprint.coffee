@@ -77,12 +77,12 @@ add_route= (verb, route, mod, func)->
 	server[cmd] pfx + '' + route, wrap for cmd in verbs
 
 # Auth Routes
-add_route 'post', 	'/Auth', 			'auth', 'authenticate'
+add_route 'post', 	'/Auth', 							'auth', 'authenticate'
+add_route 'put', 	'/Auth/:auid/updatepassword', 		'auth', 'update_password'
 
 # User Routes
-add_route 'post', 	'/User', 			'user', 'create'
-#add_route 'put', 	'/User/:usid', 		'user', 'update'
-add_route 'get', 	'/User/:usid', 		'user', 'get'
+add_route 'get', 	'/User/:usid', 						'user', 'view_profile'
+add_route 'put', 	'/User/:usid/updateprofile', 		'user', 'update_profile'
 
 # Workout Routes
 add_route 'post', 	'/Workout', 		'workout', 'create'
