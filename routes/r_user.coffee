@@ -44,6 +44,9 @@ class User
 
 		f= 'User:_get:'
 
+		# Verify p.usid is the same as the auth_id
+		throw new E.AccessDenied 'USER:VIEW_PROFILE:AUTH_ID' unless pre_loaded.auth_id is pre_loaded.user.id
+
 		Q.resolve()
 		.then ->
 			send:

@@ -63,6 +63,9 @@
         return use_doc;
       }
       f = 'User:_get:';
+      if (pre_loaded.auth_id !== pre_loaded.user.id) {
+        throw new E.AccessDenied('USER:VIEW_PROFILE:AUTH_ID');
+      }
       return Q.resolve().then(function() {
         return {
           send: {

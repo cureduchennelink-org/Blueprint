@@ -11,10 +11,9 @@ class SqlToken
 	constructor: (db, @tokenMgr, log)->
 		@log= log
 		@db= db
-
-	schema:
-		find: ['ident_id','client']
-		insert: ['token','ident_id','client','exp','cr']
+		@schema=
+			find: ['ident_id','client']
+			insert: ['token','ident_id','client','exp','cr']
 
 	find_token: (conn, token)->
 		sql= 'SELECT '+ (@schema.find.join ',') + ' FROM ' + table +

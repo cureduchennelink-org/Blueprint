@@ -7,7 +7,13 @@
 
 Q= require 'q'
 
-v_map=
+log_map=
+	get:  'GET '
+	post: 'POST'
+	put:  'PUT '
+	del:  'DEL '
+
+use_map=
 	get:  'GET'
 	post: 'POST'
 	put:  'PUT'
@@ -22,11 +28,11 @@ class Router
 		@server= kit.services.server
 
 	add_route: (verb, route, func)->
-		@usage[v_map[verb]+': '+route]= func 'use'
+		@usage[use_map[verb]+': '+route]= func 'use'
 		verbs= [verb]
 		verbs.push 'post' if verb in ['del','put']
 		for v in verbs
-			@log.info v_map[v], route
+			@log.info '\t', log_map[v], route
 			@server[v] @pfx + '' + route, func
 
 	route_usage: ()=>

@@ -146,7 +146,10 @@ class Wrapper
 			res.send result_hash.send
 			next()
 		.fail (err) ->
-			req.log.error f, '.fail', err, err.stack
+			if err.statusCode not in [ 400, 403 ]
+				req.log.error f, '.fail', err, err.stack
+			else
+				req.log.debug f, '.fail', err
 			res.send err
 			next()
 
