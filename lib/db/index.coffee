@@ -11,9 +11,9 @@
 
 class Db
 	constructor: (kit) ->
-		log= kit.logger.log
-		config= kit.config
-		tokenMgr= kit.tokenMgr
+		log= kit.services.logger.log
+		config= kit.services.config
+		tokenMgr= kit.services.tokenMgr
 
 		# MySql
 		if config.db.mysql.enable

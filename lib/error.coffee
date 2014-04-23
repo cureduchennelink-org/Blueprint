@@ -24,7 +24,7 @@ exports.MissingArg= MissingArg
 NotFoundError= (token)->
 	restify.RestError.call this,
 		statusCode: 404
-		body: {error: 'not_found', token}
+		body: {error: token}
 		constructorOpt: NotFoundError
 	this.name= 'Resource Not Found'
 

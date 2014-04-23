@@ -21,13 +21,15 @@
     function AuthRoute(kit) {
       this._authenticate = __bind(this._authenticate, this);
       this._update_password = __bind(this._update_password, this);
-      kit.logger.log.info('Initializing Auth Route...');
-      this.config = kit.config.auth;
-      this.tokenMgr = kit.tokenMgr;
-      sdb = kit.db.mysql;
-      this.log = kit.logger.log;
-      this.caller = {
+      kit.services.logger.log.info('Initializing Auth Routes...');
+      this.config = kit.services.config.auth;
+      this.tokenMgr = kit.services.tokenMgr;
+      sdb = kit.services.db.mysql;
+      this.log = kit.services.logger.log;
+      this.endpoints = {
         authenticate: {
+          verb: 'post',
+          route: '/Auth',
           use: true,
           wrap: 'auth_wrap',
           version: {
@@ -35,6 +37,8 @@
           }
         },
         update_password: {
+          verb: 'put',
+          route: '/Auth/:auid/updatepassword',
           use: true,
           wrap: 'update_wrap',
           version: {

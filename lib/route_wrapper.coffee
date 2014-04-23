@@ -18,17 +18,24 @@ pre_loader= false
 routes= false
 
 class Wrapper
-	constructor: (kits, kit_routes) ->
-		kits.logger.log.info 'Initializing Route Wrappers...'
-		_log= kits.logger.log
-		odb= kits.db.mongo
-		sdb= kits.db.mysql
-		routes= kit_routes
+	constructor: (kit) ->
+		kit.services.logger.log.info 'Initializing Route Wrappers...'
+		_log= kit.services.logger.log
+		odb= kit.services.db.mongo
+		sdb= kit.services.db.mysql
+		@routes= kit.routes
+		@router= kit.services.router
+		@wraps= {}
 
-	add: (mod, func)->
-		caller= routes[mod].caller[func]
-		caller.name= mod+':'+func
-		wrap= @[caller.wrap] caller #, mod, func
+	add_wrap: (mod, wrap)=>
+		@wraps[mod]= wrap
+
+	add: (mod)=>
+		return @wraps[mod] mod if mod of @wraps
+		for func, endpoint of @routes[mod].endpoints
+			endpoint.name= mod+':'+func
+			wrap= @[endpoint.wrap] endpoint
+			@router.add_route endpoint.verb, endpoint.route, wrap
 
 	auth_wrap: (caller)->
 		auth_func= @auth

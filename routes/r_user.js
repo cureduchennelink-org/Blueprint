@@ -19,12 +19,14 @@
 
   User = (function() {
     function User(kit) {
-      kit.logger.log.info('Initializing User Routes...');
-      odb = kit.db.mongo;
-      sdb = kit.db.mysql;
-      _log = kit.logger.log;
-      this.caller = {
-        view_profile: {
+      kit.services.logger.log.info('Initializing User Routes...');
+      odb = kit.services.db.mongo;
+      sdb = kit.services.db.mysql;
+      _log = kit.services.logger.log;
+      this.endpoints = {
+        get: {
+          verb: 'get',
+          route: '/User/:usid',
           use: true,
           wrap: 'read_wrap',
           version: {
@@ -32,11 +34,14 @@
           },
           sql_conn: true,
           auth_required: true,
+          route: '/User/:usid',
           pre_load: {
             user: this._pl_user
           }
         },
         update_profile: {
+          verb: 'put',
+          route: '/User/:usid/updateprofile',
           use: true,
           wrap: 'update_wrap',
           version: {

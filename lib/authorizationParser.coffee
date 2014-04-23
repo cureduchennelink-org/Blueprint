@@ -9,10 +9,10 @@ E= require './error'
 
 class AuthParser
 	constructor: (kit)->
-		kit.logger.log.info 'Initializing Authorization Parser...'
-		@config= kit.config.auth
-		@tokenMgr= kit.tokenMgr
-		@log= kit.logger.log
+		kit.services.logger.log.info 'Initializing Authorization Parser...'
+		@config= kit.services.config.auth
+		@tokenMgr= kit.services.tokenMgr
+		@log= kit.services.logger.log
 
 	parseAuthorization: (req, res, next)=>
 		p= req.params

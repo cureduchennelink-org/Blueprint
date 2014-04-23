@@ -12,11 +12,13 @@
 
   Workout = (function() {
     function Workout(kit) {
-      kit.logger.log.info('Initializing Workout Routes...');
-      odb = kit.db.mongo;
-      sdb = kit.db.mysql;
-      this.caller = {
+      kit.services.logger.log.info('Initializing Workout Routes...');
+      odb = kit.services.db.mongo;
+      sdb = kit.services.db.mysql;
+      this.endpoints = {
         get: {
+          verb: 'get',
+          route: '/Workout',
           use: true,
           wrap: 'read_wrap',
           version: {
@@ -25,6 +27,8 @@
           auth_required: true
         },
         create: {
+          verb: 'post',
+          route: '/Workout',
           use: true,
           wrap: 'update_wrap',
           version: {

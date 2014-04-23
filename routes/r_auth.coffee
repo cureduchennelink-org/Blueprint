@@ -23,14 +23,17 @@ sdb= false # MySql DB
 
 class AuthRoute
 	constructor: (kit)->
-		kit.logger.log.info 'Initializing Auth Route...'
-		@config= kit.config.auth
-		@tokenMgr= kit.tokenMgr
-		sdb= kit.db.mysql
-		@log= kit.logger.log
-		@caller=
-			authenticate: use: true, wrap: 'auth_wrap', version: any: @_authenticate
+		kit.services.logger.log.info 'Initializing Auth Routes...'
+		@config= kit.services.config.auth
+		@tokenMgr= kit.services.tokenMgr
+		sdb= kit.services.db.mysql
+		@log= kit.services.logger.log
+		@endpoints=
+			authenticate:
+				verb: 'post', route: '/Auth'
+				use: true, wrap: 'auth_wrap', version: any: @_authenticate
 			update_password:
+				verb: 'put', route: '/Auth/:auid/updatepassword'
 				use: true, wrap: 'update_wrap', version: any: @_update_password
 				sql_conn: true, auth_required: true
 

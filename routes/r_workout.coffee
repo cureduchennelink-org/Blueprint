@@ -18,14 +18,16 @@ sdb= false # MySql DB
 
 class Workout
 	constructor: (kit)->
-		kit.logger.log.info 'Initializing Workout Routes...'
-		odb= kit.db.mongo
-		sdb= kit.db.mysql
-		@caller=
+		kit.services.logger.log.info 'Initializing Workout Routes...'
+		odb= kit.services.db.mongo
+		sdb= kit.services.db.mysql
+		@endpoints=
 			get:
+				verb: 'get', route: '/Workout'
 				use: true, wrap: 'read_wrap', version: any: @_get
 				auth_required: true
 			create:
+				verb: 'post', route: '/Workout'
 				use: true, wrap: 'update_wrap', version: any: @_create
 				auth_required: true
 

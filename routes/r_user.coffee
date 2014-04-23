@@ -21,16 +21,18 @@ extnd_tbl= 'profile'
 
 class User
 	constructor: (kit)->
-		kit.logger.log.info 'Initializing User Routes...'
-		odb= kit.db.mongo
-		sdb= kit.db.mysql
-		_log= kit.logger.log
-		@caller=
-			view_profile:
+		kit.services.logger.log.info 'Initializing User Routes...'
+		odb= kit.services.db.mongo
+		sdb= kit.services.db.mysql
+		_log= kit.services.logger.log
+		@endpoints=
+			get:
+				verb: 'get', route: '/User/:usid'
 				use: true, wrap: 'read_wrap', version: any: @_view_profile
-				sql_conn: true, auth_required: true
+				sql_conn: true, auth_required: true, route: '/User/:usid'
 				pre_load: user: @_pl_user
 			update_profile:
+				verb: 'put', route: '/User/:usid/updateprofile'
 				use: true, wrap: 'update_wrap', version: any: @_update_profile
 				sql_conn: true, auth_required: true
 				pre_load: user: @_pl_user
