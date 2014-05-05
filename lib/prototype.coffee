@@ -1,12 +1,5 @@
 #
-# User Routes
-#
-# Author: Jamie Hollowell
-#
-# 	kit dependencies:
-#		db.[mysql,mongo]
-#		wrapper
-#		logger.log
+# Prototype Route Service
 #
 
 Q= require 'q'
@@ -51,23 +44,23 @@ class PrototypeModule
 			@resource[nm]= table: [], idx: {}, counter: 0
 			@endpoints["get#{nm}"]=
 				verb: 'get', route: "/Prototype/#{@mod.name}/#{nm}"
-				use: true, wrap: 'read_wrap', version: any: @proto_wrap @_get, nm
+				use: true, wrap: 'default_wrap', version: any: @proto_wrap @_get, nm
 				auth_required: @mod.auth_req
 			@endpoints["get_by_id#{nm}"]=
 				verb: 'get', route: "/Prototype/#{@mod.name}/#{nm}/:r0id"
-				use: true, wrap: 'read_wrap', version: any: @proto_wrap @_get, nm
+				use: true, wrap: 'default_wrap', version: any: @proto_wrap @_get, nm
 				auth_required: @mod.auth_req
 			@endpoints["create#{nm}"]=
 				verb: 'post', route: "/Prototype/#{@mod.name}/#{nm}"
-				use: true, wrap: 'update_wrap', version: any: @proto_wrap @_create, nm
+				use: true, wrap: 'default_wrap', version: any: @proto_wrap @_create, nm
 				sql_conn: false, auth_required: @mod.auth_req
 			@endpoints["update#{nm}"]=
 				verb: 'put', route: "/Prototype/#{@mod.name}/#{nm}/:r0id/update"
-				use: true, wrap: 'update_wrap', version: any: @proto_wrap @_update, nm
+				use: true, wrap: 'default_wrap', version: any: @proto_wrap @_update, nm
 				auth_required: @mod.auth_req
 			@endpoints["delete#{nm}"]=
 				verb: 'del', route: "/Prototype/#{@mod.name}/#{nm}/:r0id/delete"
-				use: true, wrap: 'update_wrap', version: any: @proto_wrap @_delete, nm
+				use: true, wrap: 'default_wrap', version: any: @proto_wrap @_delete, nm
 				auth_required: @mod.auth_req
 
 	proto_wrap: (func, resource)->

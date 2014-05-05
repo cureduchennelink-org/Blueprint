@@ -24,9 +24,14 @@ class Push
 		Q.resolve()
 		.then ->
 
-			# Acquire DB Connection and start a Transaction
-			sdb.core.AcquireTxConn ctx
-		.then ->
+			# Acquire DB Connection
+			sdb.core.Acquire()
+		.then (c) ->
+			ctx.conn= c if c isnt false
+
+			# Start a Transaction
+			sdb.core.StartTransaction(ctx)
+		.then () ->
 
 			# Grab the pset, or create one if it doesn't exist
 			sdb.pset.read_or_insert ctx, nm
@@ -39,7 +44,6 @@ class Push
 		.then ->
 
 			# Commit the transaction
-			# TODO: Tx necessary?
 			sdb.core.sqlQuery ctx, 'COMMIT'
 		.then (db_result) ->
 

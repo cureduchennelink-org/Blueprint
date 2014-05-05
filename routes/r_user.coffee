@@ -31,12 +31,12 @@ class User
 		@endpoints=
 			get:
 				verb: 'get', route: '/User/:usid'
-				use: true, wrap: 'read_wrap', version: any: @_view_profile
+				use: true, wrap: 'default_wrap', version: any: @_view_profile
 				sql_conn: true, auth_required: true, route: '/User/:usid'
 				pre_load: user: @_pl_user
 			update_profile:
 				verb: 'put', route: '/User/:usid/updateprofile'
-				use: true, wrap: 'update_wrap', version: any: @_update_profile
+				use: true, wrap: 'default_wrap', version: any: @_update_profile
 				sql_conn: true, sql_tx: true, auth_required: true
 				pre_load: user: @_pl_user
 
@@ -44,17 +44,17 @@ class User
 	_view_profile: (ctx, pre_loaded)=>
 		use_doc= {}
 		return use_doc if ctx is 'use'
-		trip= false
-		trip2= false
+		success= false
+
 		f= 'User:_get:'
-		_log= ctx.log
 
 		# Verify p.usid is the same as the auth_id
 		throw new E.AccessDenied 'USER:VIEW_PROFILE:AUTH_ID' unless pre_loaded.auth_id is pre_loaded.user.id
 		users= [pre_loaded.user]
 
 		Q.resolve()
-		.then =>
+		.then ->
+			success= true
 
 			# Respond to Client
 			send: { success, users }

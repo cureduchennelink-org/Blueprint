@@ -34,13 +34,9 @@ class Wrapper
 		auth_func= @auth
 		return (q,s,n)-> auth_func q, s, n, caller
 
-	read_wrap: (caller)->
-		read_func= @read
-		return (q,s,n)-> read_func q, s, n, caller
-
-	update_wrap: (caller)->
-		update_func= @update
-		return (q,s,n)-> update_func q, s, n, caller
+	default_wrap: (caller)->
+		func= @default
+		return (q,s,n)-> func q, s, n, caller
 
 	auth: (req, res, next, caller)->
 		f= "Wrapper:auth"
@@ -59,9 +55,14 @@ class Wrapper
 			throw new E.OAuthError 400, 'unauthorized_client' if not p.client_id
 			throw new E.OAuthError 400, 'unsupported_grant_type' if not supported_grant_type
 
-			# Acquire DB Connection and start a Transaction
-			sdb.core.AcquireTxConn ctx
-		.then ->
+			# Acquire DB Connection
+			sdb.core.Acquire()
+		.then (c) ->
+			ctx.conn= c if c isnt false
+
+			# Start a Transaction
+			sdb.core.StartTransaction(ctx)
+		.then () ->
 
 			# Call the Auth Logic. Pass in pre_loaded variables
 			route_logic ctx, pre_loaded
@@ -96,59 +97,8 @@ class Wrapper
 			res.send err
 			next()
 
-	read: (req, res, next, caller) ->
-		f= "Wrapper:read:#{caller.name}"
-		route_logic= caller.version[req.params?.Version] ? caller.version.any
-		return (if caller.use isnt true then caller.use else route_logic req) if req is 'use'
-		ctx= conn: null, p: req.params, log: req.log
-		p= ctx.p
-		pre_loaded= {}
-
-		if caller.auth_required
-			return next() if not req.auth.authorize()
-			pre_loaded.auth_id= req.auth.authId
-
-		Q.resolve()
-		.then ->
-
-			# Acquire DB Connection
-			return false unless caller.sql_conn
-			sdb.core.Acquire()
-		.then (c) ->
-			ctx.conn= c if c isnt false
-
-			# Loop through the caller's pre_load functions
-			q_result = Q.resolve true
-			for nm,func of caller.pre_load
-				do (nm,func) ->
-					q_result= q_result.then () ->
-						func ctx
-					.then (pre_load_result) ->
-						_log.debug "got #{nm}:", pre_load_result
-						pre_loaded[nm]= pre_load_result
-			q_result
-		.then ->
-
-			# Call the Route Logic. Pass in pre_loaded variables
-			# TODO: Rename pre_loaded
-			route_logic ctx, pre_loaded
-		.then (result_hash) ->
-
-			# Release database conn; Respond to Client
-			sdb.core.release ctx.conn if ctx.conn isnt null
-			res.send result_hash.send
-			next()
-		.fail (err) ->
-			if err.statusCode not in [ 400, 403 ]
-				req.log.error f, '.fail', err, err.stack
-			else
-				req.log.debug f, '.fail', err
-			res.send err
-			next()
-
-	# TODO: Combine Update and Read Wrapper. Is the difference just a transaction?
-	update: (req, res, next, caller) ->
-		f= "Wrapper:update:#{caller.name}"
+	default: (req, res, next, caller) ->
+		f= "Wrapper:default:#{caller.name}"
 		route_logic= caller.version[req.params?.Version] ? caller.version.any
 		return (if caller.use isnt true then caller.use else route_logic req) if req is 'use'
 		ctx= conn: null, p: req.params, log: req.log, auth_id: req.auth.authId
@@ -163,9 +113,15 @@ class Wrapper
 		Q.resolve()
 		.then ->
 
-			# Acquire DB Connection and start a Transaction
+			# Acquire DB Connection
 			return false unless caller.sql_conn
-			sdb.core.AcquireTxConn(ctx)
+			sdb.core.Acquire()
+		.then (c) ->
+			ctx.conn= c if c isnt false
+
+			# Start a Transaction
+			return false unless caller.sql_tx
+			sdb.core.StartTransaction(ctx)
 		.then () ->
 
 			# Loop through the caller's pre_load functions

@@ -30,7 +30,7 @@
           verb: 'get',
           route: '/User/:usid',
           use: true,
-          wrap: 'read_wrap',
+          wrap: 'default_wrap',
           version: {
             any: this._view_profile
           },
@@ -45,7 +45,7 @@
           verb: 'put',
           route: '/User/:usid/updateprofile',
           use: true,
-          wrap: 'update_wrap',
+          wrap: 'default_wrap',
           version: {
             any: this._update_profile
           },
@@ -60,21 +60,19 @@
     }
 
     User.prototype._view_profile = function(ctx, pre_loaded) {
-      var f, trip, trip2, use_doc, users,
-        _this = this;
+      var f, success, use_doc, users;
       use_doc = {};
       if (ctx === 'use') {
         return use_doc;
       }
-      trip = false;
-      trip2 = false;
+      success = false;
       f = 'User:_get:';
-      _log = ctx.log;
       if (pre_loaded.auth_id !== pre_loaded.user.id) {
         throw new E.AccessDenied('USER:VIEW_PROFILE:AUTH_ID');
       }
       users = [pre_loaded.user];
       return Q.resolve().then(function() {
+        success = true;
         return {
           send: {
             success: success,

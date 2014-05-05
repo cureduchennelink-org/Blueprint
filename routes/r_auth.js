@@ -47,39 +47,42 @@
           verb: 'put',
           route: '/Auth/:auid/updatepassword',
           use: true,
-          wrap: 'update_wrap',
+          wrap: 'default_wrap',
           version: {
             any: this._update_password
           },
           sql_conn: true,
+          sql_tx: true,
           auth_required: true
         },
         update_email: {
           verb: 'post',
           route: '/Auth/:auid/updateemail',
           use: true,
-          wrap: 'update_wrap',
+          wrap: 'default_wrap',
           version: {
             any: this._update_email
           },
           sql_conn: true,
+          sql_tx: true,
           auth_required: true
         },
         forgot_password: {
           verb: 'post',
           route: '/AuthTrip',
           use: true,
-          wrap: 'update_wrap',
+          wrap: 'default_wrap',
           version: {
             any: this._forgot_password
           },
-          sql_conn: true
+          sql_conn: true,
+          sql_tx: true
         },
         read_auth_trip: {
           verb: 'get',
           route: '/AuthTrip/:token',
           use: true,
-          wrap: 'read_wrap',
+          wrap: 'default_wrap',
           version: {
             any: this._get_auth_trip
           },
@@ -89,21 +92,23 @@
           verb: 'post',
           route: '/AuthTrip/:token/verifyforgot',
           use: true,
-          wrap: 'update_wrap',
+          wrap: 'default_wrap',
           version: {
             any: this._verify_forgot
           },
-          sql_conn: true
+          sql_conn: true,
+          sql_tx: true
         },
         verify_email: {
           verb: 'post',
           route: '/AuthTrip/:token/verifyemail',
           use: true,
-          wrap: 'update_wrap',
+          wrap: 'default_wrap',
           version: {
             any: this._verify_email
           },
-          sql_conn: true
+          sql_conn: true,
+          sql_tx: true
         }
       };
     }

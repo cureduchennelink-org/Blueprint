@@ -24,11 +24,11 @@ class Workout
 		@endpoints=
 			get:
 				verb: 'get', route: '/Workout'
-				use: true, wrap: 'read_wrap', version: any: @_get
+				use: true, wrap: 'default_wrap', version: any: @_get
 				auth_required: true
 			create:
 				verb: 'post', route: '/Workout'
-				use: true, wrap: 'update_wrap', version: any: @_create
+				use: true, wrap: 'default_wrap', version: any: @_create
 				auth_required: true
 
 	# Private Logic

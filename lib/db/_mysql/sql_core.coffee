@@ -37,20 +37,18 @@ class SqlCore
 			.then (rows_n_cols) ->
 				rows_n_cols[0]
 
-	AcquireTxConn: (ctx)=>
+	StartTransaction: (ctx)=> # Assumes conn on ctx
+		f= 'DB:SqlCore:StartTransaction'
 
-		@Acquire()
-		.then (c) =>
-			ctx.conn= c
+		Q.resolve()
+		.then =>
 
 			# Initialize the transaction
-			sql= 'SET TRANSACTION ISOLATION LEVEL SERIALIZABLE'
-			@sqlQuery ctx, sql
+			@sqlQuery ctx, 'SET TRANSACTION ISOLATION LEVEL SERIALIZABLE'
 		.then (db_result)=>
 
 			# Start the transaction
-			sql= 'START TRANSACTION'
-			@sqlQuery ctx, sql
+			@sqlQuery ctx, 'START TRANSACTION'
 		.then (db_result) ->
 			null
 

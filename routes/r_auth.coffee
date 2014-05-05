@@ -29,28 +29,28 @@ class AuthRoute
 				use: true, wrap: 'auth_wrap', version: any: @_authenticate
 			update_password:
 				verb: 'put', route: '/Auth/:auid/updatepassword'
-				use: true, wrap: 'update_wrap', version: any: @_update_password
-				sql_conn: true, auth_required: true
+				use: true, wrap: 'default_wrap', version: any: @_update_password
+				sql_conn: true, sql_tx: true, auth_required: true
 			update_email:
 				verb: 'post', route: '/Auth/:auid/updateemail'
-				use: true, wrap: 'update_wrap', version: any: @_update_email
-				sql_conn: true, auth_required: true
+				use: true, wrap: 'default_wrap', version: any: @_update_email
+				sql_conn: true, sql_tx: true, auth_required: true
 			forgot_password:
 				verb: 'post', route: '/AuthTrip'
-				use: true, wrap: 'update_wrap', version: any: @_forgot_password
-				sql_conn: true
+				use: true, wrap: 'default_wrap', version: any: @_forgot_password
+				sql_conn: true, sql_tx: true
 			read_auth_trip:
 				verb: 'get', route: '/AuthTrip/:token'
-				use: true, wrap: 'read_wrap', version: any: @_get_auth_trip
+				use: true, wrap: 'default_wrap', version: any: @_get_auth_trip
 				sql_conn: true
 			verify_forgot:
 				verb: 'post', route: '/AuthTrip/:token/verifyforgot'
-				use: true, wrap: 'update_wrap', version: any: @_verify_forgot
-				sql_conn: true
+				use: true, wrap: 'default_wrap', version: any: @_verify_forgot
+				sql_conn: true, sql_tx: true
 			verify_email:
 				verb: 'post', route: '/AuthTrip/:token/verifyemail'
-				use: true, wrap: 'update_wrap', version: any: @_verify_email
-				sql_conn: true
+				use: true, wrap: 'default_wrap', version: any: @_verify_email
+				sql_conn: true, sql_tx: true
 
 	# Create Table for email template
 	make_tbl: (recipient, token)->

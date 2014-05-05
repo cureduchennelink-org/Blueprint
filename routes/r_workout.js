@@ -20,7 +20,7 @@
           verb: 'get',
           route: '/Workout',
           use: true,
-          wrap: 'read_wrap',
+          wrap: 'default_wrap',
           version: {
             any: this._get
           },
@@ -30,7 +30,7 @@
           verb: 'post',
           route: '/Workout',
           use: true,
-          wrap: 'update_wrap',
+          wrap: 'default_wrap',
           version: {
             any: this._create
           },
