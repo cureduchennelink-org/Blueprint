@@ -8,15 +8,17 @@ E= require './error'
 _log= false
 odb= false
 sdb= false
+config= false
 
 class Wrapper
 	constructor: (kit) ->
 		kit.services.logger.log.info 'Initializing Wrapper...'
-		_log= kit.services.logger.log
-		odb= kit.services.db.mongo
-		sdb= kit.services.db.mysql
-		@routes= kit.routes
-		@router= kit.services.router
+		_log= 		kit.services.logger.log
+		odb= 		kit.services.db.mongo
+		sdb= 		kit.services.db.mysql
+		config=		kit.services.config
+		@routes= 	kit.routes
+		@router= 	kit.services.router
 		@wraps= {}
 
 	add_wrap: (mod, wrap)=>
@@ -84,7 +86,7 @@ class Wrapper
 			else
 				req.log.debug f, '.fail', err
 			if err.body and err.body.error is 'invalid_client'
-				res.setHeader 'WWW-Authenticate', 'Bearer realm="blueprint"' # TODO: Put realm in config file
+				res.setHeader 'WWW-Authenticate', "Bearer realm=#{config.auth.bearer}"
 			if ctx.conn isnt null
 				ctx.conn.query 'ROLLBACK', (err)->
 					if err
