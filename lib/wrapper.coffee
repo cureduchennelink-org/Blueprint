@@ -48,7 +48,6 @@ class Wrapper
 		return (if caller.use isnt true then caller.use else route_logic req) if req is 'use'
 		ctx= conn: null, p: req.params, log: req.log
 		p= ctx.p
-		conn= ctx.conn
 		pre_loaded= {}
 		send_result= false
 		supported_grant_type= if p.grant_type in ['password','refresh_token'] then true else false
@@ -74,7 +73,7 @@ class Wrapper
 		.then (db_result) ->
 
 			# Release database conn; Respond to Client
-			sdb.core.release conn if conn isnt null
+			sdb.core.release ctx.conn if ctx.conn isnt null
 			res.send send_result
 			next()
 
@@ -85,15 +84,15 @@ class Wrapper
 				req.log.debug f, '.fail', err
 			if err.body and err.body.error is 'invalid_client'
 				res.setHeader 'WWW-Authenticate', 'Bearer realm="blueprint"' # TODO: Put realm in config file
-			if conn isnt null
-				conn.query 'ROLLBACK', (err)->
+			if ctx.conn isnt null
+				ctx.conn.query 'ROLLBACK', (err)->
 					if err
 						req.log.warn f, 'destroy db conn (failed rollback)'
-						sdb.core.destroy conn
+						sdb.core.destroy ctx.conn
 						req.log.error f, '.fail', err.stack
 					else
 						req.log.debug f, 'release db conn (successful rollback)'
-						sdb.core.release conn
+						sdb.core.release ctx.conn
 			res.send err
 			next()
 
