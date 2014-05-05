@@ -68,7 +68,11 @@
       }
     },
     api: {
-      port: 9500
+      port: 9500,
+      static_file_server: {
+        directory: './html_root',
+        "default": 'index.html'
+      }
     },
     route_modules: [
       {

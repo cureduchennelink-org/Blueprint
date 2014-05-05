@@ -52,8 +52,11 @@ module.exports=
             enable: false
             options: 'mongodb://localhost/mydb'
 	api:
-        port: 9500
-    route_modules: [
+		port: 9500
+		static_file_server:
+			directory: './html_root'
+			default: 'index.html'
+	route_modules: [
         { enable: false, name: 'auth',		class: 'AuthRoute', file: './routes/r_auth' }
         { enable: false, name: 'user',		class: 'User', 		file: './routes/r_user' }
         { enable: false, name: 'workout', 	class: 'Workout', 	file: './routes/r_workout' }

@@ -63,11 +63,6 @@ for mod in kit.services.config.route_modules when mod.enable is true
 # API Usage Endpoint
 kit.services.router.route_usage()
 
-# Static File Server
-server.get /.*/, restify.serveStatic
-	directory: './html_root',
-	default: 'index.html'
-
 # Run Server Init Functions from Kit Service Modules
 log.debug 'running server_init()'
 q_result= Q.resolve()
@@ -76,8 +71,12 @@ for nm, service of kit.services when typeof service.server_init is 'function'
 
 # Start the Server
 q_result.then ->
+	# Static File Server (Must be last Route Created)
+	server.get /.*/, restify.serveStatic config.api.static_file_server
+	# Listen
 	server.listen config.api.port, ()->
 		log.info 'Server listening at', server.url
+
 .fail (err)->
 	log.error err
 	log.error 'SERVER FAILED TO INITIALIZE. EXITING NOW!'

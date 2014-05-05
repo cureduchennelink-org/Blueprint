@@ -94,11 +94,6 @@
 
   kit.services.router.route_usage();
 
-  server.get(/.*/, restify.serveStatic({
-    directory: './html_root',
-    "default": 'index.html'
-  }));
-
   log.debug('running server_init()');
 
   q_result = Q.resolve();
@@ -116,6 +111,7 @@
   }
 
   q_result.then(function() {
+    server.get(/.*/, restify.serveStatic(config.api.static_file_server));
     return server.listen(config.api.port, function() {
       return log.info('Server listening at', server.url);
     });

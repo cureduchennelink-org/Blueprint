@@ -35,7 +35,7 @@ class Router
 		verbs= [verb]
 		verbs.push 'post' if verb in ['del','put']
 		for v in verbs
-			@log.info '\t', log_map[v], route
+			@log.info '\t', log_map[v], @pfx + '' + route
 			@server[v] @pfx + '' + route, func
 
 	make_tbl: ()->
