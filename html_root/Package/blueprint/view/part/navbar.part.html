@@ -1,0 +1,42 @@
+<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+	<div class="container">
+		<div class="navbar-header">
+			<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+				<span class="sr-only">Toggle Navigation</span>
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span>
+			</button>
+			<a class="navbar-brand">MNC</a>
+		</div>
+	
+		<div class="collapse navbar-collapse navbar-ex1-collapse">
+			<ul class="nav navbar-nav">
+				<li class="dropdown">
+					<a href="#" class="dropdown-toggle" data-toggle="dropdown">Apps</a>
+					<ul class="dropdown-menu">
+						<li><epic:link_action action="home"><i class="icon-home icon-white"></i>View All</epic:link_action>
+						<li class="divider"></li>
+					
+						<epic:foreach table="User/App">
+						<li><epic:link_action action="view_details" p:id="&App/id;">&App/name;</epic:link_action></li>
+						</epic:foreach>
+						<li><epic:link_action action="go_create_app"><span class="glyphicon glyphicon-plus"></epic:link_action></li>
+					</ul>
+				</li>
+			</ul>
+		
+			<ul class="nav navbar-nav navbar-right">
+				<li class="dropdown">
+					<epic:foreach table="User/Me">
+						<a href="#" class="dropdown-toggle" data-toggle="dropdown">&Me/first_name; &Me/last_name;<b class="caret"></b></a>
+						<ul class="dropdown-menu">
+		<!--					<li><a href="#">Account Settings</a></li> -->
+							<li><epic:link_action action="logout">Logout</epic:link_action></li>
+						</ul>
+					</epic:foreach>
+				</li>
+			</ul>
+		</div>
+	</div>	
+</nav>

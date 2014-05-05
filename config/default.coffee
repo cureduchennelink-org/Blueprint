@@ -3,6 +3,30 @@
 #
 
 module.exports=
+	ses:
+		accessKeyId: 	'AKIAI5FIAQV7AJEQOH3Q'
+		secretAccessKey: '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'
+		region: 'us-west-2'
+		debug_email: 'Blueprint Debug ToAddress <jamie.hollowell@dv-mobile.com>'
+		default:
+			BccAddresses: []
+			CcAddresses: []
+			Source: 'Blueprint Default Source <jamie.hollowell@dv-mobile.com>'
+			ReplyToAddresses: []
+			ReturnPath: 'jamie.hollowell@dv-mobile.com' # The email address to which bounce notifications are to be forwarded.
+		emails:
+			forgot_password:
+				model: 'User', tmpl: 'Top', page: 'forgot_password'
+				Subject: 'Did you forget your password?'
+				Text: 'You have forgotten your password huh? Well, That sucks.'
+			verify_email_change:
+				model: 'User', tmpl: 'Top', page: 'verify_email_change'
+				Subject: 'Please Verify Your Email Address'
+				Text: 'Please click on the following link'
+			email_change_confirmed:
+				model: 'User', tmpl: 'Top', page: 'confirm_email_change'
+				Subject: 'Your email address has been successfully verified.'
+				Text: 'Thank you for verifying your new email address.'
 	log:
 		name: 'blueprint'
 		level: 'debug'
@@ -30,29 +54,30 @@ module.exports=
 	api:
         port: 9500
     route_modules: [
-        { enable: true, name: 'auth',		class: 'AuthRoute', file: './routes/r_auth' }
-        { enable: true, name: 'user',		class: 'User', 		file: './routes/r_user' }
-        { enable: true, name: 'workout', 	class: 'Workout', 	file: './routes/r_workout' }
-        { enable: true, name: 'prototype',	class: 'Prototype', file: './routes/r_prototype' }
+        { enable: false, name: 'auth',		class: 'AuthRoute', file: './routes/r_auth' }
+        { enable: false, name: 'user',		class: 'User', 		file: './routes/r_user' }
+        { enable: false, name: 'workout', 	class: 'Workout', 	file: './routes/r_workout' }
     ]
-	prototype_modules: [
-		{
-		name: 'Todo', enable: true, auth_req: false
-		datasets:
-			Category:
-				name: 's128'
-			Item:
-				description: 's128', done:'n', category_id:'key'
-		}
-		{
-		name: 'Baseball', enable: true, auth_req: false
-		datasets:
-			Team:
-				name: 's128'
-			Player:
-				name: 's128', pos:'n', team_id:'key'
-		}
-	]
+    template: view_path: 'views/email'
+    template_use: view_path: 'views/use'
+    prototype:
+    	enable: true
+		modules: [
+			{
+			name: 'Todo', enable: true, auth_req: false, delta: ['Item']
+			datasets:
+				Item:
+					title: 's128', completed:'n'
+			}
+			{
+			name: 'League', enable: true, auth_req: false
+			datasets:
+				Team:
+					name: 's128'
+				Player:
+					name: 's128', pos:'n', team_id:'key'
+			}
+		]
 	route_prefix:
 		assests: '/s'
 		api: '/api/:Version'

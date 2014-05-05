@@ -21,10 +21,10 @@ MissingArg= (param)->
 util.inherits MissingArg, restify.RestError
 exports.MissingArg= MissingArg
 
-NotFoundError= (token)->
+NotFoundError= (token, param)->
 	restify.RestError.call this,
 		statusCode: 404
-		body: {error: token}
+		body: {error: token, param }
 		constructorOpt: NotFoundError
 	this.name= 'Resource Not Found'
 
@@ -67,12 +67,12 @@ ServerError= (error, message)->
 util.inherits ServerError, restify.RestError
 exports.DbError= ServerError
 
-DbError= (message)->
+DbError= (token)->
 	restify.RestError.call this,
 		statusCode: 500
 		restCode: 'DatabaseError'
 		message: message
-		body: {error: 'database_error', message}
+		body: {error: token}
 		constructorOpt: DbError
 	this.name= 'Database Error'
 

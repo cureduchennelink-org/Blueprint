@@ -1,9 +1,6 @@
 #
 #	Token Manager
 #
-#	kit dependencies:
-#		logger.log.[debug,info]
-#
 
 Q= require 'q'
 E= require './error'

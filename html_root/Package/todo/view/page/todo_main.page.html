@@ -1,0 +1,64 @@
+<epic:defer>
+	$("input[data-enter]").keyup( function( event ) {
+		if(event.which === ENTER_KEY){
+			window.EpicMvc.Epic.makeClick(false,$(this).attr("data-enter"), {input_obj:this}, true);
+		}
+	});
+	$("input[data-click]").click( function( event ) {
+		window.EpicMvc.Epic.makeClick(false,$(this).attr("data-click"), {input_obj:this}, true);
+	});
+	$("label[data-double-click]").click( function( event ) {
+		window.EpicMvc.Epic.makeClick(false,$(this).attr("data-double-click"), {input_obj:this}, true);
+	});
+</epic:defer>
+<epic:page_part part="todo_css"/>
+
+<section id="todoapp">
+	<header id="header">
+		<h1>todos</h1>
+		<input id="new-todo" data-enter="save_todo" placeholder="What needs to be done?" autofocus>
+	</header>
+
+	<epic:if set="&Todo/Options/count;">
+		<section id="main">
+			<input id="toggle-all" data-click="mark_all" type="checkbox">
+			<label for="toggle-all">Mark all as complete</label>
+			<ul id="todo-list">
+				<epic:foreach table="Todo/Item">
+					<li class="&Item/completed#.completed;&Item/is_editing#..editing;">
+						<div class="view">
+							<input class="toggle" data-click="mark_toggle" data-p-id="&Item/id;" type="checkbox" &Item/completed#.checked;>
+							<label data-double-click="edit_item" data-p-id="&Item/id;">&Item/title;</label>
+							<epic:link_action action="delete_todo" p:id="&Item/id;" class="destroy btn">
+							</epic:link_action>
+						</div>
+						<input class="edit" value="&Item/title;" data-enter="save_todo" data-p-id="&Item/id;">
+					</li>
+				</epic:foreach>
+			</ul>
+		</section>
+
+		<footer id="footer">
+			<epic:if name="plural" val="&Todo/Options/not_completed_count;" ne="1"></epic:if>
+			<span id="todo-count">&Todo/Options/not_completed_count; item&Tag/If/plural#.s; left</span>
+			<ul id="filters">
+				<li>
+					<epic:link_action action="show" p:state="all" class="&Todo/Options/show_all#.selected;">All</epic:link_action>
+				</li>
+				<li>
+					<epic:link_action action="show" p:state="active" class="&Todo/Options/show_active#.selected;">Active</epic:link_action>
+				</li>
+				<li>
+					<epic:link_action action="show" p:state="completed" class="&Todo/Options/show_completed#.selected;">Completed</epic:link_action>
+				</li>
+			</ul>
+			<epic:if set="&Todo/Options/completed_count;">
+				<epic:link_action action="clear_completed" class="btn" id="clear-completed">Clear completed (&Todo/Options/completed_count;)</epic:link_action>
+			</epic:if>
+		</footer>
+	</epic:if>
+</section>
+
+<footer id="info">
+	<p>Double-click to edit a todo</p>
+</footer>

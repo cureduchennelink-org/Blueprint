@@ -39,12 +39,15 @@
       };
     }
 
-    Workout.prototype._get = function(conn, p, pre_loaded, _log) {
-      var f, use_docs;
+    Workout.prototype._get = function(ctx, pre_loaded) {
+      var conn, f, p, use_docs, _log;
       use_docs = {};
-      if (conn === 'use') {
+      if (ctx === 'use') {
         return use_docs;
       }
+      p = ctx.p;
+      conn = ctx.conn;
+      _log = ctx.log;
       f = 'Workout:_get:';
       _log.debug(f, p);
       return Q.resolve().then(function() {
@@ -58,16 +61,19 @@
       });
     };
 
-    Workout.prototype._create = function(conn, p, pre_loaded, _log) {
-      var f, newWorkout, opts, use_docs;
+    Workout.prototype._create = function(ctx, pre_loaded) {
+      var conn, f, newWorkout, opts, p, use_docs, _log;
       use_docs = {
         description: 'rS',
         workout_name: 'rS',
         type: 'rE:good,bad'
       };
-      if (conn === 'use') {
+      if (ctx === 'use') {
         return use_docs;
       }
+      p = ctx.p;
+      conn = ctx.conn;
+      _log = ctx.log;
       f = 'Workout:_create:';
       newWorkout = false;
       opts = {

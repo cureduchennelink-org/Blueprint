@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Basic bootstrap Demo Dev</title>
+  <link rel="stylesheet" type="text/css" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" />
+  <style>.epic-alternatex { display: none; }</style>
+  <script type="text/javascript" src="//code.jquery.com/jquery-latest.js"></script>
+  <script type="text/javascript" src="//rawgithub.com/epicguy/epicmvc-proto/master/EpicMvc-One-0.0.0-latest.js"></script>
+  <script type="text/javascript" src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+
+  <script src="Package/blueprint/Extras/RestAPI.js" type="text/javascript" charset="utf-8"></script>
+  <script src="Package/blueprint/Model/User.js" type="text/javascript" charset="utf-8"></script>
+  <script src="Package/blueprint/app.js" type="text/javascript" charset="utf-8"></script>
+  <script src="Package/blueprint/blueprint.fist.js" type="text/javascript" charset="utf-8"></script>
+  <script src="Package/blueprint/issues.js" type="text/javascript" charset="utf-8"></script>
+
+  <script src="Package/todo/app.js" type="text/javascript" charset="utf-8"></script>
+  <script src="Package/todo/Model/Todo.js" type="text/javascript" charset="utf-8"></script>
+  <script src="LoadStrategy.js" type="text/javascript" charset="utf-8"></script>
+</head>
+<body id="base-body">
+<script type="text/javascript">
+  _log1= Function.prototype.bind.call( console.log, console);
+  _log2= Function.prototype.bind.call( console.log, console);
+  ENTER_KEY= 13;
+  rest_v1= new EpicMvc.Extras.RestAPI('localhost', 9500, 'api', 'v1');
+  EpicMvc.Epic.run( ['Base', 'BaseDevl','blueprint','todo'], 'LoadStrategy$BaseDevl', 'bootstrap$bootstrap', []);
+</script>
+</body>
+</html>

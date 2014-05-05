@@ -12,7 +12,6 @@
 Q= require 'q'
 E= require '../lib/error'
 
-odb= false # Mongo DB
 sdb= false # MySql DB
 _log= false
 
@@ -21,10 +20,14 @@ extnd_tbl= 'profile'
 
 class User
 	constructor: (kit)->
-		kit.services.logger.log.info 'Initializing User Routes...'
-		odb= kit.services.db.mongo
-		sdb= kit.services.db.mysql
 		_log= kit.services.logger.log
+		_log.info 'Initializing User Routes...'
+		sdb= 		kit.services.db.mysql
+		@template= 	kit.services.template
+		@ses= 		kit.services.ses
+		@tripMgr= 	kit.services.tripMgr
+
+		# User Endpoint
 		@endpoints=
 			get:
 				verb: 'get', route: '/User/:usid'
@@ -34,32 +37,37 @@ class User
 			update_profile:
 				verb: 'put', route: '/User/:usid/updateprofile'
 				use: true, wrap: 'update_wrap', version: any: @_update_profile
-				sql_conn: true, auth_required: true
+				sql_conn: true, sql_tx: true, auth_required: true
 				pre_load: user: @_pl_user
 
 	# Private Logic
-	_view_profile: (conn, p, pre_loaded, _log)->
+	_view_profile: (ctx, pre_loaded)=>
 		use_doc= {}
-		return use_doc if conn is 'use'
-
+		return use_doc if ctx is 'use'
+		trip= false
+		trip2= false
 		f= 'User:_get:'
+		_log= ctx.log
 
 		# Verify p.usid is the same as the auth_id
 		throw new E.AccessDenied 'USER:VIEW_PROFILE:AUTH_ID' unless pre_loaded.auth_id is pre_loaded.user.id
+		users= [pre_loaded.user]
 
 		Q.resolve()
-		.then ->
-			send:
-				success: true
-				users: [pre_loaded.user]
+		.then =>
 
+			# Respond to Client
+			send: { success, users }
 
-	_update_profile: (conn, p, pre_loaded, _log)->
+	_update_profile: (ctx, pre_loaded)->
 		use_doc=
 			fnm: 'S', lnm: 'S', website: 'S'
 			avatar_path: 'S', avatar_thumb: 'S'
 			prog_lang: 'S', skill_lvl: 'S'
-		return use_doc if conn is 'use'
+		return use_doc if ctx is 'use'
+		p= 	  ctx.p
+		conn= ctx.conn
+		_log= ctx.log
 
 		# Verify p.usid is the same as the auth_id
 		throw new E.AccessDenied 'USER:UPDATE_PROFILE:AUTH_ID' unless pre_loaded.auth_id is pre_loaded.user.id
@@ -74,7 +82,7 @@ class User
 
 			# Update the user's profile
 			_log.debug f, new_user_values
-			sdb.user.update_by_ident_id conn, pre_loaded.user.id, new_user_values
+			sdb.user.update_by_ident_id ctx, pre_loaded.user.id, new_user_values
 		.then (db_result)->
 			_log.debug f, 'got profile update result:', db_result
 			throw new E.DbError 'User Update Failed' if db_result.affectedRows isnt 1
@@ -84,14 +92,14 @@ class User
 
 
 	# Preload the User. Stash inside pre_loaded.user
-	# Expects conn, p.usid (/User/:usid)
-	_pl_user: (conn, p)->
+	# Expects ctx: conn, p.usid (/User/:usid)
+	_pl_user: (ctx)->
 		f= 'User:_pl_user:'
-		_log.debug f, p
+		ctx.log.debug f, ctx.p
 
 		Q.resolve().then ->
 
-			sdb.user.get_by_ident_id conn, p.usid
+			sdb.user.get_by_ident_id ctx, ctx.p.usid
 		.then (db_rows) ->
 			throw new E.NotFoundError 'User' if db_rows.length isnt 1
 			db_rows[0]

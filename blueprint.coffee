@@ -1,22 +1,10 @@
 #
 #	Blueprint - Template Node Server
-#	- Restify 2.6.0
-#	- MySql 2.0.0-alpha9
-# 	- MongoDB (Mongoose ~3.8.7)
-#	- Logging with Bunyan
-#	- CoffeeScript
-#	- OAuth 2.0
-#
-#	TODO:
-#		Launch Script
-#			- Output log levels to separate files
-#		SSL Configuration
-#		Server Stats / Analytics
 #
 #	Written for DV-Mobile by Jamie Hollowell. All rights reserved.
 #
-#
 
+Q= require 'q'
 restify= require 'restify'
 
 # Library Modules and Services
@@ -24,11 +12,16 @@ restify= require 'restify'
 {Db}=			require  './lib/db'
 s_use=			require	 './lib/server_use'
 config= 		(require './lib/config')()
+{SES}=			require  './lib/ses'
+{Push}=			require  './lib/push'
 {Logger}=		require  './lib/logger'
 {Router}=		require  './lib/router'
-{Wrapper}=		require  './lib/route_wrapper'
-{TokenMgr}=		require  './lib/token_manager'
+{Wrapper}=		require  './lib/wrapper'
+{TokenMgr}=		require  './lib/token_manager' # TODO: Combine AuthParser, Token Manager in to Auth Module
+{Prototype}= 	require  './lib/prototype'
 {AuthParser}=	require  './lib/authorizationParser'
+{TripManager}= 	require  './lib/trip_manager'
+{EpicTemplate}= require  './lib/EpicTemplate'
 
 # Initialize kit and set up with core services
 kit= new Kit
@@ -42,11 +35,17 @@ kit.add_service 'server', server
 
 # Add additional Library Services to Kit
 # TODO: Move these to the config file just like the route modules
+kit.new_service 'template',		EpicTemplate, ['template']			# Epic Template Engine
+kit.new_service 'template_use',	EpicTemplate, ['template_use']			# Epic Template Engine
 kit.new_service 'tokenMgr', 	TokenMgr				# Token Manager
 kit.new_service 'db', 			Db						# Database Object (MySQL, MongoDB)
 kit.new_service 'authParser', 	AuthParser				# Request Authorization Parser
 kit.new_service 'router',		Router					# Route Creator
+kit.new_service 'push',			Push					# Push Service
 kit.new_service 'wrapper', 		Wrapper					# Route Wrapper
+kit.new_service 'prototype', 	Prototype				# Prototype Service
+kit.new_service 'ses', 			SES						# Amazon SES Module
+kit.new_service 'tripMgr', 		TripManager				# Round Trip token/code Manager
 
 # Setup Handlers
 server.use s_use.set_response_headers
@@ -69,6 +68,17 @@ server.get /.*/, restify.serveStatic
 	directory: './html_root',
 	default: 'index.html'
 
+# Run Server Init Functions from Kit Service Modules
+log.debug 'running server_init()'
+q_result= Q.resolve()
+for nm, service of kit.services when typeof service.server_init is 'function'
+	do(service)-> q_result= q_result.then -> service.server_init(kit)
+
 # Start the Server
-server.listen config.api.port, ()->
-	log.info 'Server listening at', server.url
+q_result.then ->
+	server.listen config.api.port, ()->
+		log.info 'Server listening at', server.url
+.fail (err)->
+	log.error err
+	log.error 'SERVER FAILED TO INITIALIZE. EXITING NOW!'
+	process.exit(1)

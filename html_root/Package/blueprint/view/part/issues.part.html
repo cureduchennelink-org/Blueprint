@@ -1,0 +1,23 @@
+<style>.alert { text-align: left; padding: 10px 30px 10px 10px; }</style>
+
+<epic:if table_is_not_empty="Pageflow/Message">
+	<div class="alert alert-success alert-dismissable col-sm-8 col-sm-offset-2">
+		<button data-dismiss="alert" class="close" type="button">
+			<i class="glyphicon glyphicon-remove"></i>
+		</button>
+		<epic:foreach table="Pageflow/Message">
+			<p title="&Message/title;">&Message/issue;</p>
+		</epic:foreach>
+	</div>
+</epic:if>
+
+<epic:if table_is_not_empty="Pageflow/Issue">
+	<div class="alert alert-danger alert-dismissable col-sm-8 col-sm-offset-2">
+		<button type="button" class="close" data-dismiss="alert">
+			<i class="glyphicon glyphicon-remove"></i>
+		</button>
+		<epic:foreach table="Pageflow/Issue">
+			<p title="&Issue/title;">&Issue/issue;</p>
+		</epic:foreach>
+	</div>
+</epic:if>

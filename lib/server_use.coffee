@@ -5,8 +5,8 @@
 
 # Debug Line
 exports.debug_request= (req, res, next) ->
-	req.log.info 'ROUTE:', req.url, req.method
-	(req.log.info 'PARAM:', nm + ':', val) for nm, val of req.params
+	req.log.info 'ROUTE:', req.method, req.url
+	(req.log.info 'PARAM:', nm + ':', val) for nm, val of req.params when nm not in ['_']
 	return next()
 
 # Set Response Headers to avoid CORS issues

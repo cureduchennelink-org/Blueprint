@@ -32,9 +32,12 @@ class Workout
 				auth_required: true
 
 	# Private Logic
-	_get: (conn, p, pre_loaded, _log)->
+	_get: (ctx, pre_loaded)->
 		use_docs= {}
-		return use_docs if conn is 'use'
+		return use_docs if ctx is 'use'
+		p= 	  ctx.p
+		conn= ctx.conn
+		_log= ctx.log
 
 		f= 'Workout:_get:'
 		_log.debug f, p
@@ -46,9 +49,12 @@ class Workout
 		.then (docs)->
 			send: workouts: docs
 
-	_create: (conn, p, pre_loaded, _log)->
+	_create: (ctx, pre_loaded)->
 		use_docs= description: 'rS', workout_name: 'rS', type: 'rE:good,bad'
-		return use_docs if conn is 'use'
+		return use_docs if ctx is 'use'
+		p= 	  ctx.p
+		conn= ctx.conn
+		_log= ctx.log
 
 		f= 'Workout:_create:'
 		newWorkout= false

@@ -24,35 +24,35 @@ class SqlCore
 			log: false
 		@acquire= (callback)-> @pool.acquire callback
 		@Acquire= Q.nbind @acquire, this
-		@release= (conn)-> @pool.release conn
+		@release= (conn)->
+			_log.debug 'DB:SqlCore:release:', 'releasing conn'
+			@pool.release conn
 		@destroy= (conn)-> @pool.destroy conn
 
-		@sqlQuery= (conn, sql, args)->
-			_log.debug 'SqlCore:sqlQuery:', sql
-			_log.debug 'SqlCore:args:', args if args
-			(Q.ninvoke conn, 'query', sql, args)
+		@sqlQuery= (ctx, sql, args)->
+			_log.debug 'DB:SqlCore:sqlQuery:', sql
+			_log.debug 'DB:SqlCore:args:', args if args
+			throw new E.DbError 'DB:SQL:BAD_CONN' if ctx.conn is null
+			(Q.ninvoke ctx.conn, 'query', sql, args)
 			.then (rows_n_cols) ->
 				rows_n_cols[0]
 
-	AcquireTxConn: ()=>
-		conn= false
+	AcquireTxConn: (ctx)=>
 
 		@Acquire()
 		.then (c) =>
-			conn= c
+			ctx.conn= c
 
 			# Initialize the transaction
 			sql= 'SET TRANSACTION ISOLATION LEVEL SERIALIZABLE'
-			@sqlQuery conn, sql
+			@sqlQuery ctx, sql
 		.then (db_result)=>
 
 			# Start the transaction
 			sql= 'START TRANSACTION'
-			@sqlQuery conn, sql
+			@sqlQuery ctx, sql
 		.then (db_result) ->
-
-			# Pass the conn
-			conn
+			null
 
 	# Factory for attaching common functions to SQL Modules
 	# get_collection (conn)
@@ -66,19 +66,31 @@ class SqlCore
 		sqlQuery= @sqlQuery
 
 		if schema.get_collection
-			sql_mod.get_collection= (conn)->
+			sql_mod.get_collection= (ctx)->
 				f= "DB:#{name}:get_collection:"
 
 				Q.resolve()
 				.then =>
 
 					sql= 'SELECT * FROM ' + table
-					sqlQuery conn, sql
+					sqlQuery ctx, sql
+				.then (db_rows)->
+					db_rows
+
+		if schema.get_by_id
+			sql_mod.get_by_id= (ctx, id)->
+				f= "DB:#{name}:get_by_id:"
+
+				Q.resolve()
+				.then =>
+
+					sql= 'SELECT ' + (schema.get_by_id.join ',') + ' FROM ' + table + ' WHERE id= ? AND di= 0'
+					sqlQuery ctx, sql, [id]
 				.then (db_rows)->
 					db_rows
 
 		if schema.create
-			sql_mod.create= (conn, new_values)->
+			sql_mod.create= (ctx, new_values)-> # TODO: Add a variable to return the newly inserted record
 				f= "DB:#{name}:create:"
 				_log.debug f, new_values
 
@@ -88,15 +100,15 @@ class SqlCore
 				Q.resolve()
 				.then =>
 
-					cols= []; qs= []; arg= []
+					cols= ['cr']; qs= ['?']; arg= [null]
 					(cols.push nm; qs.push '?'; arg.push val) for nm, val of new_values
 					sql= 'INSERT INTO ' + table + ' (' + (cols.join ',') + ') VALUES (' + (qs.join ',') + ')'
-					sqlQuery conn, sql, arg
+					sqlQuery ctx, sql, arg
 				.then (db_result)=>
 					db_result
 
 		if schema.update_by_ident_id
-			sql_mod.update_by_ident_id= (conn, ident_id, new_values)->
+			sql_mod.update_by_ident_id= (ctx, ident_id, new_values)->
 				f= "DB:#{name}:update_by_ident_id:"
 				_log.debug f, ident_id, new_values
 
@@ -111,12 +123,12 @@ class SqlCore
 					arg.push ident_id
 					sql= 'UPDATE ' + table + ' SET '+ (cols.join ',') +
 						' WHERE ident_id= ? AND di= 0'
-					sqlQuery conn, sql, arg
+					sqlQuery ctx, sql, arg
 				.then (db_result)=>
 					db_result
 
 		if schema.update_by_id
-			sql_mod.update_by_id= (conn, id, new_values)->
+			sql_mod.update_by_id= (ctx, id, new_values)->
 				f= "DB:#{name}:update_by_id:"
 				_log.debug f, id, new_values
 
@@ -129,14 +141,14 @@ class SqlCore
 					cols= []; arg=[]
 					(cols.push nm + '= ?'; arg.push val) for nm, val of new_values
 					arg.push id
-					sql= 'UPDATE ' + table + ' SET '+ (cols.join ',') +
+					sql= 'UPDATE ' + table + ' SET ' + (cols.join ',') +
 						' WHERE id= ? AND di= 0'
-					sqlQuery conn, sql, arg
+					sqlQuery ctx, sql, arg
 				.then (db_result)=>
 					db_result
 
 		if schema.get_by_ident_id
-			sql_mod.get_by_ident_id= (conn, ident_id)->
+			sql_mod.get_by_ident_id= (ctx, ident_id)->
 				f= "DB:#{name}:get_by_ident_id:"
 				_log.debug f, ident_id
 
@@ -146,7 +158,7 @@ class SqlCore
 					sql= 'SELECT '+ (schema.get_by_ident_id.join ',') +
 						' FROM ' + ident_tbl + ' i LEFT OUTER JOIN ' + table + ' e' +
 						' ON i.id= e.ident_id WHERE i.id= ? AND i.di= 0 AND (e.di= 0 OR e.id IS NULL)'
-					sqlQuery conn, sql, [ident_id]
+					sqlQuery ctx, sql, [ident_id]
 				.then (db_rows) ->
 					db_rows
 

@@ -19,13 +19,20 @@
 
   AuthRoute = (function() {
     function AuthRoute(kit) {
-      this._authenticate = __bind(this._authenticate, this);
+      this._get_auth_trip = __bind(this._get_auth_trip, this);
+      this._verify_forgot = __bind(this._verify_forgot, this);
+      this._forgot_password = __bind(this._forgot_password, this);
       this._update_password = __bind(this._update_password, this);
-      kit.services.logger.log.info('Initializing Auth Routes...');
+      this._verify_email = __bind(this._verify_email, this);
+      this._update_email = __bind(this._update_email, this);
+      this._authenticate = __bind(this._authenticate, this);
+      this.log = kit.services.logger.log;
+      this.log.info('Initializing Auth Routes...');
       this.config = kit.services.config.auth;
       this.tokenMgr = kit.services.tokenMgr;
       sdb = kit.services.db.mysql;
-      this.log = kit.services.logger.log;
+      this.tripMgr = kit.services.tripMgr;
+      this.ses = kit.services.ses;
       this.endpoints = {
         authenticate: {
           verb: 'post',
@@ -46,47 +53,78 @@
           },
           sql_conn: true,
           auth_required: true
+        },
+        update_email: {
+          verb: 'post',
+          route: '/Auth/:auid/updateemail',
+          use: true,
+          wrap: 'update_wrap',
+          version: {
+            any: this._update_email
+          },
+          sql_conn: true,
+          auth_required: true
+        },
+        forgot_password: {
+          verb: 'post',
+          route: '/AuthTrip',
+          use: true,
+          wrap: 'update_wrap',
+          version: {
+            any: this._forgot_password
+          },
+          sql_conn: true
+        },
+        read_auth_trip: {
+          verb: 'get',
+          route: '/AuthTrip/:token',
+          use: true,
+          wrap: 'read_wrap',
+          version: {
+            any: this._get_auth_trip
+          },
+          sql_conn: true
+        },
+        verify_forgot: {
+          verb: 'post',
+          route: '/AuthTrip/:token/verifyforgot',
+          use: true,
+          wrap: 'update_wrap',
+          version: {
+            any: this._verify_forgot
+          },
+          sql_conn: true
+        },
+        verify_email: {
+          verb: 'post',
+          route: '/AuthTrip/:token/verifyemail',
+          use: true,
+          wrap: 'update_wrap',
+          version: {
+            any: this._verify_email
+          },
+          sql_conn: true
         }
       };
     }
 
-    AuthRoute.prototype._update_password = function(conn, p, pre_loaded, _log) {
-      var f, use_doc,
-        _this = this;
-      use_doc = {
-        new_pwd: 'S'
-      };
-      if (conn === 'use') {
-        return use_doc;
-      }
-      if ((Number(p.auid)) !== pre_loaded.auth_id) {
-        throw new E.AccessDenied('AUTH:UPDATE_PASSWORD:AUTH_ID');
-      }
-      if (!p.new_pwd) {
-        throw new E.MissingArg('new_pwd');
-      }
-      f = 'User:_update_password:';
-      return Q.resolve().then(function() {
-        return _this._encryptPassword(p.new_pwd);
-      }).then(function(pwd_hash) {
-        return sdb.auth.update_by_id(conn, pre_loaded.auth_id, {
-          pwd: pwd_hash
-        });
-      }).then(function(db_result) {
-        _log.debug(f, 'got password update result:', db_result);
-        if (db_result.affectedRows !== 1) {
-          throw new E.DbError('AUTH:UPDATE_PASSWORD:AFFECTEDROWS');
-        }
-        return {
-          send: {
-            success: true
+    AuthRoute.prototype.make_tbl = function(recipient, token) {
+      return {
+        Trip: [
+          {
+            token: token
           }
-        };
-      });
+        ],
+        Recipient: [
+          {
+            email: recipient.eml
+          }
+        ]
+      };
     };
 
-    AuthRoute.prototype._authenticate = function(conn, p, pre_loaded, _log) {
-      var clearToken, f, result, use_doc,
+    AuthRoute.prototype._authenticate = function(ctx, pre_loaded) {
+      var current_token, f, p, result, use_doc, _log,
         _this = this;
       use_doc = {
         client_id: 'rS',
@@ -94,18 +132,20 @@
         password: 'rS',
         grant_type: 'S'
       };
-      if (conn === 'use') {
+      if (ctx === 'use') {
         return use_doc;
       }
+      p = ctx.p;
+      _log = ctx.log;
       f = 'Auth:_authenticate:';
       _log.debug(f, p, pre_loaded);
-      clearToken = false;
+      current_token = false;
       result = {};
       return Q.resolve().then(function() {
         if (p.grant_type !== 'password') {
           return false;
         }
-        return _this._validateCredentials(conn, p.username, p.password, _log);
+        return _this._validateCredentials(ctx, p.username, p.password);
       }).then(function(auth_ident_id) {
         _log.debug(f, 'got auth_ident_id:', auth_ident_id);
         if (auth_ident_id !== false) {
@@ -114,7 +154,7 @@
         if (p.grant_type !== 'refresh_token') {
           return false;
         }
-        return sdb.token.find_token(conn, p.refresh_token);
+        return sdb.token.find_token(ctx, p.refresh_token);
       }).then(function(valid_token) {
         var exp;
         _log.debug(f, 'got valid token:', valid_token);
@@ -125,11 +165,10 @@
           result.auth_ident_id = valid_token[0].ident_id;
         }
         if (p.grant_type === 'refresh_token') {
-          clearToken = p.refresh_token;
+          current_token = p.refresh_token;
         }
-        _log.debug('got clearToken:', clearToken);
         exp = (moment().add('seconds', _this.config.refreshTokenExpiration)).toDate();
-        return sdb.token.create_ident_token(conn, result.auth_ident_id, p.client_id, exp, clearToken);
+        return sdb.token.create_ident_token(ctx, result.auth_ident_id, p.client_id, exp, current_token);
       }).then(function(refreshToken) {
         var accessToken, exp;
         exp = moment().add('seconds', _this.config.accessTokenExpiration);
@@ -147,19 +186,308 @@
       });
     };
 
-    AuthRoute.prototype._validateCredentials = function(conn, username, password, _log) {
-      var creds, f,
+    AuthRoute.prototype._update_email = function(ctx, pre_loaded) {
+      var conn, f, p, use_doc, _log,
+        _this = this;
+      use_doc = {
+        new_eml: 'S'
+      };
+      if (ctx === 'use') {
+        return use_doc;
+      }
+      p = ctx.p;
+      conn = ctx.conn;
+      _log = ctx.log;
+      if ((Number(p.auid)) !== pre_loaded.auth_id) {
+        throw new E.AccessDenied('AUTH:UPDATE_EMAIL:AUTH_ID');
+      }
+      if (!p.new_eml) {
+        throw new E.MissingArg('new_eml');
+      }
+      f = 'User:_update_email:';
+      return Q.resolve().then(function() {
+        return sdb.auth.get_by_cred_name(ctx, p.new_eml);
+      }).then(function(db_rows) {
+        _log.debug('got ident with new_eml:', db_rows);
+        if (db_rows.length !== 0) {
+          throw new E.AccessDenied('AUTH:UPDATE_EMAIL:EMAIL_EXISTS');
+        }
+        return _this.tripMgr.planTrip(ctx, pre_loaded.auth_id, {
+          eml: p.new_eml
+        }, null, 'update_email');
+      }).then(function(new_trip) {
+        var recipient, trip;
+        _log.debug(f, 'got round trip:', new_trip);
+        trip = new_trip;
+        recipient = {
+          eml: p.new_eml
+        };
+        return _this.ses.send('verify_email_change', _this.make_tbl(recipient, trip.token));
+      }).then(function() {
+        var success;
+        success = true;
+        return {
+          send: {
+            success: success
+          }
+        };
+      });
+    };
+
+    AuthRoute.prototype._verify_email = function(ctx, pre_loaded) {
+      var f, ident, new_eml, p, trip, use_doc, _log,
+        _this = this;
+      use_doc = {};
+      if (ctx === 'use') {
+        return use_doc;
+      }
+      p = ctx.p;
+      _log = ctx.log;
+      trip = false;
+      ident = false;
+      new_eml = false;
+      f = 'Auth:_verify_email:';
+      return Q.resolve().then(function() {
+        return _this.tripMgr.getTripFromToken(ctx, p.token);
+      }).then(function(trip_info) {
+        var bad_token;
+        _log.debug(f, 'got round trip:', trip_info);
+        trip = trip_info;
+        bad_token = trip_info.status === 'unknown' || trip_info.status !== 'valid';
+        if (bad_token) {
+          throw new E.AccessDenied('AUTH:VERIFY_EMAIL:INVALID_TOKEN');
+        }
+        if (trip.domain !== 'update_email') {
+          throw new E.AccessDenied('AUTH:VERIFY_EMAIL:INVALID_DOMAIN');
+        }
+        new_eml = (JSON.parse(trip.json)).eml;
+        return sdb.auth.get_by_id(ctx, trip.auth_ident_id);
+      }).then(function(db_rows) {
+        _log.debug('got ident:', db_rows);
+        if (db_rows.length !== 1) {
+          throw new E.NotFoundError('AUTH:VERIFY_EMAIL:IDENT');
+        }
+        ident = db_rows[0];
+        return sdb.auth.get_by_cred_name(ctx, new_eml);
+      }).then(function(db_rows) {
+        _log.debug('got ident with new_eml:', db_rows);
+        if (db_rows.length !== 0) {
+          throw new E.AccessDenied('AUTH:VERIFY_EMAIL:EMAIL_EXISTS');
+        }
+        return sdb.auth.update_by_id(ctx, ident.id, {
+          eml: new_eml
+        });
+      }).then(function(db_result) {
+        _log.debug(f, 'got password update result:', db_result);
+        if (db_result.affectedRows !== 1) {
+          throw new E.DbError('AUTH:VERIFY_EMAIL:AFFECTEDROWS');
+        }
+        return _this.tripMgr.returnFromTrip(ctx, trip.id);
+      }).then(function() {
+        var recipient;
+        recipient = {
+          eml: new_eml
+        };
+        return _this.ses.send('email_change_confirmed', _this.make_tbl(recipient));
+      }).then(function() {
+        var success;
+        success = true;
+        return {
+          send: {
+            success: success
+          }
+        };
+      });
+    };
+
+    AuthRoute.prototype._update_password = function(ctx, pre_loaded) {
+      var conn, f, p, use_doc, _log,
+        _this = this;
+      use_doc = {
+        new_pwd: 'S'
+      };
+      if (ctx === 'use') {
+        return use_doc;
+      }
+      p = ctx.p;
+      conn = ctx.conn;
+      _log = ctx.log;
+      if ((Number(p.auid)) !== pre_loaded.auth_id) {
+        throw new E.AccessDenied('AUTH:UPDATE_PASSWORD:AUTH_ID');
+      }
+      if (!p.new_pwd) {
+        throw new E.MissingArg('new_pwd');
+      }
+      f = 'User:_update_password:';
+      return Q.resolve().then(function() {
+        return _this._encryptPassword(p.new_pwd);
+      }).then(function(pwd_hash) {
+        return sdb.auth.update_by_id(ctx, pre_loaded.auth_id, {
+          pwd: pwd_hash
+        });
+      }).then(function(db_result) {
+        var success;
+        _log.debug(f, 'got password update result:', db_result);
+        if (db_result.affectedRows !== 1) {
+          throw new E.DbError('AUTH:UPDATE_PASSWORD:AFFECTEDROWS');
+        }
+        success = true;
+        return {
+          send: {
+            success: success
+          }
+        };
+      });
+    };
+
+    AuthRoute.prototype._forgot_password = function(ctx, pre_loaded) {
+      var f, ident, p, use_doc, _log,
+        _this = this;
+      use_doc = {
+        email: 'S'
+      };
+      if (ctx === 'use') {
+        return use_doc;
+      }
+      p = ctx.p;
+      _log = ctx.log;
+      ident = false;
+      if (!p.email) {
+        throw new E.MissingArg('email');
+      }
+      f = 'Auth:_forgot_password:';
+      return Q.resolve().then(function() {
+        return sdb.auth.get_by_cred_name(ctx, p.email);
+      }).then(function(db_rows) {
+        _log.debug('got ident:', db_rows);
+        if (db_rows.length !== 1) {
+          throw new E.NotFoundError('AUTH:FORGOT_PASSWORD:IDENT');
+        }
+        ident = db_rows[0];
+        return _this.tripMgr.planTrip(ctx, ident.id, {}, null, 'forgot_password');
+      }).then(function(new_trip) {
+        var trip;
+        _log.debug(f, 'got round trip:', new_trip);
+        if (new_trip !== false) {
+          trip = new_trip;
+        }
+        return _this.ses.send('forgot_password', _this.make_tbl(ident, trip.token));
+      }).then(function() {
+        var success;
+        success = true;
+        return {
+          send: {
+            success: success
+          }
+        };
+      });
+    };
+
+    AuthRoute.prototype._verify_forgot = function(ctx, pre_loaded) {
+      var f, p, success, trip, use_doc, _log,
+        _this = this;
+      use_doc = {
+        new_pwd: 'S'
+      };
+      if (ctx === 'use') {
+        return use_doc;
+      }
+      p = ctx.p;
+      _log = ctx.log;
+      trip = false;
+      success = false;
+      f = 'Auth:_verify_forgot:';
+      if (!p.new_pwd) {
+        throw new E.MissingArg('new_pwd');
+      }
+      return Q.resolve().then(function() {
+        return _this.tripMgr.getTripFromToken(ctx, p.token);
+      }).then(function(trip_info) {
+        var bad_token;
+        _log.debug(f, 'got round trip:', trip_info);
+        trip = trip_info;
+        bad_token = trip_info.status === 'unknown' || trip_info.status !== 'valid';
+        if (bad_token) {
+          throw new E.AccessDenied('AUTH:AUTH_TRIP:INVALID_TOKEN');
+        }
+        if (trip.domain !== 'forgot_password') {
+          throw new E.AccessDenied('AUTH:AUTH_TRIP:INVALID_DOMAIN');
+        }
+        return _this._encryptPassword(p.new_pwd);
+      }).then(function(pwd_hash) {
+        return sdb.auth.update_by_id(ctx, trip.auth_ident_id, {
+          pwd: pwd_hash
+        });
+      }).then(function(db_result) {
+        _log.debug(f, 'got password update result:', db_result);
+        if (db_result.affectedRows !== 1) {
+          throw new E.DbError('AUTH:UPDATE_PASSWORD:AFFECTEDROWS');
+        }
+        return _this.tripMgr.returnFromTrip(ctx, trip.id);
+      }).then(function() {
+        success = true;
+        return {
+          send: {
+            success: success
+          }
+        };
+      });
+    };
+
+    AuthRoute.prototype._get_auth_trip = function(ctx, pre_loaded) {
+      var bad_token, f, ident, p, trip, use_doc, _log,
+        _this = this;
+      use_doc = {
+        email: 'S'
+      };
+      if (ctx === 'use') {
+        return use_doc;
+      }
+      p = ctx.p;
+      _log = ctx.log;
+      bad_token = false;
+      trip = false;
+      ident = false;
+      f = 'Auth:_auth_trip:';
+      return Q.resolve().then(function() {
+        return _this.tripMgr.getTripFromToken(ctx, p.token);
+      }).then(function(trip_info) {
+        _log.debug(f, 'got round trip:', trip_info);
+        trip = trip_info;
+        bad_token = trip_info.status === 'unknown' || trip_info.status !== 'valid';
+        if (bad_token) {
+          throw new E.AccessDenied('AUTH:AUTH_TRIP:BAD_TOKEN');
+        }
+        return sdb.auth.get_by_id(ctx, trip.auth_ident_id);
+      }).then(function(db_rows) {
+        _log.debug('got ident:', db_rows);
+        if (db_rows.length !== 1) {
+          throw new E.NotFoundError('AUTH:AUTH_TRIP:IDENT');
+        }
+        ident = db_rows[0];
+        ident.token = trip.token;
+        return {
+          send: {
+            ident: ident
+          }
+        };
+      });
+    };
+
+    AuthRoute.prototype._validateCredentials = function(ctx, username, password) {
+      var creds, f, _log, _ref,
         _this = this;
       f = 'Auth:_validateCredentials:';
-      if (!_log) {
-        _log = this.log;
-      }
+      _log = (_ref = ctx.log) != null ? _ref : this.log;
       creds = false;
       return Q.resolve().then(function() {
-        return sdb.auth.get_auth_credentials(conn, username);
-      }).then(function(credentials) {
-        _log.debug('got credentials:', credentials);
-        creds = credentials;
+        return sdb.auth.get_auth_credentials(ctx, username);
+      }).then(function(db_rows) {
+        _log.debug('got credentials:', db_rows);
+        if (db_rows.length !== 1 || !db_rows[0].pwd) {
+          throw new E.OAuthError(401, 'invalid_client');
+        }
+        creds = db_rows[0];
         return _this._comparePassword(password, creds.pwd);
       }).then(function(a_match) {
         _log.debug('got a match:', a_match);
@@ -202,6 +530,23 @@
         return _this._pbkdf2(password, saltBuf, ITERATIONS, KEY_LENGTH);
       }).then(function(key) {
         return (saltBuf.toString('base64')) + '.' + new Buffer(key).toString('base64');
+      });
+    };
+
+    AuthRoute.prototype._pl_ident = function(ctx) {
+      var f,
+        _this = this;
+      f = 'Auth:_pl_ident:';
+      ctx.log.debug(f, ctx.p);
+      return Q.resolve().then(function() {
+        return sdb.auth.get_by_id(ctx, ctx.auth_id);
+      }).then(function(db_rows) {
+        var ident;
+        ctx.log.debug('got ident:', db_rows);
+        if (db_rows.length !== 1) {
+          throw new E.NotFoundError('AUTH:PRELOAD:IDENT');
+        }
+        return ident = db_rows[0];
       });
     };
 

@@ -15,23 +15,23 @@ class SqlToken
 			find: ['ident_id','client']
 			insert: ['token','ident_id','client','exp','cr']
 
-	find_token: (conn, token)->
+	find_token: (ctx, token)->
 		sql= 'SELECT '+ (@schema.find.join ',') + ' FROM ' + table +
 			 ' WHERE token = ? AND exp > CURDATE()'
-		(@db.sqlQuery conn, sql, [token])
+		(@db.sqlQuery ctx, sql, [token])
 		.then (db_rows)-> db_rows
 
-	insert_token: (conn, token, user_id, client_id, expires)->
+	insert_token: (ctx, token, user_id, client_id, expires)->
 		sql = 'INSERT INTO ' + table + ' ('+ (@schema.insert.join ',') + ') VALUES (?,?,?,?,NULL)'
-		(@db.sqlQuery conn, sql, [token, user_id, client_id, expires])
+		(@db.sqlQuery ctx, sql, [token, user_id, client_id, expires])
 		.then (db_result)->	db_result
 
-	delete_token: (conn, token)->
+	delete_token: (ctx, token)->
 		sql = 'DELETE FROM ' + table + ' WHERE token = ?'
-		(@db.sqlQuery conn, sql, [token])
+		(@db.sqlQuery ctx, sql, [token])
 		.then (db_result)-> db_result
 
-	create_ident_token: (conn, user_id, clientId, expires, current_ident_token)=>
+	create_ident_token: (ctx, user_id, clientId, expires, current_ident_token)=>
 		new_token= false
 
 		Q.resolve()
@@ -44,11 +44,11 @@ class SqlToken
 
 			# Delete current refresh token if it exists
 			return false unless current_ident_token
-			@delete_token conn, current_ident_token
+			@delete_token ctx, current_ident_token
 		.then (db_result)=>
 
 			# Insert New Token
-			@insert_token conn, new_token, user_id, clientId, expires
+			@insert_token ctx, new_token, user_id, clientId, expires
 		.then (db_result)->
 			throw new E.DbError 'Refresh Token Insert Failed' if db_result.affectedRows isnt 1
 			new_token

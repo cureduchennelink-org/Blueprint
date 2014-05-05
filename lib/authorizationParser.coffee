@@ -10,9 +10,9 @@ E= require './error'
 class AuthParser
 	constructor: (kit)->
 		kit.services.logger.log.info 'Initializing Authorization Parser...'
-		@config= kit.services.config.auth
-		@tokenMgr= kit.services.tokenMgr
-		@log= kit.services.logger.log
+		@config= 	kit.services.config.auth
+		@tokenMgr= 	kit.services.tokenMgr
+		@log= 		kit.services.logger.log
 
 	parseAuthorization: (req, res, next)=>
 		p= req.params
@@ -34,14 +34,13 @@ class AuthParser
 			message: result.err
 			token: result.token
 			authId: if result.token then result.token.iid else null
-			authorize: (dontSendResponse)->
+			authorize: (skip_response)->
 				if not req.auth.authId
-					if not dontSendResponse
-						error= new E.OAuthError 401, 'invalid_token', req.auth.message
-						res.setHeader 'WWW-Authenticate', "Bearer realm=\"blueprint\""
-						res.send error
-						return next()
-					else return false
+					return false if skip_response
+					error= new E.OAuthError 401, 'invalid_token', req.auth.message
+					res.setHeader 'WWW-Authenticate', "Bearer realm=\"blueprint\""
+					res.send error
+					return next()
 				else true
 		next()
 

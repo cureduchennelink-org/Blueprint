@@ -6,10 +6,10 @@ module.exports=
 	log:
 		level: 'debug'
 	auth:
-		accessTokenExpiration: 10 * 60 # seconds (10 Minutes)
+		accessTokenExpiration: 60 * 60 # seconds (60 Minutes)
 	db:
 		mysql:
-			enable: false
+			enable: true
 			options:
 				host: 'localhost'
 				port: 8889
@@ -28,27 +28,26 @@ module.exports=
     route_modules: [
         { enable: true, name: 'auth',		class: 'AuthRoute', file: './routes/r_auth' }
         { enable: true, name: 'user',		class: 'User', 		file: './routes/r_user' }
-        { enable: true, name: 'workout', 	class: 'Workout', 	file: './routes/r_workout' }
-        { enable: true, name: 'prototype',	class: 'Prototype', file: './routes/r_prototype' }
+        { enable: false, name: 'workout', 	class: 'Workout', 	file: './routes/r_workout' }
     ]
-	prototype_modules: [
-		{
-		name: 'Todo', enable: true, auth_req: false
-		datasets:
-			Category:
-				name: 's128'
-			Item:
-				description: 's128', done:'n', category_id:'key'
-		}
-		{
-		name: 'Baseball', enable: true, auth_req: false
-		datasets:
-			Team:
-				name: 's128'
-			Player:
-				name: 's128', pos:'n', team_id:'key'
-		}
-	]
+	prototype:
+		enable: true
+		modules: [
+			{
+			name: 'Todo', enable: false, auth_req: false, delta: ['Item']
+			datasets:
+				Item:
+					title: 's128', completed:'n'
+			}
+			{
+			name: 'League', enable: false, auth_req: false
+			datasets:
+				Team:
+					name: 's128'
+				Player:
+					name: 's128', pos:'n', team_id:'key'
+			}
+		]
 	route_prefix:
 		assests: '/s'
 		api: '/api/:Version'

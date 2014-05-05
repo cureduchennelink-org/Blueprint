@@ -1,0 +1,95 @@
+/* Main CSS for TLC */
+
+/* General Colors*/
+.light-brown {
+	background: #E9DCB0
+}
+
+.dark-brown {
+	background: #944F06
+}
+
+.white {
+	background: #FFFFFF
+}
+
+/****** Main Background - light brown */
+body {
+	background: rgb(233,220,176);
+}
+
+/* Navigation Bar */
+.btn-primary {
+	background: #E9DCB0;
+	border: #E9DCB0;
+	color: black;
+}
+
+.btn-primary:hover {
+	background-color: #EFE6C7;
+	border: #E9DCB0;
+	color: black;
+}
+
+#navLink {
+	padding-top: 3px;
+	padding-right: 3px;
+	padding-left: 3px;
+}
+
+/****** General Links*/
+a:active, a:focus, a:visited, a:link {
+	color: #000;
+	text-decoration: none;
+}
+
+/****** Main page nav-tabs*/
+.main-tabs > li > a {
+	background: #D1C69E;
+	border-color: #D1C69E;
+}
+.nav-tabs.nav-justified > li > a {
+	border-bottom-color: #E9DCB0;
+}
+
+.main-tabs > li > a:hover {
+	background-color: #EFE6C7;
+	border-color: #EFE6C7;
+}
+
+.main-tabs > li.active > a {
+	background-color: #E9DCB0;
+	border-color: #E9DCB0;
+}
+.nav-tabs.nav-justified > li.active > a {
+	border-bottom-color: #E9DCB0;
+}
+
+.main-tabs > li.active > a:hover {
+	background-color: #EFE6C7;
+	border-color: #EFE6C7;
+}
+
+.tab-pane h1 {
+	margin-top: 0px;
+	padding-top: 20px;
+}
+
+caption {
+	font-size: 20px;
+}
+
+/****** Highlight Active Team in Standings */
+.active_team {
+	font-weight: bold;
+}
+
+.table-responsive > .table {
+   background-color: #E9DCB0;
+}
+
+.chat-window {
+	padding: 4px;
+	height: 300px;
+	overflow: auto;
+}
