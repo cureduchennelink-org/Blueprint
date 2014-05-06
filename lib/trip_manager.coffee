@@ -70,15 +70,17 @@ class TripManager
 			# Return new Trip
 			trip
 
-	returnFromTrip: (ctx, trip_id)->
+	returnFromTrip: (ctx, trip_id, ident_id)->
 		f= 'TripManager:returnFromTrip'
 		_log= ctx.log
+		new_values= returned: new Date()
 
 		Q.resolve()
 		.then =>
 
 			# Update 'returned' timestamp. Update ident_id when supplied
-			@sdb.trip.update_by_id ctx, trip_id, { returned: new Date() }
+			new_values.ident_id= ident_id if typeof ident_id is 'number'
+			@sdb.trip.update_by_id ctx, trip_id, new_values
 		.then (db_result)=>
 			_log.debug f, 'got returned trip result:', db_result
 			throw new E.DbError 'TRIPMANAGER:RETURN:UPDATE' if db_result.affectedRows isnt 1

@@ -41,6 +41,13 @@
           page: 'verify_signup',
           Subject: 'Please Verify Signup.',
           Text: 'Thank yor for signing up with us! Please click the link below'
+        },
+        signup_complete: {
+          model: 'Signup',
+          tmpl: 'Top',
+          page: 'signup_complete',
+          Subject: 'Signup Complete!',
+          Text: 'Thank yor for signing up with us! Your email address has been verified and your account has been activated!'
         }
       }
     },
@@ -86,7 +93,7 @@
       {
         enable: false,
         name: 'auth',
-        "class": 'Auth',
+        "class": 'AuthRoute',
         file: './routes/r_auth'
       }, {
         enable: false,

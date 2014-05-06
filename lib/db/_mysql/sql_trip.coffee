@@ -13,7 +13,7 @@ class SqlTrip
 		@table= 'trips'
 		@schema=
 			create: ['auth_ident_id','ident_id','token','domain','json','void','expires']
-			update_by_id: ['json','void','expires','returned']
+			update_by_id: ['json','void','expires','returned','ident_id']
 			get_by_token: ['*']
 			get_by_id: ['*']
 

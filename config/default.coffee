@@ -31,6 +31,10 @@ module.exports=
 				model: 'Signup', tmpl: 'Top', page: 'verify_signup'
 				Subject: 'Please Verify Signup.'
 				Text: 'Thank yor for signing up with us! Please click the link below'
+			signup_complete:
+				model: 'Signup', tmpl: 'Top', page: 'signup_complete'
+				Subject: 'Signup Complete!'
+				Text: 'Thank yor for signing up with us! Your email address has been verified and your account has been activated!'
 	log:
 		name: 'blueprint'
 		level: 'debug'
@@ -62,7 +66,7 @@ module.exports=
 			directory: './html_root'
 			default: 'index.html'
 	route_modules: [
-        { enable: false, name: 'auth',		class: 'Auth', 			file: './routes/r_auth' }
+        { enable: false, name: 'auth',		class: 'AuthRoute', 	file: './routes/r_auth' }
         { enable: false, name: 'user',		class: 'User', 			file: './routes/r_user' }
         { enable: false, name: 'workout', 	class: 'Workout', 		file: './routes/r_workout' }
         { enable: false, name: 'register', 	class: 'Registration', 	file: './routes/r_registration' }

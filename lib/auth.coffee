@@ -59,7 +59,7 @@ class Auth
 
 		Q.resolve()
 		.then ->
-
+			
 			# Grab User Credentials
 			sdb.auth.get_auth_credentials ctx, username
 		.then (db_rows)=>

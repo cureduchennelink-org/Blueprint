@@ -17,6 +17,7 @@ class SqlAuth
 			update_by_id: ['eml','pwd']
 			get_by_cred: ['*']
 			get_by_id: ['id','eml']
+			create: ['eml','pwd']
 
 		@db.method_factory @, 'SqlAuth'
 
