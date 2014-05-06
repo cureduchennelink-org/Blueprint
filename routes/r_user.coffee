@@ -1,13 +1,6 @@
 #
 # User Routes
 #
-# Author: Jamie Hollowell
-#
-# 	kit dependencies:
-#		db.[mysql,mongo]
-#		wrapper
-#		logger.log
-#
 
 Q= require 'q'
 E= require '../lib/error'
@@ -15,13 +8,9 @@ E= require '../lib/error'
 sdb= false # MySql DB
 _log= false
 
-ident_tbl= 'ident'
-extnd_tbl= 'profile'
-
 class User
 	constructor: (kit)->
-		_log= kit.services.logger.log
-		_log.info 'Initializing User Routes...'
+		_log= 		kit.services.logger.log
 		sdb= 		kit.services.db.mysql
 		@template= 	kit.services.template
 		@ses= 		kit.services.ses
@@ -32,7 +21,7 @@ class User
 			get:
 				verb: 'get', route: '/User/:usid'
 				use: true, wrap: 'default_wrap', version: any: @_view_profile
-				sql_conn: true, auth_required: true, route: '/User/:usid'
+				sql_conn: true, auth_required: true
 				pre_load: user: @_pl_user
 			update_profile:
 				verb: 'put', route: '/User/:usid/updateprofile'

@@ -14,13 +14,13 @@ sdb= false # MySql DB
 
 class AuthRoute
 	constructor: (kit)->
-		@log= kit.services.logger.log
-		@log.info 'Initializing Auth Routes...'
-		@config= 		kit.services.config.auth
-		@tokenMgr= 		kit.services.tokenMgr
-		sdb= 			kit.services.db.mysql
-		@tripMgr=		kit.services.tripMgr
-		@ses= 			kit.services.ses
+		@log= 		kit.services.logger.log
+		sdb= 		kit.services.db.mysql
+		@ses= 		kit.services.ses
+		@auth= 		kit.services.auth
+		@config= 	kit.services.config.auth
+		@tripMgr=	kit.services.tripMgr
+		@tokenMgr= 	kit.services.tokenMgr
 
 		# Authentication  Endpoints
 		@endpoints=
@@ -36,19 +36,19 @@ class AuthRoute
 				use: true, wrap: 'default_wrap', version: any: @_update_email
 				sql_conn: true, sql_tx: true, auth_required: true
 			forgot_password:
-				verb: 'post', route: '/AuthTrip'
+				verb: 'post', route: '/AuthChange'
 				use: true, wrap: 'default_wrap', version: any: @_forgot_password
 				sql_conn: true, sql_tx: true
 			read_auth_trip:
-				verb: 'get', route: '/AuthTrip/:token'
+				verb: 'get', route: '/AuthChange/:token'
 				use: true, wrap: 'default_wrap', version: any: @_get_auth_trip
 				sql_conn: true
 			verify_forgot:
-				verb: 'post', route: '/AuthTrip/:token/verifyforgot'
+				verb: 'post', route: '/AuthChange/:token/verifyforgot'
 				use: true, wrap: 'default_wrap', version: any: @_verify_forgot
 				sql_conn: true, sql_tx: true
 			verify_email:
-				verb: 'post', route: '/AuthTrip/:token/verifyemail'
+				verb: 'post', route: '/AuthChange/:token/verifyemail'
 				use: true, wrap: 'default_wrap', version: any: @_verify_email
 				sql_conn: true, sql_tx: true
 
@@ -74,7 +74,7 @@ class AuthRoute
 
 			# Validate Caller Credentials if requesting password
 			return false unless p.grant_type is 'password'
-			@_validateCredentials ctx, p.username, p.password
+			@auth.validateCredentials ctx, p.username, p.password
 		.then (auth_ident_id)->
 			_log.debug f, 'got auth_ident_id:', auth_ident_id
 			result.auth_ident_id= auth_ident_id if auth_ident_id isnt false
@@ -218,7 +218,7 @@ class AuthRoute
 		.then =>
 
 			# Encrypt the new password
-			@_encryptPassword p.new_pwd
+			@auth.encryptPassword p.new_pwd
 		.then (pwd_hash)->
 
 			# Update the ident password
@@ -295,7 +295,7 @@ class AuthRoute
 			throw new E.AccessDenied 'AUTH:AUTH_TRIP:INVALID_DOMAIN' if trip.domain isnt 'forgot_password'
 
 			# Encrypt the new password
-			@_encryptPassword p.new_pwd
+			@auth.encryptPassword p.new_pwd
 		.then (pwd_hash)->
 
 			# Update the ident password
@@ -345,58 +345,6 @@ class AuthRoute
 
 			# Send back to Client
 			send: { ident }
-
-
-	_validateCredentials: (ctx, username, password)->
-		f= 'Auth:_validateCredentials:'
-		_log= ctx.log ? @log
-		creds= false
-
-		Q.resolve()
-		.then ->
-
-			# Grab User Credentials
-			sdb.auth.get_auth_credentials ctx, username
-		.then (db_rows)=>
-			_log.debug 'got credentials:', db_rows
-			if db_rows.length isnt 1 or not db_rows[0].pwd
-				throw new E.OAuthError 401, 'invalid_client'
-			creds= db_rows[0]
-
-			# Compare given password to stored hash password
-			@_comparePassword password, creds.pwd
-		.then (a_match)->
-			_log.debug 'got a match:', a_match
-			throw new E.OAuthError 401, 'invalid_client' if not a_match
-
-			creds.id
-
-	_pbkdf2: (p,buf,IT,KL)-> (Q.ninvoke crypto, 'pbkdf2', p, buf, IT, KL)
-
-	_comparePassword: (password, compareHash)->
-		f= 'Auth:_comparePassword:'
-		parts= compareHash.split '.', 2
-		throw new E.ServerError 'auth_error','Missing salt on password hash' if parts.length isnt 2
-
-		(@_pbkdf2 password, new Buffer(parts[0], 'base64'), ITERATIONS, KEY_LENGTH)
-		.then (key)=>
-			return if (new Buffer(key).toString 'base64') is parts[1] then true else false
-
-	_encryptPassword: (password)->
-		saltBuf= false
-
-		Q.resolve()
-		.then ->
-
-			# Create Salt
-			Q.ninvoke crypto, 'randomBytes', SALT_SIZE
-		.then (buffer)=>
-			saltBuf= buffer
-
-			# Encrypt Password
-			@_pbkdf2 password, saltBuf, ITERATIONS, KEY_LENGTH
-		.then (key)->
-			return (saltBuf.toString 'base64') + '.' + new Buffer(key).toString 'base64'
 
 	# Preload the Auth Ident
 	_pl_ident: (ctx)->

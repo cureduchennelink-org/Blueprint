@@ -27,12 +27,12 @@
       this._update_email = __bind(this._update_email, this);
       this._authenticate = __bind(this._authenticate, this);
       this.log = kit.services.logger.log;
-      this.log.info('Initializing Auth Routes...');
-      this.config = kit.services.config.auth;
-      this.tokenMgr = kit.services.tokenMgr;
       sdb = kit.services.db.mysql;
-      this.tripMgr = kit.services.tripMgr;
       this.ses = kit.services.ses;
+      this.auth = kit.services.auth;
+      this.config = kit.services.config.auth;
+      this.tripMgr = kit.services.tripMgr;
+      this.tokenMgr = kit.services.tokenMgr;
       this.endpoints = {
         authenticate: {
           verb: 'post',
@@ -69,7 +69,7 @@
         },
         forgot_password: {
           verb: 'post',
-          route: '/AuthTrip',
+          route: '/AuthChange',
           use: true,
           wrap: 'default_wrap',
           version: {
@@ -80,7 +80,7 @@
         },
         read_auth_trip: {
           verb: 'get',
-          route: '/AuthTrip/:token',
+          route: '/AuthChange/:token',
           use: true,
           wrap: 'default_wrap',
           version: {
@@ -90,7 +90,7 @@
         },
         verify_forgot: {
           verb: 'post',
-          route: '/AuthTrip/:token/verifyforgot',
+          route: '/AuthChange/:token/verifyforgot',
           use: true,
           wrap: 'default_wrap',
           version: {
@@ -101,7 +101,7 @@
         },
         verify_email: {
           verb: 'post',
-          route: '/AuthTrip/:token/verifyemail',
+          route: '/AuthChange/:token/verifyemail',
           use: true,
           wrap: 'default_wrap',
           version: {
@@ -150,7 +150,7 @@
         if (p.grant_type !== 'password') {
           return false;
         }
-        return _this._validateCredentials(ctx, p.username, p.password);
+        return _this.auth.validateCredentials(ctx, p.username, p.password);
       }).then(function(auth_ident_id) {
         _log.debug(f, 'got auth_ident_id:', auth_ident_id);
         if (auth_ident_id !== false) {
@@ -325,7 +325,7 @@
       }
       f = 'User:_update_password:';
       return Q.resolve().then(function() {
-        return _this._encryptPassword(p.new_pwd);
+        return _this.auth.encryptPassword(p.new_pwd);
       }).then(function(pwd_hash) {
         return sdb.auth.update_by_id(ctx, pre_loaded.auth_id, {
           pwd: pwd_hash
@@ -418,7 +418,7 @@
         if (trip.domain !== 'forgot_password') {
           throw new E.AccessDenied('AUTH:AUTH_TRIP:INVALID_DOMAIN');
         }
-        return _this._encryptPassword(p.new_pwd);
+        return _this.auth.encryptPassword(p.new_pwd);
       }).then(function(pwd_hash) {
         return sdb.auth.update_by_id(ctx, trip.auth_ident_id, {
           pwd: pwd_hash
@@ -476,65 +476,6 @@
             ident: ident
           }
         };
-      });
-    };
-
-    AuthRoute.prototype._validateCredentials = function(ctx, username, password) {
-      var creds, f, _log, _ref,
-        _this = this;
-      f = 'Auth:_validateCredentials:';
-      _log = (_ref = ctx.log) != null ? _ref : this.log;
-      creds = false;
-      return Q.resolve().then(function() {
-        return sdb.auth.get_auth_credentials(ctx, username);
-      }).then(function(db_rows) {
-        _log.debug('got credentials:', db_rows);
-        if (db_rows.length !== 1 || !db_rows[0].pwd) {
-          throw new E.OAuthError(401, 'invalid_client');
-        }
-        creds = db_rows[0];
-        return _this._comparePassword(password, creds.pwd);
-      }).then(function(a_match) {
-        _log.debug('got a match:', a_match);
-        if (!a_match) {
-          throw new E.OAuthError(401, 'invalid_client');
-        }
-        return creds.id;
-      });
-    };
-
-    AuthRoute.prototype._pbkdf2 = function(p, buf, IT, KL) {
-      return Q.ninvoke(crypto, 'pbkdf2', p, buf, IT, KL);
-    };
-
-    AuthRoute.prototype._comparePassword = function(password, compareHash) {
-      var f, parts,
-        _this = this;
-      f = 'Auth:_comparePassword:';
-      parts = compareHash.split('.', 2);
-      if (parts.length !== 2) {
-        throw new E.ServerError('auth_error', 'Missing salt on password hash');
-      }
-      return (this._pbkdf2(password, new Buffer(parts[0], 'base64'), ITERATIONS, KEY_LENGTH)).then(function(key) {
-        if ((new Buffer(key).toString('base64')) === parts[1]) {
-          return true;
-        } else {
-          return false;
-        }
-      });
-    };
-
-    AuthRoute.prototype._encryptPassword = function(password) {
-      var saltBuf,
-        _this = this;
-      saltBuf = false;
-      return Q.resolve().then(function() {
-        return Q.ninvoke(crypto, 'randomBytes', SALT_SIZE);
-      }).then(function(buffer) {
-        saltBuf = buffer;
-        return _this._pbkdf2(password, saltBuf, ITERATIONS, KEY_LENGTH);
-      }).then(function(key) {
-        return (saltBuf.toString('base64')) + '.' + new Buffer(key).toString('base64');
       });
     };
 

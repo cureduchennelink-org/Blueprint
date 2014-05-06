@@ -34,6 +34,13 @@
           page: 'confirm_email_change',
           Subject: 'Your email address has been successfully verified.',
           Text: 'Thank you for verifying your new email address.'
+        },
+        verify_signup: {
+          model: 'Signup',
+          tmpl: 'Top',
+          page: 'verify_signup',
+          Subject: 'Please Verify Signup.',
+          Text: 'Thank yor for signing up with us! Please click the link below'
         }
       }
     },
@@ -69,6 +76,7 @@
     },
     api: {
       port: 9500,
+      ident_id: 98,
       static_file_server: {
         directory: './html_root',
         "default": 'index.html'
@@ -78,7 +86,7 @@
       {
         enable: false,
         name: 'auth',
-        "class": 'AuthRoute',
+        "class": 'Auth',
         file: './routes/r_auth'
       }, {
         enable: false,
@@ -90,6 +98,11 @@
         name: 'workout',
         "class": 'Workout',
         file: './routes/r_workout'
+      }, {
+        enable: false,
+        name: 'register',
+        "class": 'Registration',
+        file: './routes/r_registration'
       }
     ],
     template: {

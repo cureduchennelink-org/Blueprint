@@ -14,12 +14,12 @@ s_use=			require	 './lib/server_use'
 config= 		(require './lib/config')()
 {SES}=			require  './lib/ses'
 {Push}=			require  './lib/push'
+{Auth}=			require  './lib/auth'
 {Logger}=		require  './lib/logger'
 {Router}=		require  './lib/router'
 {Wrapper}=		require  './lib/wrapper'
-{TokenMgr}=		require  './lib/token_manager' # TODO: Combine AuthParser, Token Manager in to Auth Module
+{TokenMgr}=		require  './lib/token_manager'
 {Prototype}= 	require  './lib/prototype'
-{AuthParser}=	require  './lib/authorizationParser'
 {TripManager}= 	require  './lib/trip_manager'
 {EpicTemplate}= require  './lib/EpicTemplate'
 
@@ -39,7 +39,7 @@ kit.new_service 'template',		EpicTemplate, ['template']			# Epic Template Engine
 kit.new_service 'template_use',	EpicTemplate, ['template_use']			# Epic Template Engine
 kit.new_service 'tokenMgr', 	TokenMgr				# Token Manager
 kit.new_service 'db', 			Db						# Database Object (MySQL, MongoDB)
-kit.new_service 'authParser', 	AuthParser				# Request Authorization Parser
+kit.new_service 'auth', 		Auth					# Auth Logic
 kit.new_service 'router',		Router					# Route Creator
 kit.new_service 'push',			Push					# Push Service
 kit.new_service 'wrapper', 		Wrapper					# Route Wrapper
@@ -52,11 +52,12 @@ server.use s_use.set_response_headers
 server.use restify.queryParser()
 server.use restify.bodyParser()
 server.use restify.requestLogger()
-server.use kit.services.authParser.parseAuthorization
+server.use kit.services.auth.parseAuthorization # TODO: Loop through the servics and run server_use functions
 server.use s_use.debug_request
 
 # Create all Routes
 for mod in kit.services.config.route_modules when mod.enable is true
+	log.info "Initializing #{mod.class} Routes..."
 	kit.new_route_service mod.name, (require mod.file)[mod.class]
 	kit.services.wrapper.add mod.name
 

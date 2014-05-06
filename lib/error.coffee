@@ -71,7 +71,6 @@ DbError= (token)->
 	restify.RestError.call this,
 		statusCode: 500
 		restCode: 'DatabaseError'
-		message: message
 		body: {error: token}
 		constructorOpt: DbError
 	this.name= 'Database Error'

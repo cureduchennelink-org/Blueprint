@@ -1,9 +1,6 @@
 #
 #	Route Pre-Loader
 #
-#	kit dependencies:
-#		db.mysql
-#		logger.log.[debug,info]
 
 Q= require 'q'
 

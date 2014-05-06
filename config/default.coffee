@@ -7,7 +7,7 @@ module.exports=
 		accessKeyId: 	'AKIAI5FIAQV7AJEQOH3Q'
 		secretAccessKey: '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'
 		region: 'us-west-2'
-		debug_email: 'Blueprint Debug ToAddress <jamie.hollowell@dv-mobile.com>'
+		debug_email: 'Blueprint Debug ToAddress <jamie.hollowell@dv-mobile.com>' # Make False to send to actual email address
 		default:
 			BccAddresses: []
 			CcAddresses: []
@@ -27,6 +27,10 @@ module.exports=
 				model: 'User', tmpl: 'Top', page: 'confirm_email_change'
 				Subject: 'Your email address has been successfully verified.'
 				Text: 'Thank you for verifying your new email address.'
+			verify_signup:
+				model: 'Signup', tmpl: 'Top', page: 'verify_signup'
+				Subject: 'Please Verify Signup.'
+				Text: 'Thank yor for signing up with us! Please click the link below'
 	log:
 		name: 'blueprint'
 		level: 'debug'
@@ -53,13 +57,15 @@ module.exports=
             options: 'mongodb://localhost/mydb'
 	api:
 		port: 9500
+		ident_id: 98	# When the API needs to do something that requires an ident_id
 		static_file_server:
 			directory: './html_root'
 			default: 'index.html'
 	route_modules: [
-        { enable: false, name: 'auth',		class: 'AuthRoute', file: './routes/r_auth' }
-        { enable: false, name: 'user',		class: 'User', 		file: './routes/r_user' }
-        { enable: false, name: 'workout', 	class: 'Workout', 	file: './routes/r_workout' }
+        { enable: false, name: 'auth',		class: 'Auth', 			file: './routes/r_auth' }
+        { enable: false, name: 'user',		class: 'User', 			file: './routes/r_user' }
+        { enable: false, name: 'workout', 	class: 'Workout', 		file: './routes/r_workout' }
+        { enable: false, name: 'register', 	class: 'Registration', 	file: './routes/r_registration' }
     ]
     template: view_path: 'views/email'
     template_use: view_path: 'views/use'
