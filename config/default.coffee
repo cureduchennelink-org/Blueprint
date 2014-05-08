@@ -81,6 +81,8 @@ module.exports=
 			datasets:
 				Item:
 					title: 's128', completed:'n'
+				Categories:
+					label: 's128'
 			}
 			{
 			name: 'League', enable: true, auth_req: false

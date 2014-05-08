@@ -28,7 +28,7 @@ class Prototype
 				q_result= q_result.then =>
 					# Initiate the Push Set
 					ctx= conn: null, log: @log
-					push.GetPushSet ctx, false, "Prototype:#{mod.name}"
+					push.GetPushSet ctx, true, "Prototype:#{mod.name}"
 				.then (pset)=>
 					kit.add_route_service mod.name, new PrototypeModule mod, pset
 					wrapper.add mod.name
@@ -45,23 +45,23 @@ class PrototypeModule
 			@endpoints["get#{nm}"]=
 				verb: 'get', route: "/Prototype/#{@mod.name}/#{nm}"
 				use: true, wrap: 'default_wrap', version: any: @proto_wrap @_get, nm
-				auth_required: @mod.auth_req
+				sql_conn: true, sql_tx: true, auth_required: @mod.auth_req
 			@endpoints["get_by_id#{nm}"]=
 				verb: 'get', route: "/Prototype/#{@mod.name}/#{nm}/:r0id"
 				use: true, wrap: 'default_wrap', version: any: @proto_wrap @_get, nm
-				auth_required: @mod.auth_req
+				sql_conn: true, sql_tx: true, auth_required: @mod.auth_req
 			@endpoints["create#{nm}"]=
 				verb: 'post', route: "/Prototype/#{@mod.name}/#{nm}"
 				use: true, wrap: 'default_wrap', version: any: @proto_wrap @_create, nm
-				sql_conn: false, auth_required: @mod.auth_req
+				sql_conn: true, sql_tx: true, auth_required: @mod.auth_req
 			@endpoints["update#{nm}"]=
 				verb: 'put', route: "/Prototype/#{@mod.name}/#{nm}/:r0id/update"
 				use: true, wrap: 'default_wrap', version: any: @proto_wrap @_update, nm
-				auth_required: @mod.auth_req
+				sql_conn: true, sql_tx: true, auth_required: @mod.auth_req
 			@endpoints["delete#{nm}"]=
 				verb: 'del', route: "/Prototype/#{@mod.name}/#{nm}/:r0id/delete"
 				use: true, wrap: 'default_wrap', version: any: @proto_wrap @_delete, nm
-				auth_required: @mod.auth_req
+				sql_conn: true, sql_tx: true, auth_required: @mod.auth_req
 
 	proto_wrap: (func, resource)->
 		return (ctx, pre_loaded)-> func ctx, pre_loaded, resource
@@ -71,12 +71,12 @@ class PrototypeModule
 		use_doc= {}
 		return use_doc if ctx is 'use'
 		p= 	  ctx.p
-		conn= ctx.conn
 		_log= ctx.log
 
 
 		f= "Prototype:_get:#{@mod.name}:#{resource}:"
 		r= @resource[resource]
+		get_one= p.r0id?
 		r0id= (Number p.r0id)
 		result= {}
 
@@ -87,11 +87,15 @@ class PrototypeModule
 		.then =>
 
 			# Load the record or table
-			if p.r0id
+			if get_one
 				result[resource]= [ r.idx[r0id] ]
 			else
 				result[resource]= r.table
-#				result.push_item= @pset.getItem()
+			
+			# Load the Push Set Handle
+			@pset.getItem ctx, 0
+		.then (push_handle)->
+			result.push= push_handle
 
 			# Respond to Client
 			result.success= true
@@ -125,7 +129,9 @@ class PrototypeModule
 			r.idx[rec.id]= rec
 			result[resource]= [ rec ] # e.g. Item: [ {completed: 'yes', id: 1} ]
 
-			# @pset.itemChange 0, 'add', {}, rec, rec.id, resource
+			# Notify Push Set of Item Change
+			@pset.itemChange ctx, 0, 'add', {}, rec, rec.id, resource
+		.then =>
 
 			# Respond to Client
 			result.success= true
@@ -160,7 +166,7 @@ class PrototypeModule
 
 		q_result= Q.resolve true
 		for r0id in batch_ids
-			do (r0id)-> q_result= q_result.then () ->
+			do (r0id)=> q_result= q_result.then () =>
 				before= {}
 				for nm of new_values
 					before[nm]= r.idx[r0id][nm]
@@ -169,9 +175,9 @@ class PrototypeModule
 				r.idx[r0id]= _.merge r.idx[r0id], new_values
 				result[resource]= [ r.idx[r0id] ] # e.g. Item: [ {completed: 'yes', id: 1} ]
 
-				# Push the change
-				#@pset.itemChange 0, 'change', before, new_values, rec.id, resource
-
+				# Notify Push Set of Item Change
+				@pset.itemChange ctx, 0, 'change', before, new_values, r0id, resource
+			.then =>
 		q_result
 		.then ->
 
@@ -202,7 +208,7 @@ class PrototypeModule
 
 		q_result= Q.resolve true
 		for r0id in batch_ids
-			do (r0id)-> q_result= q_result.then () ->
+			do (r0id)=> q_result= q_result.then () =>
 				# Delete record
 				for item,idx in r.table when item.id is (Number r0id)
 					before= _.clone item
@@ -210,9 +216,9 @@ class PrototypeModule
 					break
 				delete r.idx[r0id]
 
-				# Push Item Change
-				#@pset.itemChange conn, 0, 'delete', before, {}, rec.id, resource
-
+				# Notify Push Set of Item Change
+				@pset.itemChange ctx, 0, 'delete', before, {}, r0id, resource
+			.then ->
 		q_result
 		.then ->
 

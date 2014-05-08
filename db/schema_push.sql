@@ -20,8 +20,8 @@ CREATE TABLE pset_item (
 	,	mo		TIMESTAMP		DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP /* 'modified' */
 	,	pset_id	INT(  10 )		NOT NULL
 
-	,	xrefa		VARCHAR( 128) DEFAULT NULL /* external table reference */
-	,	count		INT			  DEFAULT NULL /* change count */
+	,	xref		VARCHAR( 128) DEFAULT NULL /* external table reference */
+	,	count		INT			  DEFAULT 0 /* change count */
 ) TYPE = INNODB ;
 
 DROP   TABLE pset_item_change;
@@ -35,7 +35,7 @@ CREATE TABLE pset_item_change (
 	,	verb			VARCHAR( 128) DEFAULT NULL /* 'add, change, delete' */
 	,	tbl				VARCHAR( 128) DEFAULT NULL /* 'table that was changed' */
 	,	tbl_id			INT			  DEFAULT NULL /* 'id of record that was changed' */
-	,	old			VARCHAR( 128) DEFAULT '{}' /* 'fields and values before change' */
-	,	new			VARCHAR( 128) DEFAULT '{}' /* 'fields and values after change' */
+	,	prev			VARCHAR(1024) DEFAULT NULL /* 'fields and values before change' */
+	,	after			VARCHAR(1024) DEFAULT NULL /* 'fields and values after change' */
 ) TYPE = INNODB ;
 

@@ -131,6 +131,9 @@
           Item: {
             title: 's128',
             completed: 'n'
+          },
+          Categories: {
+            label: 's128'
           }
         }
       }, {

@@ -55,18 +55,6 @@ AccessDenied= (token)->
 util.inherits AccessDenied, restify.RestError
 exports.AccessDenied= AccessDenied
 
-ServerError= (error, message)->
-	restify.RestError.call this,
-		statusCode: 500
-		restCode: 'ServerError'
-		message: message
-		body: {error: error, message}
-		constructorOpt: ServerError
-	this.name= 'Server Error'
-
-util.inherits ServerError, restify.RestError
-exports.DbError= ServerError
-
 DbError= (token)->
 	restify.RestError.call this,
 		statusCode: 500

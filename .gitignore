@@ -20,5 +20,8 @@ node_modules/
 bin/
 gen/
 npm-debug.log
-
 .project
+local_dev.coffee
+local_dev.js
+git-version.txt
+

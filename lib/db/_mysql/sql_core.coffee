@@ -53,10 +53,10 @@ class SqlCore
 			null
 
 	# Factory for attaching common functions to SQL Modules
-	# get_collection (conn)
-	# get_by_ident_id (conn, ident_id)
-	# create (conn, new_values)
-	# update_by_ident_id (conn, ident_id, new_values)
+	# get_collection (ctx)
+	# get_by_ident_id (ctx, ident_id)
+	# create (ctx, new_values)
+	# update_by_ident_id (ctx, ident_id, new_values)
 	method_factory: (sql_mod, name)=>
 		table= 		sql_mod.table
 		ident_tbl=  sql_mod.ident_tbl
@@ -93,7 +93,7 @@ class SqlCore
 				_log.debug f, new_values
 
 				for nm, val of new_values when nm not in schema.create
-					throw new E.ServerError 'Invalid ' + table + ' Insert Column', col: nm, value: val
+					throw new E.DbError "DB:CORE:BAD_INSERT_COL_#{table}_#{nm}"
 
 				Q.resolve()
 				.then =>
