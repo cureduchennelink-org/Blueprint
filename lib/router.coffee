@@ -26,8 +26,11 @@ class Router
 		@template= 	kit.services.template_use
 		@server= 	kit.services.server
 		@usage= []
+		@usage_by_mod= {}
 
-	add_route: (verb, route, func)->
+	add_route: (mod, verb, route, func)->
+		@usage_by_mod[mod]= [] unless @usage_by_mod[mod]
+		@usage_by_mod[mod].push verb:use_map[verb], route: route, Param: (name: nm, format: val for nm,val of func 'use')
 		@usage.push verb:use_map[verb], route: route, Param: (name: nm, format: val for nm,val of func 'use')
 		verbs= [verb]
 		verbs.push 'post' if verb in ['del','put']
@@ -36,7 +39,10 @@ class Router
 			@server[v] @pfx + '' + route, func
 
 	make_tbl: ()->
-		Route: (rec for rec in @usage)
+		table= Module: []
+		for mod, route_list of @usage_by_mod 
+			table.Module.push name: mod, Route: (route for route in route_list)
+		table
 
 	route_usage: ()=>
 		f= 'Router:route_usage'
@@ -45,7 +51,7 @@ class Router
 				r.send @usage
 			else
 				try
-					result= @template.render 'Usage','Top','welcome', @make_tbl()
+					result= @template.render 'Usage','Usage','usage_main', @make_tbl()
 				catch e
 					@log.debug e, e.stack
 					throw e

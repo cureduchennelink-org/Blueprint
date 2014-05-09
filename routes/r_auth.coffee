@@ -59,7 +59,7 @@ class AuthRoute
 
 	# POST /Auth
 	_authenticate: (ctx, pre_loaded)=>
-		use_doc= client_id: 'rS', username: 'rS', password: 'rS', grant_type:'S'
+		use_doc= client_id: 'r:S', username: 'r:S', password: 'r:S', grant_type:'r:S'
 		return use_doc if ctx is 'use'
 		p= 	  ctx.p
 		_log= ctx.log
@@ -107,7 +107,7 @@ class AuthRoute
 
 	# POST /Auth/:auid/updateemail
 	_update_email: (ctx, pre_loaded)=>
-		use_doc= new_eml: 'S'
+		use_doc= new_eml: 'r:S'
 		return use_doc if ctx is 'use'
 		p= 	  ctx.p
 		conn= ctx.conn
@@ -202,7 +202,7 @@ class AuthRoute
 
 	# POST/PUT /Auth/:auid/updatepassword
 	_update_password: (ctx, pre_loaded)=>
-		use_doc= new_pwd: 'S'
+		use_doc= new_pwd: 'r:S'
 		return use_doc if ctx is 'use'
 		p= 	  ctx.p
 		conn= ctx.conn
@@ -233,7 +233,7 @@ class AuthRoute
 
 	# POST /AuthTrip
 	_forgot_password: (ctx, pre_loaded)=>
-		use_doc= email: 'S'
+		use_doc= email: 'r:S'
 		return use_doc if ctx is 'use'
 		p= 	  ctx.p
 		_log= ctx.log
@@ -270,7 +270,7 @@ class AuthRoute
 
 	# POST /AuthTrip/:token/verifyforgot
 	_verify_forgot: (ctx, pre_loaded)=>
-		use_doc= new_pwd: 'S'
+		use_doc= new_pwd: 'r:S'
 		return use_doc if ctx is 'use'
 		p= 	  ctx.p
 		_log= ctx.log
@@ -314,7 +314,7 @@ class AuthRoute
 
 	# GET  /AuthTrip/:token
 	_get_auth_trip: (ctx, pre_loaded)=>
-		use_doc= email: 'S'
+		use_doc= {}
 		return use_doc if ctx is 'use'
 		p= 	  ctx.p
 		_log= ctx.log

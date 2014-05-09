@@ -132,10 +132,10 @@
       var current_token, f, p, result, use_doc, _log,
         _this = this;
       use_doc = {
-        client_id: 'rS',
-        username: 'rS',
-        password: 'rS',
-        grant_type: 'S'
+        client_id: 'r:S',
+        username: 'r:S',
+        password: 'r:S',
+        grant_type: 'r:S'
       };
       if (ctx === 'use') {
         return use_doc;
@@ -195,7 +195,7 @@
       var conn, f, p, use_doc, _log,
         _this = this;
       use_doc = {
-        new_eml: 'S'
+        new_eml: 'r:S'
       };
       if (ctx === 'use') {
         return use_doc;
@@ -309,7 +309,7 @@
       var conn, f, p, use_doc, _log,
         _this = this;
       use_doc = {
-        new_pwd: 'S'
+        new_pwd: 'r:S'
       };
       if (ctx === 'use') {
         return use_doc;
@@ -349,7 +349,7 @@
       var f, ident, p, use_doc, _log,
         _this = this;
       use_doc = {
-        email: 'S'
+        email: 'r:S'
       };
       if (ctx === 'use') {
         return use_doc;
@@ -392,7 +392,7 @@
       var f, p, success, trip, use_doc, _log,
         _this = this;
       use_doc = {
-        new_pwd: 'S'
+        new_pwd: 'r:S'
       };
       if (ctx === 'use') {
         return use_doc;
@@ -442,9 +442,7 @@
     AuthRoute.prototype._get_auth_trip = function(ctx, pre_loaded) {
       var bad_token, f, ident, p, trip, use_doc, _log,
         _this = this;
-      use_doc = {
-        email: 'S'
-      };
+      use_doc = {};
       if (ctx === 'use') {
         return use_doc;
       }

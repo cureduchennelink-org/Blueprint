@@ -30,7 +30,7 @@ class Wrapper
 		for func, endpoint of @routes[mod].endpoints
 			endpoint.name= mod+':'+func
 			wrap= @[endpoint.wrap] endpoint
-			@router.add_route endpoint.verb, endpoint.route, wrap
+			@router.add_route mod, endpoint.verb, endpoint.route, wrap
 
 	auth_wrap: (caller)->
 		auth_func= @auth

@@ -77,9 +77,9 @@
       var f, p, success, use_doc,
         _this = this;
       use_doc = {
-        fnm: 'S',
-        lnm: 'S',
-        eml: 'S'
+        fnm: 'r:S',
+        lnm: 'r:S',
+        eml: 'r:S'
       };
       if (ctx === 'use') {
         return use_doc;
@@ -171,7 +171,12 @@
     Registration.prototype._register_signup = function(ctx, pre_loaded) {
       var change_trip, eml, eml_change, f, new_ident_id, new_pwd, p, success, trip, use_doc,
         _this = this;
-      use_doc = {};
+      use_doc = {
+        fnm: 'r:S',
+        lnm: 'r:S',
+        eml: 'r:S',
+        pwd: 'r:S'
+      };
       if (ctx === 'use') {
         return use_doc;
       }

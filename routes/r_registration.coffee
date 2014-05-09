@@ -40,7 +40,7 @@ class Registration
 
 	# Private Logic
 	_signup: (ctx, pre_loaded)=>
-		use_doc= fnm: 'S', lnm: 'S', eml: 'S'
+		use_doc= fnm: 'r:S', lnm: 'r:S', eml: 'r:S'
 		return use_doc if ctx is 'use'
 		_log= ctx.log
 		p= ctx.p
@@ -110,7 +110,7 @@ class Registration
 			send: { success, signup: trip.json}
 
 	_register_signup: (ctx, pre_loaded)=>
-		use_doc= {}
+		use_doc= fnm: 'r:S', lnm: 'r:S', eml: 'r:S', pwd: 'r:S'
 		return use_doc if ctx is 'use'
 		_log= ctx.log
 		p= ctx.p
