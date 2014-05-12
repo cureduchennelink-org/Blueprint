@@ -30,7 +30,7 @@ class Wrapper
 		for func, endpoint of @routes[mod].endpoints
 			endpoint.name= mod+':'+func
 			wrap= @[endpoint.wrap] endpoint
-			@router.add_route mod, endpoint.verb, endpoint.route, wrap
+			@router.add_route mod, func, endpoint.verb, endpoint.route, wrap
 
 	auth_wrap: (caller)->
 		auth_func= @auth
@@ -42,6 +42,7 @@ class Wrapper
 
 	auth: (req, res, next, caller)->
 		f= "Wrapper:auth"
+		throw new E.ServerError 'WRAPPER:AUTH:MYSQL_NOT_ENABLED' unless config.db.mysql.enable
 		route_logic= caller.version[req.params?.Version] ? caller.version.any
 		return (if caller.use isnt true then caller.use else route_logic req) if req is 'use'
 		ctx= conn: null, p: req.params, log: req.log
@@ -117,12 +118,14 @@ class Wrapper
 
 			# Acquire DB Connection
 			return false unless caller.sql_conn
+			throw new E.ServerError 'WRAPPER:DEFAULT:MYSQL_NOT_ENABLED' unless config.db.mysql.enable
 			sdb.core.Acquire()
 		.then (c) ->
 			ctx.conn= c if c isnt false
 
 			# Start a Transaction
 			return false unless caller.sql_tx
+			throw new E.ServerError 'WRAPPER:DEFAULT:MYSQL_NOT_ENABLED' unless config.db.mysql.enable
 			sdb.core.StartTransaction(ctx)
 		.then () ->
 
