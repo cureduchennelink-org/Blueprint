@@ -32,8 +32,14 @@ class Router
 		@log.debug 'adding route:', name
 		@usage_by_mod[mod]= [] unless @usage_by_mod[mod]
 		use_spec= func 'use'
-		@usage_by_mod[mod].push name: name, verb: use_map[verb], route: route, Param: (name: nm, format: val for nm,val of use_spec)
-		@usage.push verb:use_map[verb], route: route, Param: (name: nm, format: val for nm,val of func 'use')
+		use_rec= 
+			name: name
+			verb: use_map[verb]
+			route: route
+			Param: (name: nm, format: val for nm,val of use_spec.params)
+			Response: (name: nm, format: val for nm,val of use_spec.response)
+		@usage_by_mod[mod].push use_rec
+		@usage.push use_rec
 		verbs= [verb]
 		verbs.push 'post' if verb in ['del','put']
 		for v in verbs

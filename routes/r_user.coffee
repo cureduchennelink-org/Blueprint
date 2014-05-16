@@ -31,7 +31,9 @@ class User
 
 	# Private Logic
 	_view_profile: (ctx, pre_loaded)=>
-		use_doc= {}
+		use_doc=
+			params: {}
+			response: success: 'bool', users: 'list'
 		return use_doc if ctx is 'use'
 		success= false
 
@@ -50,9 +52,11 @@ class User
 
 	_update_profile: (ctx, pre_loaded)->
 		use_doc=
-			fnm: 'S', lnm: 'S', website: 'S'
-			avatar_path: 'S', avatar_thumb: 'S'
-			prog_lang: 'S', skill_lvl: 'S'
+			params:
+				fnm: 'S', lnm: 'S', website: 'S'
+				avatar_path: 'S', avatar_thumb: 'S'
+				prog_lang: 'S', skill_lvl: 'S'
+			response: success: 'bool', updated_user: 'object'
 		return use_doc if ctx is 'use'
 		p= 	  ctx.p
 		conn= ctx.conn

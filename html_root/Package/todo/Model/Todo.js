@@ -282,7 +282,7 @@
       if (this.c_items) {
         return this.c_items;
       }
-      results = rest_v1.call('GET', 'Prototype/Todo/Item', f);
+      results = rest_v1.call('GET', 'Prototype/Todo', f);
       if (results.success) {
         this.c_items = results.Item;
         this.c_items_idx = {};

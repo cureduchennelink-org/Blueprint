@@ -55,7 +55,13 @@
 
     User.prototype._view_profile = function(ctx, pre_loaded) {
       var f, success, use_doc, users;
-      use_doc = {};
+      use_doc = {
+        params: {},
+        response: {
+          success: 'bool',
+          users: 'list'
+        }
+      };
       if (ctx === 'use') {
         return use_doc;
       }
@@ -79,13 +85,19 @@
     User.prototype._update_profile = function(ctx, pre_loaded) {
       var conn, f, new_user_values, nm, p, updatable_fields, use_doc, val;
       use_doc = {
-        fnm: 'S',
-        lnm: 'S',
-        website: 'S',
-        avatar_path: 'S',
-        avatar_thumb: 'S',
-        prog_lang: 'S',
-        skill_lvl: 'S'
+        params: {
+          fnm: 'S',
+          lnm: 'S',
+          website: 'S',
+          avatar_path: 'S',
+          avatar_thumb: 'S',
+          prog_lang: 'S',
+          skill_lvl: 'S'
+        },
+        response: {
+          success: 'bool',
+          updated_user: 'object'
+        }
       };
       if (ctx === 'use') {
         return use_doc;

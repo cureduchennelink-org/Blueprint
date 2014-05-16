@@ -40,16 +40,13 @@ class PrototypeModule
 		@resource= {}
 		@endpoints= {}
 
+		@endpoints["get#{@mod.name}"]=
+			verb: 'get', route: "/Prototype/#{@mod.name}"
+			use: true, wrap: 'default_wrap', version: any: @_get
+			sql_conn: true, sql_tx: true, auth_required: @mod.auth_req
+		
 		for nm,dataset of @mod.datasets
 			@resource[nm]= idx: {}, counter: 0
-			@endpoints["get#{nm}"]=
-				verb: 'get', route: "/Prototype/#{@mod.name}/#{nm}"
-				use: true, wrap: 'default_wrap', version: any: @proto_wrap @_get, nm
-				sql_conn: true, sql_tx: true, auth_required: @mod.auth_req
-			@endpoints["get_by_id#{nm}"]=
-				verb: 'get', route: "/Prototype/#{@mod.name}/#{nm}/:r0id"
-				use: true, wrap: 'default_wrap', version: any: @proto_wrap @_get, nm
-				sql_conn: true, sql_tx: true, auth_required: @mod.auth_req
 			@endpoints["create#{nm}"]=
 				verb: 'post', route: "/Prototype/#{@mod.name}/#{nm}"
 				use: true, wrap: 'default_wrap', version: any: @proto_wrap @_create, nm
@@ -67,31 +64,22 @@ class PrototypeModule
 		return (ctx, pre_loaded)-> func ctx, pre_loaded, resource
 
 	# Private Logic
-	_get: (ctx, pre_loaded, resource)=>
-		use_doc= {}
+	_get: (ctx, pre_loaded)=>
+		use_doc= params: {}, response: success: 'bool', push: 'string'
+		use_doc.response[nm]= 'list' for nm of @resource
 		return use_doc if ctx is 'use'
-		p= 	  ctx.p
 		_log= ctx.log
 
 
-		f= "Prototype:_get:#{@mod.name}:#{resource}:"
-		r= @resource[resource]
-		get_one= p.r0id?
-		r0id= (Number p.r0id)
+		f= "Prototype:_get:#{@mod.name}:"
 		result= {}
-
-		if p.r0id
-			throw new E.NotFoundError "PROTO:GET:#{@mod.name}:#{resource}:r0id" unless r0id of r.idx
 
 		Q.resolve()
 		.then =>
 
-			# Load the record or table
-			if get_one
-				result[resource]= [ r.idx[r0id] ]
-			else
-				result[resource]= []
-				result[resource].push rec for id,rec of r.idx
+			for nm, r_obj of @resource
+				result[nm]= []
+				result[nm].push rec for id,rec of r_obj.idx
 			
 			# Load the Push Set Handle
 			@pset.getPushHandle ctx, 0
@@ -104,7 +92,10 @@ class PrototypeModule
 
 	# POST /Mod/Resource/:r0id
 	_create: (ctx, pre_loaded, resource)=>
-		use_doc= @mod.datasets[resource]
+		use_doc= 
+			params: @mod.datasets[resource]
+			response: success: 'bool'
+		use_doc.response[resource]= 'list'
 		return use_doc if ctx is 'use'
 		p= 	  ctx.p
 		conn= ctx.conn
@@ -138,7 +129,10 @@ class PrototypeModule
 			send: result
 
 	_update: (ctx, pre_loaded, resource)=>
-		use_doc= @mod.datasets[resource]
+		use_doc= 
+			params: @mod.datasets[resource]
+			response: success: 'bool'
+		use_doc.response[resource]= 'list'
 		return use_doc if ctx is 'use'
 		p= 	  ctx.p
 		conn= ctx.conn
@@ -189,7 +183,8 @@ class PrototypeModule
 			send: result
 
 	_delete: (ctx, pre_loaded, resource)=>
-		use_doc= @mod.datasets[resource]
+		use_doc=
+			params: {}, response: success: 'bool'
 		return use_doc if ctx is 'use'
 		p= 	  ctx.p
 		conn= ctx.conn

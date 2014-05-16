@@ -74,9 +74,16 @@ $(document).ready(function() {
 								
 								<div id="&Route/name;" class="panel-collapse collapse">
 									<div class="panel-body">
+										<h6>Params:</h6>
 										<ul>
 											<epic:foreach table="Route/Param">
 												<li>&Param/name; &Param/format;</li>
+											</epic:foreach>
+										</ul>
+										<h6>Response:</h6>
+										<ul>
+											<epic:foreach table="Route/Response">
+												<li>&Response/name; : '&Response/format;'</li>
 											</epic:foreach>
 										</ul>
 									</div>

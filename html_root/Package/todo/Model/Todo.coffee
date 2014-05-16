@@ -134,7 +134,7 @@ class Todo extends window.EpicMvc.ModelJS
 		f= 'Todo._getTodos:'
 		@c_items= (item for idx, item of @c_items_idx) if @c_items_idx
 		return @c_items if @c_items
-		results= rest_v1.call 'GET', 'Prototype/Todo/Item', f
+		results= rest_v1.call 'GET', 'Prototype/Todo', f
 		if results.success
 			@c_items= results.Item
 			@c_items_idx= {}
