@@ -40,6 +40,21 @@ class Wrapper
 		func= @default
 		return (q,s,n)-> func q, s, n, caller
 
+	simple_wrap: (caller)->
+		func= @simple
+		return (q,s,n)-> func q, s, n, caller		
+
+	simple: (req, res, next, caller) ->
+		f= "Wrapper:simple:#{caller.name}"
+		route_logic= caller.version[req.params?.Version] ? caller.version.any
+		return route_logic req if req is 'use'
+
+		if caller.auth_required
+			return next() if not req.auth.authorize()
+
+		# Call the Route Logic.
+		route_logic req, res, next
+		
 	auth: (req, res, next, caller)->
 		f= "Wrapper:auth"
 		throw new E.ServerError 'WRAPPER:AUTH:MYSQL_NOT_ENABLED' unless config.db.mysql.enable
