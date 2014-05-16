@@ -7,13 +7,28 @@ E= require '../../error'
 
 class SqlPSetItem
 	constructor: (@db, @log)->
-		@table= 'pset_item'
+		@table= 'pset_items'
 		@schema=
 			create: ['pset_id', 'xref']
 			get_by_id: ['*']
 			id_xref: ['*']
 			get_psid: ['*']
+			update_by_id: ['count']
 		@db.method_factory @, 'SqlPSetItem'
+
+	lock: (ctx, id)->
+		f= "DB:SqlPSetItem:lock:"
+		_log= ctx.log
+		_log.debug f, id
+
+		Q.resolve()
+		.then =>
+
+			sql= 'SELECT id FROM ' + @table +
+				' WHERE id= ? AND di= 0 FOR UPDATE'
+			@db.sqlQuery ctx, sql, [id]
+		.then (db_rows)->
+			db_rows
 
 	get_psid_xref: (ctx, pset_id, xref)->
 		f= "DB:SqlPSetItem:get_id_xref:"

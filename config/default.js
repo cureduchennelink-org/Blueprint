@@ -89,6 +89,9 @@
         "default": 'index.html'
       }
     },
+    push_service: {
+      poll_interval: 5000
+    },
     route_modules: [
       {
         enable: false,

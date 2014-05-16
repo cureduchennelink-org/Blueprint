@@ -28,7 +28,7 @@ class Prototype
 				q_result= q_result.then =>
 					# Initiate the Push Set
 					ctx= conn: null, log: @log
-					push.GetPushSet ctx, true, "Prototype:#{mod.name}"
+					push.GetPushSet ctx, true, "Prototype/#{mod.name}"
 				.then (pset)=>
 					kit.add_route_service mod.name, new PrototypeModule mod, pset
 					wrapper.add mod.name
@@ -41,7 +41,7 @@ class PrototypeModule
 		@endpoints= {}
 
 		for nm,dataset of @mod.datasets
-			@resource[nm]= table: [], idx: {}, counter: 0
+			@resource[nm]= idx: {}, counter: 0
 			@endpoints["get#{nm}"]=
 				verb: 'get', route: "/Prototype/#{@mod.name}/#{nm}"
 				use: true, wrap: 'default_wrap', version: any: @proto_wrap @_get, nm
@@ -90,10 +90,11 @@ class PrototypeModule
 			if get_one
 				result[resource]= [ r.idx[r0id] ]
 			else
-				result[resource]= r.table
+				result[resource]= []
+				result[resource].push rec for id,rec of r.idx
 			
 			# Load the Push Set Handle
-			@pset.getItem ctx, 0
+			@pset.getPushHandle ctx, 0
 		.then (push_handle)->
 			result.push= push_handle
 
@@ -125,12 +126,11 @@ class PrototypeModule
 		.then =>
 
 			# Create new record
-			r.table.push rec
 			r.idx[rec.id]= rec
 			result[resource]= [ rec ] # e.g. Item: [ {completed: 'yes', id: 1} ]
 
 			# Notify Push Set of Item Change
-			@pset.itemChange ctx, 0, 'add', {}, rec, rec.id, resource
+			@pset.itemChange ctx, 0, 'add', {}, rec, resource, rec.id, null
 		.then =>
 
 			# Respond to Client
@@ -164,6 +164,7 @@ class PrototypeModule
 		for r0id in batch_ids
 			throw new E.NotFoundError "PROTO:UPDATE:#{@mod.name}:#{resource}:r0id" unless r0id of r.idx
 
+		result[resource]= []
 		q_result= Q.resolve true
 		for r0id in batch_ids
 			do (r0id)=> q_result= q_result.then () =>
@@ -173,11 +174,13 @@ class PrototypeModule
 
 				# Update record
 				r.idx[r0id]= _.merge r.idx[r0id], new_values
-				result[resource]= [ r.idx[r0id] ] # e.g. Item: [ {completed: 'yes', id: 1} ]
+				result[resource].push r.idx[r0id] # e.g. Item: [ {completed: 'yes', id: 1}, ... ]
 
 				# Notify Push Set of Item Change
-				@pset.itemChange ctx, 0, 'change', before, new_values, r0id, resource
-			.then =>
+				vals= _.clone new_values
+				vals= _.merge vals, id: r0id
+				@pset.itemChange ctx, 0, 'update', before, vals, resource, r0id, null
+			.then => # TODO: Have itemChange return what the push service would
 		q_result
 		.then ->
 
@@ -210,14 +213,10 @@ class PrototypeModule
 		for r0id in batch_ids
 			do (r0id)=> q_result= q_result.then () =>
 				# Delete record
-				for item,idx in r.table when item.id is (Number r0id)
-					before= _.clone item
-					r.table.splice idx, 1
-					break
-				delete r.idx[r0id]
+				delete r.idx["#{r0id}"]
 
 				# Notify Push Set of Item Change
-				@pset.itemChange ctx, 0, 'delete', before, {}, r0id, resource
+				@pset.itemChange ctx, 0, 'delete', before, {}, resource, r0id, null
 			.then ->
 		q_result
 		.then ->

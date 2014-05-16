@@ -66,6 +66,17 @@ DbError= (token)->
 util.inherits DbError, restify.RestError
 exports.DbError= DbError
 
+ServerError= (token)->
+	restify.RestError.call this,
+		statusCode: 500
+		restCode: 'ServerError'
+		body: {error: token}
+		constructorOpt: ServerError
+	this.name= 'Server Error'
+
+util.inherits ServerError, restify.RestError
+exports.ServerError= ServerError
+
 MongoDbError= (message)->
 	restify.RestError.call this,
 		statusCode: 500

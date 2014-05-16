@@ -65,6 +65,8 @@ module.exports=
 		static_file_server:
 			directory: './html_root'
 			default: 'index.html'
+	push_service:
+		poll_interval: 5000
 	route_modules: [
         { enable: false, name: 'auth',		class: 'AuthRoute', 	file: './routes/r_auth' }
         { enable: false, name: 'user',		class: 'User', 			file: './routes/r_user' }

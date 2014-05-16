@@ -8,10 +8,12 @@ Q= require 'q'
 E= require '../../error'
 
 _log= false
+_log2= debug: ()->
 
 class SqlCore
 	constructor: (config, log)->
 		_log= log
+		#_log2= log # Uncomment to turn level 2 debug on
 		@pool= Pool
 			name: 'mysql - Blueprint'
 			create: (cb)->
@@ -25,13 +27,13 @@ class SqlCore
 		@acquire= (callback)-> @pool.acquire callback
 		@Acquire= Q.nbind @acquire, this
 		@release= (conn)->
-			_log.debug 'DB:SqlCore:release:', 'releasing conn'
+			_log2.debug 'DB:SqlCore:release:', 'releasing conn'
 			@pool.release conn
 		@destroy= (conn)-> @pool.destroy conn
 
 		@sqlQuery= (ctx, sql, args)->
-			_log.debug 'DB:SqlCore:sqlQuery:', sql
-			_log.debug 'DB:SqlCore:args:', args if args
+			_log2.debug 'DB:SqlCore:sqlQuery:', sql
+			_log2.debug 'DB:SqlCore:args:', args if args
 			throw new E.DbError 'DB:SQL:BAD_CONN' if ctx.conn is null
 			(Q.ninvoke ctx.conn, 'query', sql, args)
 			.then (rows_n_cols) ->

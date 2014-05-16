@@ -8,17 +8,42 @@
     __extends(Todo, _super);
 
     function Todo(Epic, view_nm) {
-      var ss;
+      var ss,
+        _this = this;
       ss = {
         show_state: 'all',
         active_item_id: false
       };
       Todo.__super__.constructor.call(this, Epic, view_nm, ss);
       this.rest = rest_v1;
+      this.socket = window.EpicMvc.Extras.io.connect('http://localhost:9500/push');
+      this.socket.on('connected', function() {
+        return console.log('Connected to Socket Server!');
+      });
+      this.socket.on('update', function(data) {
+        var rec, _i, _len, _ref;
+        console.log('got socket update:', data);
+        _ref = data.changes['Item'];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          rec = _ref[_i];
+          switch (rec.verb) {
+            case 'add':
+              _this.c_items_idx[rec.id] = rec.after;
+              break;
+            case 'update':
+              $.extend(_this.c_items_idx[rec.id], rec.after);
+              break;
+            case 'delete':
+              delete _this.c_items_idx[rec.id];
+          }
+        }
+        _this.c_items = false;
+        return _this.invalidateTables(true);
+      });
     }
 
     Todo.prototype.action = function(act, p) {
-      var batch_ids, data, el, f, i, id, item, m, new_item, nm, r, results, title, val, _i, _j, _len, _len1, _ref, _ref1, _ref2, _ref3;
+      var batch_ids, data, el, f, i, id, item, m, new_item, r, results, title, _i, _j, _len, _len1;
       f = "Todo:action:" + act;
       _log1(f, p);
       r = {};
@@ -50,19 +75,7 @@
             results = rest_v1.call('POST', "Prototype/Todo/Item/" + id + "/update", f, data);
             _log2(f, 'got update results:', results);
             if (results.success) {
-              _ref = this.c_items;
-              for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-                item = _ref[_i];
-                if (!(item.id === (Number(id)))) {
-                  continue;
-                }
-                _ref1 = results.Item[0];
-                for (nm in _ref1) {
-                  val = _ref1[nm];
-                  item[nm] = val;
-                }
-                break;
-              }
+              $.extend(this.c_items_idx[id], results.Item[0]);
             }
           } else {
             data = {
@@ -72,8 +85,9 @@
             results = rest_v1.call('POST', 'Prototype/Todo/Item', f, data);
             _log2(f, 'got create results:', results);
             new_item = results.Item[0];
-            this.c_items.push(new_item);
+            this.c_items_idx[new_item.id] = new_item;
           }
+          this.c_items = false;
           this.invalidateTables(true);
           break;
         case "delete_todo":
@@ -81,17 +95,18 @@
           results = rest_v1.call('POST', "Prototype/Todo/Item/" + p.id + "/delete", f);
           _log2(f, 'got delete results:', results);
           if (results.success === true) {
+            delete this.c_items_idx[p.id];
             this.c_items = false;
           }
           this.invalidateTables(true);
           break;
         case "clear_completed":
           batch_ids = (function() {
-            var _j, _len1, _ref2, _results;
-            _ref2 = this.c_items;
+            var _i, _len, _ref, _results;
+            _ref = this.c_items;
             _results = [];
-            for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
-              item = _ref2[_j];
+            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+              item = _ref[_i];
               if (item.completed === 'yes') {
                 _results.push(item.id);
               }
@@ -104,6 +119,10 @@
           results = rest_v1.call('POST', "Prototype/Todo/Item/batch/delete", f, data);
           _log2(f, 'got delete results:', results);
           if (results.success === true) {
+            for (_i = 0, _len = batch_ids.length; _i < _len; _i++) {
+              id = batch_ids[_i];
+              delete this.c_items_idx[id];
+            }
             this.c_items = false;
           }
           this.invalidateTables(true);
@@ -111,35 +130,23 @@
         case "mark_toggle":
           el = $(p.input_obj);
           id = el.attr("data-p-id");
-          _ref2 = this.c_items;
-          for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
-            item = _ref2[_j];
-            if (!(item.id === (Number(id)))) {
-              continue;
-            }
-            data = {
-              completed: item.completed === 'yes' ? '' : 'yes'
-            };
-            results = rest_v1.call('POST', "Prototype/Todo/Item/" + id + "/update", f, data);
-            _log2(f, 'got mark toggle results:', results);
-            if (results.success) {
-              _ref3 = results.Item[0];
-              for (nm in _ref3) {
-                val = _ref3[nm];
-                item[nm] = val;
-              }
-            }
-            break;
+          data = {
+            completed: this.c_items_idx[id].completed === 'yes' ? '' : 'yes'
+          };
+          results = rest_v1.call('POST', "Prototype/Todo/Item/" + id + "/update", f, data);
+          if (results.success) {
+            $.extend(this.c_items_idx[id], results.Item[0]);
+            this.c_items = false;
           }
           this.invalidateTables(true);
           break;
         case "mark_all":
           batch_ids = (function() {
-            var _k, _len2, _ref4, _results;
-            _ref4 = this.c_items;
+            var _j, _len1, _ref, _results;
+            _ref = this.c_items;
             _results = [];
-            for (_k = 0, _len2 = _ref4.length; _k < _len2; _k++) {
-              item = _ref4[_k];
+            for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
+              item = _ref[_j];
               if (item.completed !== 'yes') {
                 _results.push(item.id);
               }
@@ -153,6 +160,12 @@
           results = rest_v1.call('POST', "Prototype/Todo/Item/batch/update", f, data);
           _log2(f, 'got mark all results:', results);
           if (results.success === true) {
+            for (_j = 0, _len1 = batch_ids.length; _j < _len1; _j++) {
+              id = batch_ids[_j];
+              $.extend(this.c_items_idx[id], {
+                completed: 'yes'
+              });
+            }
             this.c_items = false;
           }
           this.invalidateTables(true);
@@ -166,6 +179,7 @@
     Todo.prototype.loadTable = function(tbl_nm) {
       var c, f, item, item_list, nc, row, rows, _i, _j, _len, _len1;
       f = "loadTable:" + tbl_nm;
+      _log2(f);
       item_list = this._getTodos();
       switch (tbl_nm) {
         case 'Options':
@@ -251,17 +265,37 @@
     };
 
     Todo.prototype._getTodos = function() {
-      var f, results;
+      var f, idx, item, results, _i, _len, _ref;
       f = 'Todo._getTodos:';
+      if (this.c_items_idx) {
+        this.c_items = (function() {
+          var _ref, _results;
+          _ref = this.c_items_idx;
+          _results = [];
+          for (idx in _ref) {
+            item = _ref[idx];
+            _results.push(item);
+          }
+          return _results;
+        }).call(this);
+      }
       if (this.c_items) {
         return this.c_items;
       }
       results = rest_v1.call('GET', 'Prototype/Todo/Item', f);
       if (results.success) {
-        return this.c_items = results.Item;
+        this.c_items = results.Item;
+        this.c_items_idx = {};
+        _ref = results.Item;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          item = _ref[_i];
+          this.c_items_idx[item.id] = item;
+        }
+        this.socket.emit('listen', results.push);
       } else {
-        return this.c_items = [];
+        this.c_items = [];
       }
+      return this.c_items;
     };
 
     return Todo;

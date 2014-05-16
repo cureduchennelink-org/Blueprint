@@ -8,7 +8,7 @@ E= require '../../error'
 
 class SqlPSet
 	constructor: (@db, @log)->
-		@table= 'pset'
+		@table= 'psets'
 		@schema=
 			create: ['name']
 			get_by_id: ['*']

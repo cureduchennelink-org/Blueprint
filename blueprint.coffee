@@ -4,8 +4,10 @@
 #	Written for DV-Mobile by Jamie Hollowell. All rights reserved.
 #
 
-Q= require 'q'
-restify= require 'restify'
+# Node Modules
+Q= 			require 'q'
+restify= 	require 'restify'
+socketio=	require 'socket.io'
 
 # Library Modules and Services
 {Kit}=			require  './lib/kit'
@@ -28,10 +30,12 @@ kit= new Kit
 kit.add_service 'config', 		config					# Config Object
 kit.new_service 'logger', 		Logger					# Bunyan Logger
 
-# Create Server and add to Kit
 log= kit.services.logger.log
-server= restify.createServer log: log
-kit.add_service 'server', server
+server= restify.createServer log: log 	# Create Server
+io= socketio.listen server 				# Create Web Socket Listener
+io.set 'log level', 2					# Set socket.io output to info level
+kit.add_service 'server', server 		# Add server to kit
+kit.add_service 'io', io 				# Add socket io to kit
 
 # Add additional Library Services to Kit
 # TODO: Move these to the config file just like the route modules
@@ -41,9 +45,9 @@ kit.new_service 'tokenMgr', 	TokenMgr				# Token Manager
 kit.new_service 'db', 			Db						# Database Object (MySQL, MongoDB)
 kit.new_service 'auth', 		Auth					# Auth Logic
 kit.new_service 'router',		Router					# Route Creator
-kit.new_service 'push',			Push					# Push Service
 kit.new_service 'wrapper', 		Wrapper					# Route Wrapper
 kit.new_service 'prototype', 	Prototype				# Prototype Service
+kit.new_service 'push',			Push					# Push Service
 kit.new_service 'ses', 			SES						# Amazon SES Module
 kit.new_service 'tripMgr', 		TripManager				# Round Trip token/code Manager
 

@@ -5,6 +5,21 @@ class Todo extends window.EpicMvc.ModelJS
 			active_item_id: false
 		super Epic, view_nm, ss
 		@rest= rest_v1
+		@socket= window.EpicMvc.Extras.io.connect 'http://localhost:9500/push'
+		@socket.on 'connected', ()=>
+			console.log 'Connected to Socket Server!'
+		@socket.on 'update', (data)=>
+			console.log 'got socket update:', data
+			for rec in data.changes['Item']
+				switch rec.verb
+					when 'add'
+						@c_items_idx[rec.id]= rec.after
+					when 'update'
+						$.extend @c_items_idx[rec.id], rec.after
+					when 'delete'
+						delete @c_items_idx[rec.id]				
+			@c_items= false
+			@invalidateTables true
 	action: (act,p) ->
 		f= "Todo:action:#{act}"
 		_log1 f, p
@@ -32,21 +47,21 @@ class Todo extends window.EpicMvc.ModelJS
 					results= rest_v1.call 'POST', "Prototype/Todo/Item/#{id}/update", f, data
 					_log2 f, 'got update results:', results
 					if results.success
-						for item in @c_items when item.id is (Number id)
-							item[nm]= val for nm, val of results.Item[0]
-							break
+						$.extend @c_items_idx[id], results.Item[0]
 				else
 					data= title: title, completed: ''
 					results= rest_v1.call 'POST', 'Prototype/Todo/Item', f, data
 					_log2 f, 'got create results:', results
 					new_item= results.Item[0]
-					@c_items.push new_item
+					@c_items_idx[new_item.id]= new_item
+				@c_items= false
 				@invalidateTables true
 			when "delete_todo" # p.id
 				_log2 f, 'items before:', @c_items
 				results= rest_v1.call 'POST', "Prototype/Todo/Item/#{p.id}/delete", f
 				_log2 f, 'got delete results:', results
 				if results.success is true
+					delete @c_items_idx[p.id]
 					@c_items= false
 				@invalidateTables true
 			when "clear_completed"
@@ -55,18 +70,17 @@ class Todo extends window.EpicMvc.ModelJS
 				results= rest_v1.call 'POST', "Prototype/Todo/Item/batch/delete", f, data
 				_log2 f, 'got delete results:', results
 				if results.success is true
+					delete @c_items_idx[id] for id in batch_ids
 					@c_items= false
 				@invalidateTables true
 			when "mark_toggle" # p.input_obj, data-p-id
 				el= $(p.input_obj)
 				id= el.attr("data-p-id")
-				for item in @c_items when item.id is (Number id)
-					data= completed: if item.completed is 'yes' then '' else 'yes'
-					results= rest_v1.call 'POST', "Prototype/Todo/Item/#{id}/update", f, data
-					_log2 f, 'got mark toggle results:', results
-					if results.success
-						item[nm]= val for nm, val of results.Item[0]
-					break
+				data= completed: if @c_items_idx[id].completed is 'yes' then '' else 'yes'
+				results= rest_v1.call 'POST', "Prototype/Todo/Item/#{id}/update", f, data
+				if results.success
+					$.extend @c_items_idx[id], results.Item[0]
+					@c_items= false
 				@invalidateTables true
 			when "mark_all"
 				batch_ids= (item.id for item in @c_items when item.completed isnt 'yes')
@@ -74,12 +88,14 @@ class Todo extends window.EpicMvc.ModelJS
 				results= rest_v1.call 'POST', "Prototype/Todo/Item/batch/update", f, data
 				_log2 f, 'got mark all results:', results
 				if results.success is true
+					$.extend @c_items_idx[id], { completed: 'yes' } for id in batch_ids
 					@c_items= false
 				@invalidateTables true
 			else return super act, p
 		[r,i,m]
 	loadTable: (tbl_nm) ->
 		f= "loadTable:#{tbl_nm}"
+		_log2 f
 		item_list= @_getTodos()
 		switch tbl_nm
 			when 'Options'
@@ -116,10 +132,17 @@ class Todo extends window.EpicMvc.ModelJS
 			else return super oFist, field_nm
 	_getTodos: ()->
 		f= 'Todo._getTodos:'
+		@c_items= (item for idx, item of @c_items_idx) if @c_items_idx
 		return @c_items if @c_items
 		results= rest_v1.call 'GET', 'Prototype/Todo/Item', f
 		if results.success
 			@c_items= results.Item
+			@c_items_idx= {}
+			for item in results.Item
+				@c_items_idx[item.id]= item 
+			@socket.emit 'listen', results.push
 		else
 			@c_items= []
+		@c_items
+
 window.EpicMvc.Model.Todo= Todo # Public API
