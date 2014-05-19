@@ -21,8 +21,8 @@ class Auth
 
 	_pbkdf2: (p,buf,IT,KL)-> (Q.ninvoke crypto, 'pbkdf2', p, buf, IT, KL)
 
-	# server.use function
-	parseAuthorization: (req, res, next)=>
+	# Request Authorization Parser
+	server_use: (req, res, next)=>
 		p= req.params
 		h= req.headers
 		authHeader= false

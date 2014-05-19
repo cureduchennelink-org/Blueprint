@@ -29,7 +29,6 @@ class Router
 		@usage_by_mod= {}
 
 	add_route: (mod, name, verb, route, func)->
-		@log.debug 'adding route:', name
 		@usage_by_mod[mod]= [] unless @usage_by_mod[mod]
 		use_spec= func 'use'
 		use_rec= 
@@ -52,8 +51,8 @@ class Router
 			table.Module.push name: mod, Route: (route for route in route_list)
 		table
 
-	route_usage: ()=>
-		f= 'Router:route_usage'
+	server_init: ()=>
+		f= 'Router:server_init'
 		@server.get @pfx, (q,r,n)=>
 			if q.params.format is 'json'
 				r.send @usage

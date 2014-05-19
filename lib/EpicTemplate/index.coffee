@@ -62,7 +62,7 @@ class Epic
 
 class EpicTemplate
 	constructor: (kit, opts)->
-		config= kit.services.config[opts]
+		config= opts
 		@log= kit.services.logger.log
 		(require './parse.js') window
 		(require './util.js') window

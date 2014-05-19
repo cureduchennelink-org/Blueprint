@@ -3,11 +3,14 @@
   "version": "0.0.0-131231",
   "private": "true",
   "dependencies": {
-    "restify": "2.6.0",
-    "mysql": "2.0.x",
-    "generic-pool": "2.0.3",
-    "lodash": "2.2.1",
-    "bunyan": "0.22.0",
-    "mongoose": "~3.8.7"
+    "aws-sdk": "^2.0.0-rc.17",
+    "bunyan": "^0.22.3",
+    "lodash": "^2.4.1",
+    "moment": "^2.6.0",
+    "mongoose": "^3.8.9",
+    "mysql": "^2.3.0",
+    "q": "^1.0.1",
+    "restify": "^2.8.1",
+    "socket.io": "^0.9.16"
   }
 }

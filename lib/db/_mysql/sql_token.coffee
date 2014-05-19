@@ -8,7 +8,7 @@ E= require '../../error'
 table= 'ident_tokens'
 
 class SqlToken
-	constructor: (db, @tokenMgr, log)->
+	constructor: (db, log)->
 		@log= log
 		@db= db
 		@schema=
@@ -31,16 +31,10 @@ class SqlToken
 		(@db.sqlQuery ctx, sql, [token])
 		.then (db_result)-> db_result
 
-	create_ident_token: (ctx, user_id, clientId, expires, current_ident_token)=>
-		new_token= false
+	update_active_token: (ctx, user_id, clientId, expires, new_token, current_ident_token)=>
 
 		Q.resolve()
 		.then =>
-
-			# Generate new refresh token
-			@tokenMgr.CreateToken 16
-		.then (token)=>
-			new_token= token
 
 			# Delete current refresh token if it exists
 			return false unless current_ident_token

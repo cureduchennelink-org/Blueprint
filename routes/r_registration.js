@@ -77,9 +77,14 @@
       var f, p, success, use_doc,
         _this = this;
       use_doc = {
-        fnm: 'r:S',
-        lnm: 'r:S',
-        eml: 'r:S'
+        params: {
+          fnm: 'r:S',
+          lnm: 'r:S',
+          eml: 'r:S'
+        },
+        response: {
+          success: 'bool'
+        }
       };
       if (ctx === 'use') {
         return use_doc;
@@ -132,7 +137,13 @@
     Registration.prototype._read_signup = function(ctx, pre_loaded) {
       var f, p, success, trip, use_doc,
         _this = this;
-      use_doc = {};
+      use_doc = {
+        params: {},
+        response: {
+          success: 'bool',
+          signup: 'JSON'
+        }
+      };
       if (ctx === 'use') {
         return use_doc;
       }
@@ -172,10 +183,16 @@
       var change_trip, eml, eml_change, f, new_ident_id, new_pwd, p, success, trip, use_doc,
         _this = this;
       use_doc = {
-        fnm: 'r:S',
-        lnm: 'r:S',
-        eml: 'r:S',
-        pwd: 'r:S'
+        params: {
+          fnm: 'r:S',
+          lnm: 'r:S',
+          eml: 'r:S',
+          pwd: 'r:S'
+        },
+        response: {
+          success: 'bool',
+          eml_change: 'bool'
+        }
       };
       if (ctx === 'use') {
         return use_doc;

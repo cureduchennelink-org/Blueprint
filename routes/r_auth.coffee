@@ -5,6 +5,7 @@
 Q= require 'q'
 E= require '../lib/error'
 crypto= require 'crypto'
+moment= require 'moment'
 
 ITERATIONS= 150000
 SALT_SIZE= 16
@@ -73,6 +74,7 @@ class AuthRoute
 		f= 'Auth:_authenticate:'
 		_log.debug f, p, pre_loaded
 		current_token= false
+		new_token= false
 		result= {}
 
 		Q.resolve()
@@ -94,10 +96,15 @@ class AuthRoute
 				throw new E.OAuthError 401, 'invalid_client' if valid_token.length is 0
 				result.auth_ident_id= valid_token[0].ident_id
 
-			# Generate Refresh Token
+			# Generate new refresh token
+			@tokenMgr.CreateToken 16
+		.then (token)=>
+			new_token= token
+
+			# Store new token, remove old token
 			current_token= p.refresh_token if p.grant_type is 'refresh_token'
 			exp= (moment().add 'seconds', @config.refreshTokenExpiration).toDate()
-			sdb.token.create_ident_token ctx, result.auth_ident_id, p.client_id, exp, current_token
+			sdb.token.update_active_token ctx, result.auth_ident_id, p.client_id, exp, new_token, current_token
 		.then (refreshToken)=>
 
 			# Generate Access Token

@@ -2,34 +2,26 @@
 #	Core DB Functions. Includes DB Pool
 #
 
-mysql= require 'mysql'
-{Pool}= require 'generic-pool' # TODO: Remove Generic Pool. Use MySQL Pool
-Q= require 'q'
-E= require '../../error'
+Q= 		require 'q'
+E= 		require '../../error'
+mysql= 	require 'mysql'
 
 _log= false
 _log2= debug: ()->
 
 class SqlCore
-	constructor: (config, log)->
+	constructor: (pool_opts, log)->
 		_log= log
 		#_log2= log # Uncomment to turn level 2 debug on
-		@pool= Pool
-			name: 'mysql - Blueprint'
-			create: (cb)->
-				conn= mysql.createConnection(config);
-				cb(null, conn)
-			destroy: (conn)-> conn.end()
-			max: config.maxConnections
-			min: config.minConnections
-			idleTimeoutMillis: config.idleTimeoutMillis
-			log: false
-		@acquire= (callback)-> @pool.acquire callback
+		@pool= mysql.createPool pool_opts
+		@acquire= (callback)-> @pool.getConnection callback
 		@Acquire= Q.nbind @acquire, this
 		@release= (conn)->
 			_log2.debug 'DB:SqlCore:release:', 'releasing conn'
-			@pool.release conn
-		@destroy= (conn)-> @pool.destroy conn
+			conn.release()
+		@destroy= (conn)->
+			_log2.debug 'DB:SqlCore:destroy:', 'destroying conn'
+			conn.destroy
 
 		@sqlQuery= (ctx, sql, args)->
 			_log2.debug 'DB:SqlCore:sqlQuery:', sql

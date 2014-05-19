@@ -40,7 +40,9 @@ class Registration
 
 	# Private Logic
 	_signup: (ctx, pre_loaded)=>
-		use_doc= fnm: 'r:S', lnm: 'r:S', eml: 'r:S'
+		use_doc= 
+			params: fnm: 'r:S', lnm: 'r:S', eml: 'r:S'
+			response: success: 'bool'
 		return use_doc if ctx is 'use'
 		_log= ctx.log
 		p= ctx.p
@@ -78,7 +80,7 @@ class Registration
 			send: { success }
 
 	_read_signup: (ctx, pre_loaded)=>
-		use_doc= {}
+		use_doc= params: {}, response: success: 'bool', signup: 'JSON'
 		return use_doc if ctx is 'use'
 		_log= ctx.log
 		p= ctx.p
@@ -110,7 +112,9 @@ class Registration
 			send: { success, signup: trip.json}
 
 	_register_signup: (ctx, pre_loaded)=>
-		use_doc= fnm: 'r:S', lnm: 'r:S', eml: 'r:S', pwd: 'r:S'
+		use_doc= 
+			params: fnm: 'r:S', lnm: 'r:S', eml: 'r:S', pwd: 'r:S'
+			response: success: 'bool', eml_change: 'bool'
 		return use_doc if ctx is 'use'
 		_log= ctx.log
 		p= ctx.p
