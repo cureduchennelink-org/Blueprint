@@ -1,24 +1,22 @@
 
-<div class="col-sm-6 col-sm-offset-3 well">
-	<div class="row">
-		<div class="container">
-			<div class="row">
-				<div class="col-sm-10 col-sm-offset-1">
-					<legend align="center">Authentication</legend>
-				</div>
-			</div>
-			<div class="row">
-				<div class="container">
-					<form>
-						<epic:form_part form="Login" part="fist_login" show_req=""/>
-					</form>
-				</div>
-			</div>
-			<div class="row">
-				<div class="col-sm-6 col-sm-offset-3">
-					<epic:form_action action="login" value="Login" class="btn btn-primary btn-block" type="submit" />
-				</div>
-			</div>
-		</div>
-	</div>
+<div class="container">
+    <div class="row">
+        <div class="col-md-4 col-md-offset-4">
+            <div class="login-panel panel panel-default">
+                
+                <div class="panel-heading">
+                    <h3 class="panel-title">Please Sign In</h3>
+                </div>
+                <div class="panel-body">
+                    <form role="form">
+                        <fieldset>
+	                    	<epic:form_part form="Login" part="fist_login" show_req=""/>
+                            <epic:form_action action="login" value="Login" class="btn btn-lg btn-success btn-block" type="submit" />
+                        </fieldset>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
 </div>

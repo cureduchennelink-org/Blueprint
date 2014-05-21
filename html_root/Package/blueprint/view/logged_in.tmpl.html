@@ -1,5 +1,19 @@
-<epic:page_part part="navbar" />
+<epic:defer>
+$(function() {
+
+    $('#side-menu-mobile').metisMenu();
+    $('#side-menu-desktop').metisMenu();
+
+});
+</epic:defer>
+
+<div id="wrapper">
+	<epic:page_part part="navbar" />
+	<div id="page-wrapper">
+		<epic:page />
+	</div>
+</div>
+
+<!--
 <epic:page_part part="issues" />
-<epic:page />
-
-
+-->

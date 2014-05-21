@@ -5,19 +5,15 @@
 </epic:if>
 
 <epic:if val="&Control/type#lc;" eq="email">
-	<div class="col-sm-8 col-sm-offset-2">
 		<div class="form-group">
 			<input class="form-control" type="&Control/type#lc;" name="&Control/name;" value="&Control/value;" size="&Control/width;" placeholder="&Control/label;" &Tag/If/req#.required="".title="Cannot be blank";>
 		</div>
-	</div>
 </epic:if>
 
 <epic:if val="&Control/type#lc;" eq="password">
-	<div class="col-sm-8 col-sm-offset-2">
 		<div class="form-group">
 			<input class="form-control" type="&Control/type#lc;" name="&Control/name;" value="&Control/value;" size="&Control/width;" placeholder="&Control/label;" &Tag/If/req#.required="";>
 		</div>
-	</div>
 </epic:if>
 
 <epic:if set="&Control/issue;">

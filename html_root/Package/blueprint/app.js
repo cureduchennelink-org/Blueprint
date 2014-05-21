@@ -94,19 +94,10 @@
                 page: 'login',
                 CLICKS: {
                   login: {
-                    call: 'User/login',
-                    use_form: 'Login',
-                    RESULTS: [
-                      {
-                        r: {
-                          success: 'SUCCESS'
-                        },
-                        call: 'Pageflow/path',
-                        p: {
-                          path: 'logged_in'
-                        }
-                      }
-                    ]
+                    call: 'Pageflow/path',
+                    p: {
+                      path: 'logged_in/home/app_listing'
+                    }
                   }
                 }
               }
@@ -119,37 +110,138 @@
         template: 'logged_in',
         TRACKS: {
           home: {
-            start: 'app_listing',
+            start: 'dashboard',
             CLICKS: {
-              home: {
-                call: 'User/home',
-                RESULTS: [
-                  {
-                    r: {},
-                    call: 'Pageflow/path',
-                    p: {
-                      path: '//app_listing'
-                    }
-                  }
-                ]
+              logout: {
+                call: 'Pageflow/path',
+                p: {
+                  path: 'anon/login/login'
+                }
               },
-              view_details: {
-                call: 'User/view_details',
-                use_fields: 'id',
-                RESULTS: [
-                  {
-                    r: {},
-                    call: 'Pageflow/path',
-                    p: {
-                      path: '//app_overview'
-                    }
-                  }
-                ]
+              go_dashboard: {
+                call: 'Pageflow/path',
+                p: {
+                  path: '//dashboard'
+                }
+              },
+              go_flot: {
+                call: 'Pageflow/path',
+                p: {
+                  path: '//flot'
+                }
+              },
+              go_morris: {
+                call: 'Pageflow/path',
+                p: {
+                  path: '//morris'
+                }
+              },
+              go_tables: {
+                call: 'Pageflow/path',
+                p: {
+                  path: '//tables'
+                }
+              },
+              go_forms: {
+                call: 'Pageflow/path',
+                p: {
+                  path: '//forms'
+                }
+              },
+              go_buttons: {
+                call: 'Pageflow/path',
+                p: {
+                  path: '//buttons'
+                }
+              },
+              go_panels_wells: {
+                call: 'Pageflow/path',
+                p: {
+                  path: '//panels_wells'
+                }
+              },
+              go_notifications: {
+                call: 'Pageflow/path',
+                p: {
+                  path: '//notifications'
+                }
+              },
+              go_typography: {
+                call: 'Pageflow/path',
+                p: {
+                  path: '//typography'
+                }
+              },
+              go_grid: {
+                call: 'Pageflow/path',
+                p: {
+                  path: '//grid'
+                }
+              },
+              go_blank: {
+                call: 'Pageflow/path',
+                p: {
+                  path: '//blank'
+                }
               }
             },
             STEPS: {
-              app_listing: {
-                page: 'app_listing'
+              dashboard: {
+                page: 'dashboard'
+              },
+              flot: {
+                page: 'flot',
+                v: {
+                  chart: true
+                }
+              },
+              morris: {
+                page: 'morris',
+                v: {
+                  chart: true
+                }
+              },
+              tables: {
+                page: 'tables'
+              },
+              forms: {
+                page: 'forms'
+              },
+              buttons: {
+                page: 'buttons',
+                v: {
+                  ui_element: true
+                }
+              },
+              panels_wells: {
+                page: 'panels_wells',
+                v: {
+                  ui_element: true
+                }
+              },
+              notifications: {
+                page: 'notifications',
+                v: {
+                  ui_element: true
+                }
+              },
+              typography: {
+                page: 'typography',
+                v: {
+                  ui_element: true
+                }
+              },
+              grid: {
+                page: 'grid',
+                v: {
+                  ui_element: true
+                }
+              },
+              blank: {
+                page: 'blank',
+                v: {
+                  sample_page: true
+                }
               }
             }
           }
