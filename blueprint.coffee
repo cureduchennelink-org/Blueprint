@@ -11,7 +11,6 @@ socketio=	require 'socket.io'
 
 # Library Modules and Services
 {Kit}=		require  './lib/kit'
-s_use=		require	 './lib/server_use'
 config= 	(require './lib/config')()
 {Logger}=	require  './lib/logger'
 
