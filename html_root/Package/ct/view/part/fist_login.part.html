@@ -1,0 +1,23 @@
+<epic:foreach table="Tag/Control">
+
+<epic:if name="req" set="&Tag/Form/show_req;">
+	<epic:if name="req" set="&Control/req;"/>
+</epic:if>
+
+<epic:if val="&Control/type#lc;" eq="email">
+		<div class="form-group">
+			<input class="form-control" type="&Control/type#lc;" name="&Control/name;" value="&Control/value;" size="&Control/width;" placeholder="&Control/label;" &Tag/If/req#.required="".title="Cannot be blank";>
+		</div>
+</epic:if>
+
+<epic:if val="&Control/type#lc;" eq="password">
+		<div class="form-group">
+			<input class="form-control" type="&Control/type#lc;" name="&Control/name;" value="&Control/value;" size="&Control/width;" placeholder="&Control/label;" &Tag/If/req#.required="";>
+		</div>
+</epic:if>
+
+<epic:if set="&Control/issue;">
+	<span class="help-inline field-error">&Control/issue;</span>
+</epic:if>
+
+</epic:foreach>

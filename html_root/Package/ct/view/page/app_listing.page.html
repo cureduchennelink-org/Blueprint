@@ -1,0 +1,24 @@
+<div class="container">
+	<div class="row">
+		<epic:foreach table="User/App">
+			<epic:link_action action="view_details" p:id="&App/id;" >
+			<div class="well col-sm-6 col-md-4">
+				<div class="row">
+					<h2>&App/name;</h2>
+				</div>
+			</div>
+			</epic:link_action>			
+		</epic:foreach>
+	</div> <!-- row -->
+</div><!-- container-->
+
+<!--
+					<div class="col-sm-3 col-xs-12">
+						<epic:link_action action="view_details" p:id="&App/id;" >
+							<img src="Package/mnc/images/default_app_image.png" class="img-responsive"/>
+						</epic:link_action>
+					</div>
+					<div class="col-sm-9 col-xs-12">
+						<h2>&App/name;</h2>
+					</div>
+-->
