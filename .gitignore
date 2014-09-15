@@ -25,3 +25,5 @@ local_dev.coffee
 local_dev.js
 git-version.txt
 
+*.sublime-project
+*.sublime-workspace
