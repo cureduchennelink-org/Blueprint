@@ -1,6 +1,6 @@
 #
 # Authentication Services
-# 
+#
 
 Q= require 'q'
 E= require '../lib/error'
@@ -18,6 +18,7 @@ class Auth
 		@log= 		kit.services.logger
 		@config= 	kit.services.config.auth
 		@tokenMgr= 	kit.services.tokenMgr
+		@pwd_col= 	sdb.auth.pwd_col
 
 	_pbkdf2: (p,buf,IT,KL)-> (Q.ninvoke crypto, 'pbkdf2', p, buf, IT, KL)
 
@@ -46,7 +47,7 @@ class Auth
 				if not req.auth.authId
 					return false if skip_response
 					error= new E.OAuthError 401, 'invalid_token', req.auth.message
-					res.setHeader 'WWW-Authenticate', "Bearer realm=\"blueprint\""
+					res.setHeader 'WWW-Authenticate', "Bearer realm=\"#{@config.auth.bearer}\""
 					res.send error
 					return next()
 				else true
@@ -59,21 +60,20 @@ class Auth
 
 		Q.resolve()
 		.then ->
-			
+
 			# Grab User Credentials
 			sdb.auth.get_auth_credentials ctx, username
 		.then (db_rows)=>
 			_log.debug 'got credentials:', db_rows
-			if db_rows.length isnt 1 or not db_rows[0].pwd
+			if db_rows.length isnt 1 or not db_rows[0][@pwd_col]
 				throw new E.OAuthError 401, 'invalid_client'
 			creds= db_rows[0]
 
 			# Compare given password to stored hash password
-			@comparePassword password, creds.pwd
+			@comparePassword password, creds[@pwd_col]
 		.then (a_match)->
 			_log.debug 'got a match:', a_match
 			throw new E.OAuthError 401, 'invalid_client' if not a_match
-
 			creds.id
 
 

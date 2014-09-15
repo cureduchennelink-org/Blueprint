@@ -21,10 +21,10 @@ MissingArg= (param)->
 util.inherits MissingArg, restify.RestError
 exports.MissingArg= MissingArg
 
-NotFoundError= (token, param)->
+NotFoundError= (token, message)->
 	restify.RestError.call this,
 		statusCode: 404
-		body: {error: token, param }
+		body: {error: token, message }
 		constructorOpt: NotFoundError
 	this.name= 'Resource Not Found'
 
@@ -46,10 +46,10 @@ util.inherits OAuthError, restify.RestError
 exports.OAuthError= OAuthError
 
 # token in the form 'MODULE:FUNCTION:CUSTOM_STRING'
-AccessDenied= (token)->
+AccessDenied= (token, message)->
 	restify.RestError.call this,
 		statusCode: 403
-		body: {error: token}
+		body: {error: token, message}
 		constructorOpt: AccessDenied
 	this.name= 'Access Denied'
 util.inherits AccessDenied, restify.RestError
@@ -66,11 +66,11 @@ DbError= (token)->
 util.inherits DbError, restify.RestError
 exports.DbError= DbError
 
-ServerError= (token)->
+ServerError= (token, message)->
 	restify.RestError.call this,
 		statusCode: 500
 		restCode: 'ServerError'
-		body: {error: token}
+		body: {error: token, message}
 		constructorOpt: ServerError
 	this.name= 'Server Error'
 

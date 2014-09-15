@@ -1,13 +1,15 @@
 #
-#	Blueprint - Template Node Server
-#
-#	Written for DV-Mobile by Jamie Hollowell. All rights reserved.
+#	Server Initialization
 #
 
-# Node Modules
+# Require Node Modules
+M= 			require 'moment'
 Q= 			require 'q'
 restify= 	require 'restify'
-socketio=	require 'socket.io'
+_= 			require 'lodash'
+
+# Set default format for moment
+M.defaultFormat= 'YYYY-MM-DD HH:mm:ss'
 
 # Library Modules and Services
 {Kit}=		require  './lib/kit'
@@ -21,21 +23,12 @@ kit.new_service 'logger', 		Logger					# Bunyan Logger
 
 log= 	kit.services.logger.log
 server= restify.createServer log: log 	# Create Server
-io= 	socketio.listen server 			# Create Web Socket Listener
-io.set 'log level', 2					# Set socket.io output to info level
 kit.add_service 'server', server 		# Add server to kit
-kit.add_service 'io', io 				# Add socket io to kit
 
 # Services
-for mod in kit.services.config.service_modules when mod.enable is true
+for nm, mod of kit.services.config.service_modules when mod.enable is true
 	opts= if mod.instConfig then [mod.instConfig] else null
 	kit.new_service mod.name, (require mod.file)[mod.class], opts
-
-# Routes
-for mod in kit.services.config.route_modules when mod.enable is true
-	log.info "Initializing #{mod.class} Routes..."
-	kit.new_route_service mod.name, (require mod.file)[mod.class]
-	kit.services.wrapper.add mod.name
 
 # Restify Hanlders
 for handler in config.restify.handlers
@@ -45,10 +38,33 @@ for handler in config.restify.handlers
 for nm, service of kit.services when typeof service.server_use is 'function'
 	server.use service.server_use
 
+# Parse JSON param
+server.use (req, res, next)->
+	if "JSON" of req.params
+		_.merge req.params, JSON.parse req.params.JSON
+	next()
+
+# Strip all <> from params
+server.use (req, res, next)->
+	for param of req.params
+		if req.params[param] isnt null and _.isString(req.params[param])
+			req.params[param]= req.params[param].replace /[<>]/g, "-"
+	next()
+
+# Routes
+for nm,mod of kit.services.config.route_modules when mod.enable is true
+	log.info "Initializing #{mod.class} Routes..."
+	kit.new_route_service mod.name, (require mod.file)[mod.class]
+	kit.services.wrapper.add mod.name
+
 # Run Server Init Functions from Kit Service Modules
 q_result= Q.resolve()
 for nm, service of kit.services when typeof service.server_init is 'function'
 	do(service)-> q_result= q_result.then -> service.server_init(kit)
+
+# Run Server Init Function from Kit Route Modules
+for nm, route of kit.routes when typeof route.server_init is 'function'
+	do(route)-> q_result= q_result.then -> route.server_init(kit)
 
 # Start the Server
 q_result.then ->

@@ -4,9 +4,16 @@
 
 Q= require 'q'
 E= require '../../error'
+mongoose= require 'mongoose'
+
+checkForHexRegExp= new RegExp("^[0-9a-fA-F]{24}$")
 
 class MCore
 	constructor: (@log)->
+
+	# Checks to see if n is a valid ObjectId
+	isObjectId: (n)->
+		checkForHexRegExp.test n
 
 	# Create and save a document
 	# Returns the new doc
@@ -37,14 +44,14 @@ class MCore
 
 	# Find multiple documents
 	# Returns an array of docs (possibly empty)
-	find: (model, opts)->
-		(Q.ninvoke model, 'find', opts)
+	find: (model, opts, pjn)->
+		(Q.ninvoke model, 'find', opts, pjn)
 		.then (docs)-> docs
 
 	# Find one document
 	# Returns a single doc or null
-	findOne: (model, opts)->
-		(Q.ninvoke model, 'findOne', opts)
+	findOne: (model, opts, pjn)->
+		(Q.ninvoke model, 'findOne', opts, pjn)
 		.then (doc)-> doc
 
 	# Find one document by id

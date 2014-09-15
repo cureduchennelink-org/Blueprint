@@ -3,31 +3,30 @@
 #
 
 module.exports=
-	route_modules: [	# Instantiated in order
-        { enable: false, name: 'auth',			class: 'AuthRoute', 	file: './routes/r_auth' }
-        { enable: false, name: 'user',			class: 'User', 			file: './routes/r_user' }
-        { enable: false, name: 'workout', 		class: 'Workout', 		file: './routes/r_workout' }
-        { enable: false, name: 'register', 		class: 'Registration', 	file: './routes/r_registration' }
-    ]
-	service_modules: [	# Instantiated in order
-        { enable: true, name: 'template',		class: 'EpicTemplate', 	file: './lib/EpicTemplate', instConfig: view_path: 'views/email'  }
-        { enable: true, name: 'template_use',	class: 'EpicTemplate', 	file: './lib/EpicTemplate', instConfig: view_path: 'views/use'  }
-        { enable: true, name: 'tokenMgr',		class: 'TokenMgr', 		file: './lib/token_manager'  }
-        { enable: true, name: 'db',				class: 'Db', 			file: './lib/db'  }
-        { enable: true, name: 'auth',			class: 'Auth', 			file: './lib/auth'  }
-        { enable: true, name: 'router',			class: 'Router', 		file: './lib/router'  }
-        { enable: true, name: 'wrapper',		class: 'Wrapper', 		file: './lib/wrapper'  }
-        { enable: true, name: 'prototype',		class: 'Prototype', 	file: './lib/prototype'  }
-        { enable: true, name: 'push',			class: 'Push', 			file: './lib/push'  }
-        { enable: true, name: 'ses',			class: 'SES', 			file: './lib/ses'  }
-        { enable: true, name: 'tripMgr',		class: 'TripManager', 	file: './lib/trip_manager'  }
-    ]
 	api:
 		port: 9500
 		ident_id: 98	# When the API needs to do something that requires an ident_id
+		longPollTimeout: 60000* 10 # 10 Minutes
 		static_file_server:
 			directory: './html_root'
 			default: 'index.html'
+	route_modules:
+		Auth:			enable: true,  	name: 'Auth',				class: 'AuthRoute', 	file: './routes/r_auth'
+		Poll:			enable:	true,  	name: 'Poll', 				class: 'LongPoll', 		file: './routes/r_poll'
+		Registration:	enable: true, 	name: 'Registration', 		class: 'Registration', 	file: './routes/r_registration'
+	service_modules:
+		template:		enable: true, name: 'template',		class: 'EpicTemplate', 	file: './lib/EpicTemplate', instConfig: view_path: 'views/email'
+		template_use:	enable: true, name: 'template_use',	class: 'EpicTemplate', 	file: './lib/EpicTemplate', instConfig: view_path: 'views/use'
+		tokenMgr:		enable: true, name: 'tokenMgr',		class: 'TokenMgr', 		file: './lib/token_manager'
+		db:				enable: true, name: 'db',			class: 'Db', 			file: './lib/db'
+		util:			enable: true, name: 'util',			class: 'Util', 			file: './lib/util'
+		auth:			enable: true, name: 'auth',			class: 'Auth', 			file: './lib/auth'
+		router:			enable: true, name: 'router',		class: 'Router', 		file: './lib/router'
+		wrapper:		enable: true, name: 'wrapper',		class: 'Wrapper', 		file: './lib/wrapper'
+		prototype:		enable: false, name: 'prototype',	class: 'Prototype', 	file: './lib/prototype'
+		push:			enable: true, name: 'push',			class: 'Push', 			file: './lib/push'
+		ses:			enable: true, name: 'ses',			class: 'SES', 			file: './lib/ses'
+		tripMgr:		enable: true, name: 'tripMgr',		class: 'TripManager', 	file: './lib/trip_manager'
 	restify:
 		handlers: [ 'queryParser','bodyParser','requestLogger' ]
 	route_prefix:
@@ -47,6 +46,7 @@ module.exports=
 			enable: false
 			pool:
 				host: 'localhost'
+				port: 3306
 				user: 'root'
 				password: 'root'
 				database: 'blueprint'
@@ -55,15 +55,14 @@ module.exports=
 				bigNumberStrings: true
 				waitForConnections: false
 				connectionLimit: 10
-			modules: [
-				{ enable: true, name: 'auth', 				class: 'SqlAuth', 			file: 'sql_auth'}
-				{ enable: true, name: 'user', 				class: 'SqlUser', 			file: 'sql_user'}
-				{ enable: true, name: 'token', 				class: 'SqlToken', 			file: 'sql_token'}
-				{ enable: true, name: 'trip', 				class: 'SqlTrip', 			file: 'sql_trip'}
-				{ enable: true, name: 'pset', 				class: 'SqlPSet', 			file: 'sql_pset'}
-				{ enable: true, name: 'pset_item', 			class: 'SqlPSetItem', 		file: 'sql_pset_item'}
-				{ enable: true, name: 'pset_item_change', 	class: 'SqlPSetItemChange', file: 'sql_pset_item_change'}
-			]
+			modules:
+				auth:				enable: true,	class: 'SqlAuth', 			file: 'sql_auth'
+				user:				enable: true,	class: 'SqlUser', 			file: 'sql_user'
+				token:				enable: true,	class: 'SqlToken', 			file: 'sql_token'
+				trip:				enable: true,	class: 'SqlTrip', 			file: 'sql_trip'
+				pset:				enable: true,	class: 'SqlPSet', 			file: 'sql_pset'
+				pset_item:			enable: true,	class: 'SqlPSetItem', 		file: 'sql_pset_item'
+				pset_item_change:	enable: true,	class: 'SqlPSetItemChange', file: 'sql_pset_item_change'
 		mongo:
             enable: false
             options: 'mongodb://localhost/mydb'
@@ -81,14 +80,6 @@ module.exports=
 					title: 's128', completed:'n'
 				Categories:
 					label: 's128'
-			}
-			{
-			name: 'League', enable: true, auth_req: false
-			datasets:
-				Team:
-					name: 's128'
-				Player:
-					name: 's128', pos:'n', team_id:'key'
 			}
 		]
 	ses:
@@ -122,4 +113,4 @@ module.exports=
 			signup_complete:
 				model: 'Signup', tmpl: 'Top', page: 'signup_complete'
 				Subject: 'Signup Complete!'
-				Text: 'Thank yor for signing up with us! Your email address has been verified and your account has been activated!'		
+				Text: 'Thank yor for signing up with us! Your email address has been verified and your account has been activated!'

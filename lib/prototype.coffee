@@ -44,9 +44,13 @@ class PrototypeModule
 			verb: 'get', route: "/Prototype/#{@mod.name}"
 			use: true, wrap: 'default_wrap', version: any: @_get
 			sql_conn: true, sql_tx: true, auth_required: @mod.auth_req
-		
+
 		for nm,dataset of @mod.datasets
-			@resource[nm]= idx: {}, counter: 0
+			idx= {}
+			counter= 0
+			for rec in @mod.data?[nm] ? []
+				idx[rec.id= counter++]= rec
+			@resource[nm]= { idx, counter }
 			@endpoints["create#{nm}"]=
 				verb: 'post', route: "/Prototype/#{@mod.name}/#{nm}"
 				use: true, wrap: 'default_wrap', version: any: @proto_wrap @_create, nm
@@ -80,7 +84,7 @@ class PrototypeModule
 			for nm, r_obj of @resource
 				result[nm]= []
 				result[nm].push rec for id,rec of r_obj.idx
-			
+
 			# Load the Push Set Handle
 			@pset.getPushHandle ctx, 0
 		.then (push_handle)->
@@ -92,7 +96,7 @@ class PrototypeModule
 
 	# POST /Mod/Resource/:r0id
 	_create: (ctx, pre_loaded, resource)=>
-		use_doc= 
+		use_doc=
 			params: @mod.datasets[resource]
 			response: success: 'bool'
 		use_doc.response[resource]= 'list'
@@ -129,7 +133,7 @@ class PrototypeModule
 			send: result
 
 	_update: (ctx, pre_loaded, resource)=>
-		use_doc= 
+		use_doc=
 			params: @mod.datasets[resource]
 			response: success: 'bool'
 		use_doc.response[resource]= 'list'

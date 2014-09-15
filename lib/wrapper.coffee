@@ -21,7 +21,7 @@ class Wrapper
 		@router= 	kit.services.router
 		@wraps= {}
 
-	add_wrap: (mod, wrap)=>
+	add_wrap: (mod, wrap)=> # TOOD: See where this is used
 		@wraps[mod]= wrap
 
 	add: (mod)=>
@@ -42,7 +42,7 @@ class Wrapper
 
 	simple_wrap: (caller)->
 		func= @simple
-		return (q,s,n)-> func q, s, n, caller		
+		return (q,s,n)-> func q, s, n, caller
 
 	simple: (req, res, next, caller) ->
 		f= "Wrapper:simple:#{caller.name}"
@@ -54,7 +54,7 @@ class Wrapper
 
 		# Call the Route Logic.
 		route_logic req, res, next
-		
+
 	auth: (req, res, next, caller)->
 		f= "Wrapper:auth"
 		throw new E.ServerError 'WRAPPER:AUTH:MYSQL_NOT_ENABLED' unless config.db.mysql.enable
@@ -100,7 +100,7 @@ class Wrapper
 			if err.statusCode not in [ 400, 401, 403 ]
 				req.log.error f, '.fail', err, err.stack
 			else
-				req.log.debug f, '.fail', err
+				req.log.debug f, '.fail', err, err.stack
 			if err.body and err.body.error is 'invalid_client'
 				res.setHeader 'WWW-Authenticate', "Bearer realm=#{config.auth.bearer}"
 			if ctx.conn isnt null
@@ -115,16 +115,19 @@ class Wrapper
 			res.send err
 			next()
 
-	default: (req, res, next, caller) ->
-		f= "Wrapper:default:#{caller.name}"
-		route_logic= caller.version[req.params?.Version] ? caller.version.any
-		return (if caller.use isnt true then caller.use else route_logic req) if req is 'use'
-		ctx= conn: null, p: req.params, log: req.log, auth_id: req.auth.authId
+	default: (req, res, next, endpoint) =>
+		f= "Wrapper:default:#{endpoint.name}"
+		route_logic= endpoint.version[req.params?.Version] ? endpoint.version.any
+		return (if endpoint.use isnt true then endpoint.use else route_logic req) if req is 'use'
+		ctx=
+			conn: null, p: req.params
+			log: req.log, auth_id: req.auth.authId
+			files: req.files, req: req
 		p= ctx.p
 		pre_loaded= {}
 		result= false
 
-		if caller.auth_required
+		if endpoint.auth_required or endpoint.permit
 			return next() if not req.auth.authorize()
 			pre_loaded.auth_id= req.auth.authId
 
@@ -132,26 +135,26 @@ class Wrapper
 		.then ->
 
 			# Acquire DB Connection
-			return false unless caller.sql_conn
+			return false unless endpoint.sql_conn
 			throw new E.ServerError 'WRAPPER:DEFAULT:MYSQL_NOT_ENABLED' unless config.db.mysql.enable
 			sdb.core.Acquire()
 		.then (c) ->
 			ctx.conn= c if c isnt false
 
 			# Start a Transaction
-			return false unless caller.sql_tx
+			return false unless endpoint.sql_tx
 			throw new E.ServerError 'WRAPPER:DEFAULT:MYSQL_NOT_ENABLED' unless config.db.mysql.enable
 			sdb.core.StartTransaction(ctx)
 		.then () ->
 
-			# Loop through the caller's pre_load functions
+			# Loop through the endpoint's pre_load functions
 			q_result = Q.resolve true
-			for nm,func of caller.pre_load
+			for nm,func of endpoint.pre_load
 				do (nm,func) ->
 					q_result= q_result.then () ->
-						func ctx
+						func ctx, pre_loaded
 					.then (pre_load_result) ->
-						_log.debug "got #{nm}:", pre_load_result
+						_log.debug f, "got #{nm}:", pre_load_result
 						pre_loaded[nm]= pre_load_result
 			q_result
 		.then ->
@@ -162,7 +165,7 @@ class Wrapper
 			result= result_hash
 
 			# Commit the transaction
-			return false unless caller.sql_conn
+			return false unless endpoint.sql_conn
 			sdb.core.sqlQuery ctx, 'COMMIT'
 		.then (db_result) ->
 

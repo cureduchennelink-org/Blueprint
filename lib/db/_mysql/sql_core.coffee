@@ -48,14 +48,69 @@ class SqlCore
 
 	# Factory for attaching common functions to SQL Modules
 	# get_collection (ctx)
-	# get_by_ident_id (ctx, ident_id)
 	# create (ctx, new_values)
-	# update_by_ident_id (ctx, ident_id, new_values)
+	# GetByKey (ctx, key, ids)
+	# UpdateByKey (ctx, key, ids, new_values)
+	# DisposeByIds (ctx, ids)
+	# get_by_id (ctx, id)
+	# create (ctx, new_values, re_read)
+	# update_by_id (ctx, id, new_values, re_read)
+	# delete_by_id (ctx, id)
 	method_factory: (sql_mod, name)=>
 		table= 		sql_mod.table
 		ident_tbl=  sql_mod.ident_tbl
 		schema= 	sql_mod.schema
 		sqlQuery= @sqlQuery
+
+		if schema.GetByKey
+			sql_mod.GetByKey= (ctx, key, ids)->
+				f= "DB:#{name}:GetByKey:"
+				ctx.log.debug f, key
+
+				Q.resolve()
+				.then =>
+
+					throw new E.DbError "DB:CORE:SCHEMA_UNDEFINED:GetByKey_#{key}" unless schema.GetByKey[key]
+					sql= 'SELECT '+ (schema.GetByKey[key].join ',')+ ' FROM '+ table+
+						' WHERE di= 0 AND '+ key+ ' IN (?)'
+					sqlQuery ctx, sql, [ ids]
+				.then (db_rows)->
+					db_rows
+
+		if schema.UpdateByKey
+			sql_mod.UpdateByKey= (ctx, key, ids, new_values)->
+				f= "DB:#{name}:UpdateByKey:"
+				ctx.log.debug f, key
+
+				throw new E.DbError "DB:CORE:SCHEMA_UNDEFINED:UpdateByKey_#{key}" unless schema.UpdateByKey[key]
+				for nm,val of new_values when nm not in schema.UpdateByKey[key]
+					throw new E.DbError "UPDATE_BY_KEY:COL_NOT_IN_SCHEMA", { col: nm, value: val}
+
+				Q.resolve()
+				.then ()=>
+
+					cols= []; arg=[]
+					(cols.push nm + '= ?'; arg.push val) for nm, val of new_values
+					arg.push ids
+					sql= 'UPDATE '+ table+ ' SET '+ (cols.join ',')+
+						' WHERE '+ key+ ' IN (?) AND di= 0'
+					sqlQuery ctx, sql, arg
+				.then (db_result)=>
+					db_result
+
+
+		if schema.DisposeByIds
+			sql_mod.DisposeByIds= (ctx, ids)->
+				f= "DB:#{name}:DisposeByIds:"
+				ctx.log.debug f, ids
+
+				Q.resolve()
+				.then =>
+
+					sql= 'UPDATE '+ table+ ' SET di= 1 WHERE id IN (?)'
+					sqlQuery ctx, sql, [ ids]
+				.then (db_result)=>
+					db_result
 
 		if schema.get_collection
 			sql_mod.get_collection= (ctx)->
@@ -64,7 +119,8 @@ class SqlCore
 				Q.resolve()
 				.then =>
 
-					sql= 'SELECT * FROM ' + table
+					sql= 'SELECT '+ (schema.get_collection.join ',')+ ' FROM '+ table+
+						' WHERE di= 0'
 					sqlQuery ctx, sql
 				.then (db_rows)->
 					db_rows
@@ -82,9 +138,10 @@ class SqlCore
 					db_rows
 
 		if schema.create
-			sql_mod.create= (ctx, new_values)-> # TODO: Add a variable to return the newly inserted record
+			sql_mod.create= (ctx, new_values, re_read)->
 				f= "DB:#{name}:create:"
 				_log.debug f, new_values
+				result= false
 
 				for nm, val of new_values when nm not in schema.create
 					throw new E.DbError "DB:CORE:BAD_INSERT_COL_#{table}_#{nm}"
@@ -97,32 +154,24 @@ class SqlCore
 					sql= 'INSERT INTO ' + table + ' (' + (cols.join ',') + ') VALUES (' + (qs.join ',') + ')'
 					sqlQuery ctx, sql, arg
 				.then (db_result)=>
-					db_result
+					result= db_result
+					throw new E.DbError f+'NO_INSERT' if db_result.affectedRows isnt 1
 
-		if schema.update_by_ident_id
-			sql_mod.update_by_ident_id= (ctx, ident_id, new_values)->
-				f= "DB:#{name}:update_by_ident_id:"
-				_log.debug f, ident_id, new_values
-
-				for nm, val of new_values when nm not in schema.update_by_ident_id
-					throw new E.DbError 'Invalid ' + table + ' Update Column', col: nm, value: val
-
-				Q.resolve()
-				.then =>
-
-					cols= []; arg=[]
-					(cols.push nm + '= ?'; arg.push val) for nm, val of new_values
-					arg.push ident_id
-					sql= 'UPDATE ' + table + ' SET '+ (cols.join ',') +
-						' WHERE ident_id= ? AND di= 0'
-					sqlQuery ctx, sql, arg
-				.then (db_result)=>
-					db_result
+					return false unless re_read is true
+					throw new E.ServerError f+'REREAD_NOT_DEFINED_IN_SCHEMA' unless schema.reread
+					sql= 'SELECT ' + (schema.reread.join ',') + ' FROM ' + table + ' WHERE id= ? AND di= 0'
+					sqlQuery ctx, sql, [db_result.insertId]
+				.then (db_rows)->
+					if db_rows isnt false
+						throw new E.NotFoundError f+'REREAD' if db_rows.length isnt 1
+						result= db_rows[0]
+					result
 
 		if schema.update_by_id
-			sql_mod.update_by_id= (ctx, id, new_values)->
+			sql_mod.update_by_id= (ctx, id, new_values, re_read)->
 				f= "DB:#{name}:update_by_id:"
-				_log.debug f, id, new_values
+				_log.debug f, { id, new_values, re_read }
+				result= false
 
 				for nm, val of new_values when nm not in schema.update_by_id
 					throw new E.DbError 'Invalid ' + table + ' Update Column', col: nm, value: val
@@ -137,21 +186,29 @@ class SqlCore
 						' WHERE id= ? AND di= 0'
 					sqlQuery ctx, sql, arg
 				.then (db_result)=>
-					db_result
+					result= db_result
 
-		if schema.get_by_ident_id
-			sql_mod.get_by_ident_id= (ctx, ident_id)->
-				f= "DB:#{name}:get_by_ident_id:"
-				_log.debug f, ident_id
+					return false unless re_read is true
+					throw new E.ServerError f+'REREAD_NOT_DEFINED_IN_SCHEMA' unless schema.reread
+					sql= 'SELECT ' + (schema.reread.join ',') + ' FROM ' + table + ' WHERE id= ? AND di= 0'
+					sqlQuery ctx, sql, [id]
+				.then (db_rows)->
+					if db_rows isnt false
+						throw new E.NotFoundError f+'REREAD' if db_rows.length isnt 1
+						result= db_rows[0]
+					result
+
+		if schema.delete_by_id
+			sql_mod.delete_by_id= (ctx, id)->
+				f= "DB:#{name}:delete_by_id:"
+				_log.debug f, id
 
 				Q.resolve()
-				.then =>
+				.then ()=>
 
-					sql= 'SELECT '+ (schema.get_by_ident_id.join ',') +
-						' FROM ' + ident_tbl + ' i LEFT OUTER JOIN ' + table + ' e' +
-						' ON i.id= e.ident_id WHERE i.id= ? AND i.di= 0 AND (e.di= 0 OR e.id IS NULL)'
-					sqlQuery ctx, sql, [ident_id]
-				.then (db_rows) ->
-					db_rows
+					sql= 'DELETE FROM ' + table + ' WHERE id= ?'
+					@db.sqlQuery ctx, sql, [ id ]
+				.then (db_result)=>
+					db_result
 
 exports.SqlCore= SqlCore

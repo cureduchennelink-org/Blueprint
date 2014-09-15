@@ -8,22 +8,21 @@ _= require 'lodash'
 
 sdb= false
 _log= false
-io= false
-INTERVAL= false
 
 class Push
 	constructor: (@kit)->
 		kit.services.logger.log.info 'Initializing Push Service...'
-		sdb=	kit.services.db.mysql
-		_log=	kit.services.logger.log
-		io= 	kit.services.io
-		config= kit.services.config.push_service
-		INTERVAL= config.poll_interval
+		sdb=		kit.services.db.mysql
+		_log=		kit.services.logger.log
+		config= 	kit.services.config.push_service
+		@util= 		kit.services.util
+		@interval=  config.poll_interval # TODO: change to @poll_interval
+		@interested_parties= [] # List of callbacks to call when changes are processed
 		@pset_by_name= {}
 		@count= false
-		io.of('/push').on 'connection', @connect
 
 	# Get the latest push count
+	# TODO: Hold on to a single connection for the push service
 	server_init: (kit)->
 		f= 'Push:server_init'
 		ctx= conn: null, log: _log
@@ -40,31 +39,17 @@ class Push
 			sdb.pset_item_change.get_recent ctx, 1, @count
 		.then (db_rows)=>
 			if db_rows.length
-				@count= db_rows[db_rows.length].count
+				@count= db_rows[0].count
 
-			# Release DB conn / Start the timer
+			# Release DB conn / Start the timer / Start listening
 			sdb.core.release ctx.conn
-			@timer= setTimeout @Poll, INTERVAL
+			@timer= setTimeout @Poll, @interval
 
-	# Socket.io entry point for the push service
-	connect: (socket)->
-		f= 'Push:connect:'
-		_log.debug f, 'client connected to push service'
-
-		socket.emit 'connected' # Let the client know we have connected
-		
-		socket.on 'listen', (push_handle)-> # TODO: Prevent someone from listenting to a non-existent room
-			_log.info f, 'client wants to listen to:', push_handle
-			socket.join push_handle
-		
-		socket.on 'ignore', (push_handle)->
-			_log.info f, 'clients wants to ignore:', push_handle
-
-	# TODO: Consider holding on to a db connection for the @Poll function
+	RegisterForChanges: (cb)-> @interested_parties.push cb
 	Poll: ()=>
 		f= 'Push:Poll'
 		ctx= conn: null, log: _log
-		limit= 5
+		limit= 30
 		fromId= @count
 
 		Q.resolve()
@@ -76,7 +61,7 @@ class Push
 			ctx.conn= c
 
 			# Read all pset_item_changes from last cursor
-			sdb.pset_item_change.get_recent ctx, limit, fromId
+			sdb.pset_item_change.get_recent ctx, limit, fromId # TODO: need get_next()->
 		.then (db_rows)=>
 			if db_rows.length
 				@count= db_rows[db_rows.length - 1].count
@@ -84,20 +69,19 @@ class Push
 			return false unless db_rows.length
 			@ProcessChanges db_rows
 		.then ()=>
-			
+
 			# Release DB Connection / Restart the timer
 			sdb.core.release ctx.conn
-			@timer= setTimeout @Poll, INTERVAL
+			@timer= setTimeout @Poll, @interval
 
 		.fail (e)->
 			_log.error f, e, e.stack
-
 	ProcessChanges: (changes)->
 		f= 'Push:ProcessChanges'
 		data= {}
 
 		Q.resolve()
-		.then ()->
+		.then ()=>
 
 			# Sort changes by pset_id/pset_item_id
 			for rec in changes
@@ -106,22 +90,23 @@ class Push
 				data[pid]= {} unless data[pid]
 				data[pid][iid]= {} unless data[pid][iid]
 				data[pid][iid].count= rec.count
-				data[pid][iid].changes= {} unless data[pid][iid].changes
-				data[pid][iid].changes[rec.resource]= [] unless data[pid][iid].changes[rec.resource]
+				data[pid][iid].sync= {} unless data[pid][iid].sync
+				data[pid][iid].sync[rec.resource]= [] unless data[pid][iid].sync[rec.resource]
 
 				rec.after= JSON.parse rec.after
 				rec.prev= JSON.parse rec.prev
-				data[pid][iid].changes[rec.resource].push _.pick rec, ['id','count','verb','prev','after']
+				data[pid][iid].sync[rec.resource].push _.pick rec, ['id','count','verb','prev','after']
 
-			# Update all push rooms
+			# Update interested parties
+			sorted_changes= []
 			for pset, items of data
 				for item, push_obj of items
-					push_handle= "#{pset}/#{item}"
-					_log.debug f, 'pushing to room:', push_handle
-					io.of('/push').in(push_handle).emit 'update', push_obj
-					
+					partial_handle= "#{pset}/#{item}"
+					push_obj.partial_handle= partial_handle
+					sorted_changes.push push_obj
+			cb sorted_changes for cb in @interested_parties
 	GetPushSet: (ctx, clear_pset, nm)->
-		f= 'Push:GetPushSet'
+		f= 'Push:GetPushSet:'
 		_log= ctx.log
 		_log.debug f, {clear_pset}, nm
 		pset_id= false
@@ -143,7 +128,7 @@ class Push
 			# Grab the pset, or create one if it doesn't exist
 			sdb.pset.read_or_insert ctx, nm
 		.then (pset_rec)=>
-			@pset_by_name[nm]= new PushSet pset_rec
+			@pset_by_name[nm]= new PushSet pset_rec, @util
 			pset_id= pset_rec.id
 
 			# if clear_pset is true remove all data related to pset id
@@ -161,7 +146,6 @@ class Push
 
 			return @pset_by_name[nm]
 			# return new PushSet rec or existing @pset_by_name[nm]
-
 	CleanPushSet: (ctx, pset_id)->
 		f= 'Push:CleanPushSet'
 		_log= ctx.log
@@ -170,7 +154,7 @@ class Push
 
 		Q.resolve()
 		.then ()->
-			
+
 			# Grab all pset_item id's related to this pset
 			sdb.pset_item.get_by_psid ctx, pset_id
 		.then (db_rows)->
@@ -188,21 +172,26 @@ class Push
 			_log.debug f, 'got delete items:', db_result
 
 			true
-			
+
 class PushSet
-	constructor: (@pset)-> # pset: id= 10, name= 'Todo'
+	constructor: (@pset, @util)-> # pset: id= 10, name= 'Todo'
 		@c_items= {} # Cached Push Set Items. indexed by 'xref'
 
-	itemChange: (ctx, xref, verb, prev, after, resource, tbl_id, tbl)->
+	itemChange: (ctx, xref, verb, prev, now, resource, tbl_id, tbl)->
 		f= "PushSet:#{@pset.name}:itemChange:"
 		_log= ctx.log
-		_log.debug f, { xref, verb, prev, after, tbl_id, tbl }
+		_log.debug f, { xref, verb, resource, tbl_id, tbl }
 		pset_item_id= false
+
+		# Optimization to skip if prev and now are the same during update
+		[before, after]= @util.Diff prev, now
+		_log.debug f, { before, after}
+		return false if (_.isEmpty after) and verb is 'update'
 
 		Q.resolve()
 		.then ()=>
-			
-			# Gran the pset_item's id
+
+			# Grab the pset_item's id
 			@getItem ctx, xref
 		.then (item_rec)=>
 			_log.debug f, { item_rec }
@@ -214,9 +203,9 @@ class PushSet
 			throw new E.DbError 'PUSHSET:ITEMCHANGE:BAD_LOCK' unless db_rows.length is 1
 
 			# Insert the change
-			prev= JSON.stringify prev
+			before= JSON.stringify before
 			after= JSON.stringify after
-			new_change= { pset_id: @pset.id, pset_item_id, verb, prev, after, resource, tbl_id, tbl }
+			new_change= { pset_id: @pset.id, pset_item_id, verb, prev: before, after, resource, tbl_id, tbl }
 			sdb.pset_item_change.create ctx, new_change
 		.then (db_result)=>
 
@@ -254,17 +243,17 @@ class PushSet
 			_log.debug f, 'got new_handle:', new_handle
 			if new_handle isnt false
 				@c_items[sxref]= new_handle
-		
+
 			# Send back to client
 			@c_items[sxref]
-	
+
 	getPushHandle: (ctx, xref)->
 		f= "PushSet:#{@pset.name}:getPushHandle:"
 		_log= ctx.log
-		
+
 		Q.resolve()
 		.then ()=>
-			
+
 			@getItem ctx, xref
 		.then (item_rec)=>
 
@@ -279,7 +268,7 @@ class PushSet
 
 		Q.resolve()
 		.then ()->
-			
+
 			# Insert in to pset_item table (@pset.id, xref)
 			sdb.pset_item.create ctx, { pset_id, xref }
 		.then (db_result)=>
@@ -297,7 +286,7 @@ class PushSet
 			prev= {}; after= {}; resource= null; tbl_id= null; tbl= null
 			@itemChange ctx, xref, 'init', prev, after, resource, tbl_id, tbl
 		.then =>
-			
+
 			# return insertId
 			handle
 

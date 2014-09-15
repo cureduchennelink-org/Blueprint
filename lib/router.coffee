@@ -20,7 +20,6 @@ usage= []
 
 class Router
 	constructor: (kit) ->
-		kit.services.logger.log.info 'Initializing Router...'
 		@log= 		kit.services.logger.log
 		@pfx= 		kit.services.config.route_prefix.api
 		@template= 	kit.services.template_use
@@ -31,7 +30,7 @@ class Router
 	add_route: (mod, name, verb, route, func)->
 		@usage_by_mod[mod]= [] unless @usage_by_mod[mod]
 		use_spec= func 'use'
-		use_rec= 
+		use_rec=
 			name: name
 			verb: use_map[verb]
 			route: route
@@ -47,7 +46,7 @@ class Router
 
 	make_tbl: ()->
 		table= Module: []
-		for mod, route_list of @usage_by_mod 
+		for mod, route_list of @usage_by_mod
 			table.Module.push name: mod, Route: (route for route in route_list)
 		table
 

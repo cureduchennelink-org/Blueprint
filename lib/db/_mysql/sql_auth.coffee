@@ -5,19 +5,19 @@
 Q= require 'q'
 E= require '../../error'
 
-cred_col= 'eml'
-
 class SqlAuth
 	constructor: (db, log)->
 		@db= db
 		@log= log
 		@table= 'ident'
+		@cred_col= 'eml'
+		@pwd_col= 'pwd'
 		@schema=
-			auth:	['id','pwd']
-			update_by_id: ['eml','pwd']
+			auth:	['id', @pwd_col]
+			update_by_id: [@cred_col,@pwd_col]
 			get_by_cred: ['*']
-			get_by_id: ['id','eml']
-			create: ['eml','pwd']
+			get_by_id: ['id',@cred_col]
+			create: [@cred_col,@pwd_col]
 
 		@db.method_factory @, 'SqlAuth'
 
@@ -26,11 +26,11 @@ class SqlAuth
 		@log.debug f, cred_name
 
 		Q.resolve()
-		.then =>
+		.then ()=>
 
 			# Grab the Ident Credentials
 			sql= 'SELECT '+ (@schema.auth.join ',') +
-				 ' FROM ' + @table + ' WHERE ' + cred_col + '= ? and di= 0'
+				 ' FROM '+ @table+ ' WHERE '+ @cred_col+ '= ? and di= 0'
 			@db.sqlQuery ctx, sql, [cred_name]
 		.then (db_rows)=>
 			db_rows
@@ -40,11 +40,11 @@ class SqlAuth
 		@log.debug f, cred_name
 
 		Q.resolve()
-		.then =>
+		.then ()=>
 
 			# Grab the Ident Credentials
 			sql= 'SELECT '+ (@schema.get_by_cred.join ',') +
-				 ' FROM ' + @table + ' WHERE ' + cred_col + '= ? and di= 0'
+				 ' FROM '+ @table+ ' WHERE '+ @cred_col+ '= ? and di= 0'
 			@db.sqlQuery ctx, sql, [cred_name]
 		.then (db_rows)=>
 			db_rows
