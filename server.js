@@ -37,6 +37,7 @@ for (nm in _ref) {
   if (!(mod.enable === true)) {
     continue;
   }
+  log.info("Initializing " + mod["class"] + " Service...");
   opts = mod.instConfig ? [mod.instConfig] : null;
   kit.new_service(mod.name, (require(mod.file))[mod["class"]], opts);
 }

@@ -27,6 +27,7 @@ kit.add_service 'server', server 		# Add server to kit
 
 # Services
 for nm, mod of kit.services.config.service_modules when mod.enable is true
+	log.info "Initializing #{mod.class} Service..."
 	opts= if mod.instConfig then [mod.instConfig] else null
 	kit.new_service mod.name, (require mod.file)[mod.class], opts
 
