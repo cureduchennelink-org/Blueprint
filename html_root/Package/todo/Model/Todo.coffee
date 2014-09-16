@@ -4,22 +4,10 @@ class Todo extends window.EpicMvc.ModelJS
 			show_state: 'all'
 			active_item_id: false
 		super Epic, view_nm, ss
-		@rest= rest_v1
-		@socket= window.EpicMvc.Extras.io.connect 'http://localhost:9500/push'
-		@socket.on 'connected', ()=>
-			console.log 'Connected to Socket Server!'
-		@socket.on 'update', (data)=>
-			console.log 'got socket update:', data
-			for rec in data.changes['Item']
-				switch rec.verb
-					when 'add'
-						@c_items_idx[rec.id]= rec.after
-					when 'update'
-						$.extend @c_items_idx[rec.id], rec.after
-					when 'delete'
-						delete @c_items_idx[rec.id]				
-			@c_items= false
-			@invalidateTables true
+		@rest= window.rest_v1
+		@cache= window.cache_v1
+		@cache_cb= @C_SyncTodo
+		@c_is_pending= true
 	action: (act,p) ->
 		f= "Todo:action:#{act}"
 		_log1 f, p
@@ -44,59 +32,92 @@ class Todo extends window.EpicMvc.ModelJS
 				title= el.val()
 				if id?
 					data= title: title
-					results= rest_v1.call 'POST', "Prototype/Todo/Item/#{id}/update", f, data
+					results= @rest.NoAuthPost "Prototype/Todo/Item/#{id}/update", f, data
 					_log2 f, 'got update results:', results
 					if results.success
-						$.extend @c_items_idx[id], results.Item[0]
+						m.add 'SUCCESS'
+						r.success= 'SUCCESS'
+						# Uncomment to update Cache immediately
+						# $.extend @c_todo.Item_idx[id], results.Item[0]
+					else
+						@rest.MakeIssue i, result
+						r.success= 'FAIL'
 				else
 					data= title: title, completed: ''
-					results= rest_v1.call 'POST', 'Prototype/Todo/Item', f, data
+					results= @rest.NoAuthPost 'Prototype/Todo/Item', f, data
 					_log2 f, 'got create results:', results
-					new_item= results.Item[0]
-					@c_items_idx[new_item.id]= new_item
-				@c_items= false
+					if results.success
+						m.add 'SUCCESS'
+						r.success= 'SUCCESS'
+						# Uncomment to update Cache immediately
+						# @c_todo.Item_idx[new_item.id]= results.Item[0]
+					else
+						@rest.MakeIssue i, result
+						r.success= 'FAIL'
 				@invalidateTables true
 			when "delete_todo" # p.id
-				_log2 f, 'items before:', @c_items
-				results= rest_v1.call 'POST', "Prototype/Todo/Item/#{p.id}/delete", f
+				results= @rest.NoAuthPost "Prototype/Todo/Item/#{p.id}/delete", f
 				_log2 f, 'got delete results:', results
 				if results.success is true
-					delete @c_items_idx[p.id]
-					@c_items= false
-				@invalidateTables true
+					m.add 'SUCCESS'
+					r.success= 'SUCCESS'
+					# Uncomment to update Cache immediately
+					# delete @c_todo.Item_idx[p.id]
+					@invalidateTables true
+				else
+					@rest.MakeIssue i, result
+					r.success= 'FAIL'
 			when "clear_completed"
-				batch_ids= (item.id for item in @c_items when item.completed is 'yes')
+				batch_ids= (item.id for id,item of @c_todo.Item_idx when item.completed is 'yes')
 				data= batch_ids: batch_ids
-				results= rest_v1.call 'POST', "Prototype/Todo/Item/batch/delete", f, data
+				results= @rest.NoAuthPost "Prototype/Todo/Item/batch/delete", f, data
 				_log2 f, 'got delete results:', results
 				if results.success is true
-					delete @c_items_idx[id] for id in batch_ids
-					@c_items= false
-				@invalidateTables true
+					m.add 'SUCCESS'
+					r.success= 'SUCCESS'
+					# Uncomment to update Cache immediately
+					# delete @c_todo.Item_idx[id] for id in batch_ids
+					@invalidateTables true
+				else
+					@rest.MakeIssue i, result
+					r.success= 'FAIL'
 			when "mark_toggle" # p.input_obj, data-p-id
 				el= $(p.input_obj)
 				id= el.attr("data-p-id")
-				data= completed: if @c_items_idx[id].completed is 'yes' then '' else 'yes'
-				results= rest_v1.call 'POST', "Prototype/Todo/Item/#{id}/update", f, data
+				data= completed: if @c_todo.Item_idx[id].completed is 'yes' then '' else 'yes'
+				results= @rest.NoAuthPost "Prototype/Todo/Item/#{id}/update", f, data
+				_log2 f, {results}
 				if results.success
-					$.extend @c_items_idx[id], results.Item[0]
-					@c_items= false
-				@invalidateTables true
+					m.add 'SUCCESS'
+					r.success= 'SUCCESS'
+					# Uncomment to update Cache immediately
+					# $.extend @c_todo.Item_idx[id], results.Item[0]
+					# @c_items= false
+					@invalidateTables true
+				else
+					@rest.MakeIssue i, result
+					r.success= 'FAIL'
 			when "mark_all"
-				batch_ids= (item.id for item in @c_items when item.completed isnt 'yes')
+				batch_ids= (item.id for id,item of @c_todo.Item_idx when item.completed isnt 'yes')
 				data= { completed: 'yes', batch_ids }
-				results= rest_v1.call 'POST', "Prototype/Todo/Item/batch/update", f, data
+				results= @rest.NoAuthPost "Prototype/Todo/Item/batch/update", f, data
 				_log2 f, 'got mark all results:', results
 				if results.success is true
-					$.extend @c_items_idx[id], { completed: 'yes' } for id in batch_ids
-					@c_items= false
-				@invalidateTables true
+					m.add 'SUCCESS'
+					r.success= 'SUCCESS'
+					# Uncomment to update Cache immediately
+					# $.extend @c_todo.Item_idx[id], { completed: 'yes' } for id in batch_ids
+					@invalidateTables true
+				else
+					@rest.MakeIssue i, result
+					r.success= 'FAIL'
 			else return super act, p
 		[r,i,m]
 	loadTable: (tbl_nm) ->
 		f= "loadTable:#{tbl_nm}"
 		_log2 f
-		item_list= @_getTodos()
+		item_list= @S_GetItems()
+		item_list= [] if item_list is true
 		switch tbl_nm
 			when 'Options'
 				c= 0; nc= 0
@@ -126,23 +147,28 @@ class Todo extends window.EpicMvc.ModelJS
 		switch oFist.getFistNm()
 			when 'Login' then null
 			else return super oFist
-	fistGetFieldChoices: (oFist,field_nm) ->
-		switch field_nm
-			when 'DevPull' then options: [ 'Development', 'Production' ], values: [ 'yes', 'no' ]
-			else return super oFist, field_nm
-	_getTodos: ()->
-		f= 'Todo._getTodos:'
-		@c_items= (item for idx, item of @c_items_idx) if @c_items_idx
-		return @c_items if @c_items
-		results= rest_v1.call 'GET', 'Prototype/Todo', f
-		if results.success
-			@c_items= results.Item
-			@c_items_idx= {}
-			for item in results.Item
-				@c_items_idx[item.id]= item 
-			@socket.emit 'listen', results.push
-		else
-			@c_items= []
-		@c_items
+	S_GetItems: ()->
+		f= 'Todo._getItems:'
+		todos= @S_GetTodoResource()
+		if todos is true
+		then true # async load
+		else (item for id, item of @c_todo.Item_idx)
+	S_GetTodoResource: ()->
+		f= 'M/Todo:S_GetTodoResource:'
+		_log2 f
+		return @c_todo if @c_todo
+		data= @cache.GetResource 'Todo', {}, @cache_cb
+		_log2 f, 'got data:', data
+		@cache_cb= null
+		return data if data is true # Pending load
+		@c_is_pending= false
+		@c_todo= data.Todo
+	C_SyncTodo: (resource, data)=>
+		f= 'M/Todo:C_SyncTodo:'
+		_log2 f, {resource, data}
+		BROKEN() if resource isnt 'Todo'
+		@c_is_pending= false
+		@c_todo= data.Todo
+		@invalidateTables true
 
 window.EpicMvc.Model.Todo= Todo # Public API

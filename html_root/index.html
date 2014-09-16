@@ -2,52 +2,54 @@
 <html lang="en">
 <head>
   <title>Blueprint</title>
+  <meta name="viewport" content="width=device-width, initial-scale=0.9">
+
+  <!-- 3PP CSS Frameworks -->
   <link rel="stylesheet" type="text/css" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" />
   <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.0.3/css/font-awesome.min.css"></link>
   <style>.epic-alternatex { display: none; }</style>
+
+  <!-- 3PP Frameworks -->
   <script type="text/javascript" src="//code.jquery.com/jquery-latest.js"></script>
-  <!--
-  <script type="text/javascript" src="//rawgithub.com/epicguy/epicmvc-proto/master/EpicMvc-One-0.0.0-latest.js"></script>
-  -->
   <script src="EpicMvc-One-0.0.0-latest.js" type="text/javascript" charset="utf-8"></script>
   <script type="text/javascript" src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
-  <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/0.9.16/socket.io.min.js"></script>
-  
-  <!-- Dashboard css -->
-  <link href="Package/blueprint/css/_sb-admin.css" rel="stylesheet">
-  <link href="Package/blueprint/css/plugins/timeline/timeline.css" rel="stylesheet">
-  <link href="Package/blueprint/css/plugins/morris/morris-0.4.3.min.css" rel="stylesheet">
-  <link href="Package/blueprint/css/plugins/social-buttons/social-buttons.css" rel="stylesheet">
-  <!-- Dashboard js -->
-  <script src="Package/blueprint/js/plugins/metisMenu/jquery.metisMenu.js" type="text/javascript" charset="utf-8"></script>
-  <script src="Package/blueprint/js/plugins/morris/morris.js" type="text/javascript" charset="utf-8"></script>
-  <script src="Package/blueprint/js/plugins/morris/raphael-2.1.0.min.js" type="text/javascript" charset="utf-8"></script>
-  <script src="Package/blueprint/js/plugins/flot/jquery.flot.js" type="text/javascript" charset="utf-8"></script>
-  <script src="Package/blueprint/js/plugins/flot/jquery.flot.tooltip.min.js" type="text/javascript" charset="utf-8"></script>
-  <script src="Package/blueprint/js/plugins/flot/jquery.flot.resize.js" type="text/javascript" charset="utf-8"></script>
-  <script src="Package/blueprint/js/plugins/flot/jquery.flot.pie.js" type="text/javascript" charset="utf-8"></script>
+
+  <!--
+  -->
 
   <!-- Blueprint js -->
-  <script src="Package/blueprint/Extras/RestAPI.js" type="text/javascript" charset="utf-8"></script>
+  <script src="Package/blueprint/Extras/RestAPI.js"     type="text/javascript" charset="utf-8"></script>
+  <script src="Package/blueprint/Extras/LocalCache.js"  type="text/javascript" charset="utf-8"></script>
+  <script src="Package/blueprint/Extras/Cache.js"       type="text/javascript" charset="utf-8"></script>
+  <script src="Package/blueprint/Extras/Poll.js"        type="text/javascript" charset="utf-8"></script>
+  <script src="Package/blueprint/Extras/Util.js"        type="text/javascript" charset="utf-8"></script>
+  <script src="Package/blueprint/Extras/DataAction.js"  type="text/javascript" charset="utf-8"></script>
+  <!--
   <script src="Package/blueprint/Model/User.js" type="text/javascript" charset="utf-8"></script>
   <script src="Package/blueprint/app.js" type="text/javascript" charset="utf-8"></script>
   <script src="Package/blueprint/blueprint.fist.js" type="text/javascript" charset="utf-8"></script>
   <script src="Package/blueprint/issues.js" type="text/javascript" charset="utf-8"></script>
+  -->
 
-  <!-- Todo js -->
+  <!-- Todo App -->
   <script src="Package/todo/app.js" type="text/javascript" charset="utf-8"></script>
+  <script src="Package/todo/issues.js" type="text/javascript" charset="utf-8"></script>
   <script src="Package/todo/Model/Todo.js" type="text/javascript" charset="utf-8"></script>
-  
-  <script src="LoadStrategy.js" type="text/javascript" charset="utf-8"></script>
+
+  <!-- Environment config -->
+  <script src="config.js" type="text/javascript" charset="utf-8"></script>
+
 </head>
 <body id="base-body">
 <script type="text/javascript">
   _log1= Function.prototype.bind.call( console.log, console);
   _log2= Function.prototype.bind.call( console.log, console);
   ENTER_KEY= 13;
-  window.EpicMvc.Extras.io= io
+  var rest_opts= window.EpicMvc.Extras.options.rest
+  var rest_v1= new EpicMvc.Extras.RestAPI(rest_opts.host, rest_opts.port, rest_opts.prefix, rest_opts.version);
+  var cache_v1= new EpicMvc.Extras.Cache
   rest_v1= new EpicMvc.Extras.RestAPI('localhost', 9500, 'api', 'v1');
-  EpicMvc.Epic.run( ['Base', 'BaseDevl','todo','blueprint','ct'], 'LoadStrategy$BaseDevl', 'bootstrap$bootstrap', []);
+  EpicMvc.Epic.run( ['Base', 'BaseDevl','todo'], 'LoadStrategy$BaseDevl', 'bootstrap$bootstrap', []);
 </script>
 </body>
 </html>

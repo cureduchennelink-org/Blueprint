@@ -1,5 +1,9 @@
 
 window.EpicMvc.app$todo=
+	OPTIONS:
+		login: 		flow: 'anon'
+		template:	default: 'todo'
+		settings:	group: 'blueprint', show_issues: 'inline'
 	MODELS:
 		Todo:		class: 'Todo',		inst: 'tdTO'
 	FLOWS:

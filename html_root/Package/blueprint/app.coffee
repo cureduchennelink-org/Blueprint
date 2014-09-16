@@ -30,7 +30,7 @@ window.EpicMvc.app$blueprint=
 					start: 'login'
 					STEPS:
 						login: page: 'login', CLICKS:
-							login: call: 'Pageflow/path', p: { path:'logged_in/home/app_listing' }
+							login: call: 'Pageflow/path', p: { path:'logged_in/home/dashboard' }
 							#login: call: 'User/login', use_form: 'Login', RESULTS: [
 							#	r:{success:'SUCCESS'}, call: 'Pageflow/path', p:{path: 'logged_in'} ]
 		logged_in:
