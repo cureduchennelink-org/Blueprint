@@ -13,7 +13,7 @@ class User extends window.EpicMvc.ModelJS
 		r= {}; i= new window.EpicMvc.Issue @Epic, @view_nm, act; m= new window.EpicMvc.Issue @Epic, @view_nm, act
 		switch act
 			when 'check' # Controller wants to know, valid[login]:yes/no, apps[exist]:yes/no
-				if (valid= @rest.doToken()) isnt false
+				if (valid= @rest.DoToken()) isnt false
 					r.valid= 'yes'
 				else r= valid: 'no'
 			when 'parse_hash' # Page initially loaded; params.hash
