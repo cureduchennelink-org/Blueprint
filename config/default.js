@@ -86,7 +86,7 @@ module.exports = {
       file: './lib/wrapper'
     },
     prototype: {
-      enable: false,
+      enable: true,
       name: 'prototype',
       "class": 'Prototype',
       file: './lib/prototype'
@@ -130,10 +130,10 @@ module.exports = {
   },
   db: {
     mysql: {
-      enable: false,
+      enable: true,
       pool: {
         host: 'localhost',
-        port: 3306,
+        port: 8889,
         user: 'root',
         password: 'root',
         database: 'blueprint',
@@ -172,12 +172,12 @@ module.exports = {
         pset_item: {
           enable: true,
           "class": 'SqlPSetItem',
-          file: 'sql_pset_item'
+          file: 'sql_pset'
         },
         pset_item_change: {
           enable: true,
           "class": 'SqlPSetItemChange',
-          file: 'sql_pset_item_change'
+          file: 'sql_pset'
         }
       }
     },
@@ -208,9 +208,20 @@ module.exports = {
             title: 's128',
             completed: 'n'
           },
-          Categories: {
+          Category: {
             label: 's128'
           }
+        },
+        data: {
+          Item: [
+            {
+              title: 'myTitle',
+              completed: ''
+            }, {
+              title: 'myTitle2',
+              completed: ''
+            }
+          ]
         }
       }
     ]

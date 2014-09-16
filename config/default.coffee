@@ -23,7 +23,7 @@ module.exports=
 		auth:			enable: true, name: 'auth',			class: 'Auth', 			file: './lib/auth'
 		router:			enable: true, name: 'router',		class: 'Router', 		file: './lib/router'
 		wrapper:		enable: true, name: 'wrapper',		class: 'Wrapper', 		file: './lib/wrapper'
-		prototype:		enable: false, name: 'prototype',	class: 'Prototype', 	file: './lib/prototype'
+		prototype:		enable: true, name: 'prototype',	class: 'Prototype', 	file: './lib/prototype'
 		push:			enable: true, name: 'push',			class: 'Push', 			file: './lib/push'
 		ses:			enable: true, name: 'ses',			class: 'SES', 			file: './lib/ses'
 		tripMgr:		enable: true, name: 'tripMgr',		class: 'TripManager', 	file: './lib/trip_manager'
@@ -43,10 +43,10 @@ module.exports=
 		accessTokenExpiration: 10 * 60 # seconds (10 Minutes)
 	db:
 		mysql:
-			enable: false
+			enable: true
 			pool:
 				host: 'localhost'
-				port: 3306
+				port: 8889
 				user: 'root'
 				password: 'root'
 				database: 'blueprint'
@@ -61,8 +61,8 @@ module.exports=
 				token:				enable: true,	class: 'SqlToken', 			file: 'sql_token'
 				trip:				enable: true,	class: 'SqlTrip', 			file: 'sql_trip'
 				pset:				enable: true,	class: 'SqlPSet', 			file: 'sql_pset'
-				pset_item:			enable: true,	class: 'SqlPSetItem', 		file: 'sql_pset_item'
-				pset_item_change:	enable: true,	class: 'SqlPSetItemChange', file: 'sql_pset_item_change'
+				pset_item:			enable: true,	class: 'SqlPSetItem', 		file: 'sql_pset'
+				pset_item_change:	enable: true,	class: 'SqlPSetItemChange', file: 'sql_pset'
 		mongo:
             enable: false
             options: 'mongodb://localhost/mydb'
@@ -75,12 +75,18 @@ module.exports=
 		modules: [
 			{
 			name: 'Todo', enable: true, auth_req: false, delta: ['Item']
-			datasets:
+			datasets: # sub-resources of 'Todo'
 				Item:
 					title: 's128', completed:'n'
-				Categories:
+				Category:
 					label: 's128'
+			data:
+				Item: [
+					{ title: 'myTitle', completed:'' }
+					{ title: 'myTitle2', completed:'' }
+				]
 			}
+
 		]
 	ses:
 		accessKeyId: 	'AKIAI5FIAQV7AJEQOH3Q'

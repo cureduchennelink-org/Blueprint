@@ -12,7 +12,6 @@ class Prototype
 	constructor: (kit)->
 		f= 'Prototype:constructor'
 		@log= kit.services.logger.log
-		@log.info 'Initializing Prototype...'
 
 	# optional server_init func
 	# Runs before server starts listening
@@ -72,23 +71,22 @@ class PrototypeModule
 		use_doc= params: {}, response: success: 'bool', push: 'string'
 		use_doc.response[nm]= 'list' for nm of @resource
 		return use_doc if ctx is 'use'
-		_log= ctx.log
-
-
 		f= "Prototype:_get:#{@mod.name}:"
+		_log= ctx.log
 		result= {}
+		result[@mod.name]= {}
 
 		Q.resolve()
-		.then =>
+		.then ()=>
 
 			for nm, r_obj of @resource
-				result[nm]= []
-				result[nm].push rec for id,rec of r_obj.idx
+				result[@mod.name][nm]= []
+				result[@mod.name][nm].push rec for id,rec of r_obj.idx
 
 			# Load the Push Set Handle
 			@pset.getPushHandle ctx, 0
 		.then (push_handle)->
-			result.push= push_handle
+			result.push_handle= push_handle
 
 			# Respond to Client
 			result.success= true
