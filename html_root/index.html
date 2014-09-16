@@ -48,7 +48,6 @@
   var rest_opts= window.EpicMvc.Extras.options.rest
   var rest_v1= new EpicMvc.Extras.RestAPI(rest_opts.host, rest_opts.port, rest_opts.prefix, rest_opts.version);
   var cache_v1= new EpicMvc.Extras.Cache
-  rest_v1= new EpicMvc.Extras.RestAPI('localhost', 9500, 'api', 'v1');
   EpicMvc.Epic.run( ['Base', 'BaseDevl','todo'], 'LoadStrategy$BaseDevl', 'bootstrap$bootstrap', []);
 </script>
 </body>
