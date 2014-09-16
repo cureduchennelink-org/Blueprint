@@ -17,7 +17,6 @@ urlSafeBase64EncodeFix= (str)->
 class TokenMgr
 	constructor: (kit)->
 		@log= kit.services.logger.log
-		@log.info 'Initializing Token Manager...'
 		@CreateToken= Q.nbind @createToken, @
 
 	createToken: (length, callback)->

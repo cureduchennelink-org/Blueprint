@@ -7,7 +7,6 @@ E= require './error'
 
 class TripManager
 	constructor: (kit) ->
-		kit.services.logger.log.info 'Initializing TripManager...'
 		@log=		kit.services.logger.log
 		@sdb= 		kit.services.db.mysql
 		@tokenMgr=	kit.services.tokenMgr

@@ -9,7 +9,6 @@ class SES
 	constructor: (kit) ->
 		@log= kit.services.logger.log
 		@config= kit.services.config.ses
-		@log.info 'Initializing SES...'
 		AWS.config.update
 			accessKeyId: @config.accessKeyId
 			secretAccessKey: @config.secretAccessKey

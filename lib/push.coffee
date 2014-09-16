@@ -11,7 +11,6 @@ _log= false
 
 class Push
 	constructor: (@kit)->
-		kit.services.logger.log.info 'Initializing Push Service...'
 		sdb=		kit.services.db.mysql
 		_log=		kit.services.logger.log
 		config= 	kit.services.config.push_service

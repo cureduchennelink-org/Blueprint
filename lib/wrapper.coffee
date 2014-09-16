@@ -12,7 +12,6 @@ config= false
 
 class Wrapper
 	constructor: (kit) ->
-		kit.services.logger.log.info 'Initializing Wrapper...'
 		_log= 		kit.services.logger.log
 		odb= 		kit.services.db.mongo
 		sdb= 		kit.services.db.mysql
