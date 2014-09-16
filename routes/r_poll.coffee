@@ -27,7 +27,7 @@ class LongPoll
 			poll:
 				verb: 'post', route: '/Poll'
 				use: true, wrap: 'simple_wrap', version: any: @LongPollRequest
-				auth_required: true
+				auth_required: @config.api.authReqForPoll
 	server_init: (kit)-> @push.RegisterForChanges @C_ProcessChanges
 
 	LongPollRequest: (req,res,next) =>

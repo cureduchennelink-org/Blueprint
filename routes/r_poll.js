@@ -45,7 +45,7 @@ LongPoll = (function() {
         version: {
           any: this.LongPollRequest
         },
-        auth_required: true
+        auth_required: this.config.api.authReqForPoll
       }
     };
   }

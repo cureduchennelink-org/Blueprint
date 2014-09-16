@@ -7,6 +7,7 @@ module.exports=
 		port: 9500
 		ident_id: 98	# When the API needs to do something that requires an ident_id
 		longPollTimeout: 60000* 10 # 10 Minutes
+		authReqForPoll: false
 		static_file_server:
 			directory: './html_root'
 			default: 'index.html'

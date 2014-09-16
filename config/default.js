@@ -5,6 +5,7 @@ module.exports = {
     port: 9500,
     ident_id: 98,
     longPollTimeout: 60000 * 10,
+    authReqForPoll: false,
     static_file_server: {
       directory: './html_root',
       "default": 'index.html'
