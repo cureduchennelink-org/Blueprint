@@ -147,8 +147,8 @@ class PrototypeModule
 		result= {}
 
 		if p.r0id is 'batch'
+			throw new E.MissingArg 'batch_ids' unless 'batch_ids' of p
 			batch_ids= ( (Number id) for id in p.batch_ids )
-			throw new E.MissingArg 'batch_ids' unless batch_ids.length
 		else
 			batch_ids= [ (Number p.r0id) ]
 
