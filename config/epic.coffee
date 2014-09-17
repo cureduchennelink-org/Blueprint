@@ -4,7 +4,7 @@
 
 module.exports=
 	api:
-		port: 9500
+		port: 9502
 	db:
 		mysql:
 			enable: true
