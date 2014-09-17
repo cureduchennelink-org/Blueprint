@@ -19,3 +19,8 @@ $(document).on "click change dblclick", "[data-action]", (event_obj)->
 				, 5
 			)(form_flag, render_flag, action, params)
 			return false
+
+ENTER_KEY= 13
+$(document).on "keyup", "input[data-enter]", (event)->
+	if event.which is ENTER_KEY
+		window.EpicMvc.Epic.makeClick false, $(this).attr("data-enter"), {title:$(this).val(),id:$(this).attr('data-p-id')}, true
