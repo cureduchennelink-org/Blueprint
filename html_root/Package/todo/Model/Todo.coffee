@@ -18,18 +18,15 @@ class Todo extends window.EpicMvc.ModelJS
 			when "show" # p.state= (all|active|completed)
 				@show_state= p.state
 				@invalidateTables true
-			when "choose_item" # p.input_obj, p.clear
+			when "choose_item" # p.id, p.clear
 				if p.clear is true
 					@active_item_id= false
 				else
-					el= $(p.input_obj)
-					id= el.attr("data-p-id")
-					@active_item_id= (Number id)
+					@active_item_id= (Number p.id)
 				@invalidateTables true
-			when "save_todo" # p.input_obj
-				el= $(p.input_obj)
-				id= el.attr("data-p-id")
-				title= el.val()
+			when "save_todo" # p.id
+				id= p.id
+				title= p.title
 				if id?
 					data= title: title
 					results= @rest.NoAuthPost "Prototype/Todo/Item/#{id}/update", f, data
@@ -81,9 +78,8 @@ class Todo extends window.EpicMvc.ModelJS
 				else
 					@rest.MakeIssue i, result
 					r.success= 'FAIL'
-			when "mark_toggle" # p.input_obj, data-p-id
-				el= $(p.input_obj)
-				id= el.attr("data-p-id")
+			when "mark_toggle" # p.id
+				id= p.id
 				data= completed: if @c_todo.Item_idx[id].completed is 'yes' then '' else 'yes'
 				results= @rest.NoAuthPost "Prototype/Todo/Item/#{id}/update", f, data
 				_log2 f, {results}
@@ -98,8 +94,18 @@ class Todo extends window.EpicMvc.ModelJS
 					@rest.MakeIssue i, result
 					r.success= 'FAIL'
 			when "mark_all"
-				batch_ids= (item.id for id,item of @c_todo.Item_idx when item.completed isnt 'yes')
-				data= { completed: 'yes', batch_ids }
+				return [r,i,m] unless @c_todo.Item.length # Guard against no Todo items
+				complete_ids= []; not_complete_ids= []; completed= 'yes'
+				for id,item of @c_todo.Item_idx
+					if item.completed is 'yes'
+						complete_ids.push id
+					else not_complete_ids.push id
+				if not_complete_ids.length
+					batch_ids= not_complete_ids
+				else
+					batch_ids= complete_ids
+					completed= ''
+				data= { completed, batch_ids }
 				results= @rest.NoAuthPost "Prototype/Todo/Item/batch/update", f, data
 				_log2 f, 'got mark all results:', results
 				if results.success is true

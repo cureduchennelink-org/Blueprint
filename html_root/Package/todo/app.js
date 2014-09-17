@@ -35,7 +35,7 @@ window.EpicMvc.app$todo = {
                 },
                 save_todo: {
                   call: 'Todo/save_todo',
-                  use_fields: 'input_obj',
+                  use_fields: 'title,id',
                   RESULTS: [
                     {
                       r: {},
@@ -55,14 +55,14 @@ window.EpicMvc.app$todo = {
                 },
                 mark_toggle: {
                   call: 'Todo/mark_toggle',
-                  use_fields: 'input_obj'
+                  use_fields: 'id'
                 },
                 mark_all: {
                   call: 'Todo/mark_all'
                 },
                 edit_item: {
                   call: 'Todo/choose_item',
-                  use_fields: 'input_obj'
+                  use_fields: 'id'
                 }
               }
             }

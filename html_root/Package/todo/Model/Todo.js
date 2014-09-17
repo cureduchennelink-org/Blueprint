@@ -24,7 +24,7 @@ Todo = (function(_super) {
   }
 
   Todo.prototype.action = function(act, p) {
-    var batch_ids, data, el, f, i, id, item, m, r, results, title;
+    var batch_ids, complete_ids, completed, data, f, i, id, item, m, not_complete_ids, r, results, title, _ref;
     f = "Todo:action:" + act;
     _log1(f, p);
     r = {};
@@ -39,16 +39,13 @@ Todo = (function(_super) {
         if (p.clear === true) {
           this.active_item_id = false;
         } else {
-          el = $(p.input_obj);
-          id = el.attr("data-p-id");
-          this.active_item_id = Number(id);
+          this.active_item_id = Number(p.id);
         }
         this.invalidateTables(true);
         break;
       case "save_todo":
-        el = $(p.input_obj);
-        id = el.attr("data-p-id");
-        title = el.val();
+        id = p.id;
+        title = p.title;
         if (id != null) {
           data = {
             title: title
@@ -119,8 +116,7 @@ Todo = (function(_super) {
         }
         break;
       case "mark_toggle":
-        el = $(p.input_obj);
-        id = el.attr("data-p-id");
+        id = p.id;
         data = {
           completed: this.c_todo.Item_idx[id].completed === 'yes' ? '' : 'yes'
         };
@@ -138,20 +134,29 @@ Todo = (function(_super) {
         }
         break;
       case "mark_all":
-        batch_ids = (function() {
-          var _ref, _results;
-          _ref = this.c_todo.Item_idx;
-          _results = [];
-          for (id in _ref) {
-            item = _ref[id];
-            if (item.completed !== 'yes') {
-              _results.push(item.id);
-            }
+        if (!this.c_todo.Item.length) {
+          return [r, i, m];
+        }
+        complete_ids = [];
+        not_complete_ids = [];
+        completed = 'yes';
+        _ref = this.c_todo.Item_idx;
+        for (id in _ref) {
+          item = _ref[id];
+          if (item.completed === 'yes') {
+            complete_ids.push(id);
+          } else {
+            not_complete_ids.push(id);
           }
-          return _results;
-        }).call(this);
+        }
+        if (not_complete_ids.length) {
+          batch_ids = not_complete_ids;
+        } else {
+          batch_ids = complete_ids;
+          completed = '';
+        }
         data = {
-          completed: 'yes',
+          completed: completed,
           batch_ids: batch_ids
         };
         results = this.rest.NoAuthPost("Prototype/Todo/Item/batch/update", f, data);
