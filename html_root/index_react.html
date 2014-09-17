@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>TodoMvc - React</title>
+  <meta name="viewport" content="width=device-width, initial-scale=0.9">
+
+  <!-- 3PP Inlcuded CSS Frameworks -->
+  <link rel="stylesheet" type="text/css" href="css/font-awesome.min.css"></link>
+  <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css" />
+  <style>.epic-alternatex { display: none; }</style>
+
+  <!-- 3PP Included JS Frameworks -->
+  <script type="text/javascript" src="js/jquery-2.1.1.min.js"></script>
+  <script type="text/javascript" src="js/bootstrap.min.js"></script>
+  <script type="text/javascript" src="js/react.js"></script>
+  <script type="text/javascript" src="js/EpicMvc-One-0.0.0-latest.js"></script>
+
+  <!-- EpicMvc/EpicReact stuff -->
+  <script type="text/javascript" charset="utf-8" src="EpicPkg/react/app.js"></script>
+  <script type="text/javascript" charset="utf-8" src="EpicPkg/react/Extras/react.js" ></script>
+  <script type="text/javascript" charset="utf-8" src="EpicPkg/react/Extras/ViewExe.js" ></script>
+  <script type="text/javascript" charset="utf-8" src="EpicPkg/react/Extras/ParseFile.js" ></script>
+  <script type="text/javascript" charset="utf-8" src="EpicPkg/react/Extras/LoadStrategy.js" ></script>
+
+  <!-- Blueprint JS -->
+  <script type="text/javascript" charset="utf-8" src="Package/blueprint/Extras/RestAPI.js"     ></script>
+  <script type="text/javascript" charset="utf-8" src="Package/blueprint/Extras/LocalCache.js"  ></script>
+  <script type="text/javascript" charset="utf-8" src="Package/blueprint/Extras/Cache.js"       ></script>
+  <script type="text/javascript" charset="utf-8" src="Package/blueprint/Extras/Poll.js"        ></script>
+  <script type="text/javascript" charset="utf-8" src="Package/blueprint/Extras/Util.js"        ></script>
+  <script type="text/javascript" charset="utf-8" src="Package/blueprint/Extras/DataAction.js"  ></script>
+
+  <!-- Todo App -->
+  <script type="text/javascript" charset="utf-8" src="Package/todo/app.js" ></script>
+  <script type="text/javascript" charset="utf-8" src="Package/todo/issues.js" ></script>
+  <script type="text/javascript" charset="utf-8" src="Package/todo/Model/Todo.js" ></script>
+
+  <!-- Todo CSS -->
+  <link rel="stylesheet" type="text/css" href="Package/todo/css/todo_css.css"></link>
+
+  <!-- Environment config -->
+  <script src="config.js" type="text/javascript" charset="utf-8"></script>
+
+</head>
+<body id="base-body">
+
+<!-- Init Script that sets the App in motion -->
+<script type="text/javascript">
+  _log1= Function.prototype.bind.call( console.log, console);
+  _log2= Function.prototype.bind.call( console.log, console);
+  rest_opts= window.EpicMvc.Extras.options.rest
+  rest_v1= new EpicMvc.Extras.RestAPI(rest_opts.host, rest_opts.port, rest_opts.prefix, rest_opts.version);
+  cache_v1= new EpicMvc.Extras.Cache
+  window.EpicMvc.ViewExe= window.EpicMvc.Extras.ViewExe$react; // Override EpicMvc's ViewExe for the EpicReact version
+  EpicMvc.Epic.run( ['Base', 'BaseDevl', 'react', 'todo'], 'LoadStrategy$react', 'react$react', [ bdvel_watcher]);
+</script>
+
+</body>
+</html>
