@@ -195,7 +195,8 @@ module.exports = {
     }
   },
   push_service: {
-    poll_interval: 5000
+    poll_interval: 5000,
+    poll_limit: 30
   },
   prototype: {
     modules: [

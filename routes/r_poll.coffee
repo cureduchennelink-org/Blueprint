@@ -12,7 +12,7 @@ _log2= debug: ()->
 class LongPoll
 	constructor: (kit)->
 		_log= 		 kit.services.logger.log
-		#_log2= 		 kit.services.logger.log
+		# _log2= 		 kit.services.logger.log
 		@config= 	 kit.services.config
 		@push= 		 kit.services.push
 		@setTimeout= kit.services.test?.mock_setTimeout or setTimeout
@@ -28,6 +28,7 @@ class LongPoll
 				verb: 'post', route: '/Poll'
 				use: true, wrap: 'simple_wrap', version: any: @LongPollRequest
 				auth_required: @config.api.authReqForPoll
+
 	server_init: (kit)-> @push.RegisterForChanges @C_ProcessChanges
 
 	LongPollRequest: (req,res,next) =>
@@ -74,8 +75,32 @@ class LongPoll
 
 	C_ProcessChanges: (sorted_changes)=>
 		f= 'LongPoll:C_ProcessChanges:'
+
+		@S_UpdateHistoryBuffer sorted_changes
+		formatted_changes= @S_FormatChanges sorted_changes
+		@S_RespondWithChanges formatted_changes
+
+	S_UpdateHistoryBuffer: (sorted_changes)-> return true # TODO: Implement
+
+	# sorted_changes:
+	#	{ '1/6': [ {id,count,verb,prev,after,resource}, ...], '2/15': [], ...}
+	S_FormatChanges: (sorted_changes)->
+		f= 'LongPoll:S_FormatChanges:'
+		data= {}
+		formatted_changes= []
+
+		for ph, change_list of sorted_changes # ph: partial_handle
+			data[ph]= sync: {}, partial_handle: ph
+			for change in change_list
+				data[ph].count= change.count unless data[ph].count > change.count
+				data[ph].sync[change.resource]?= []
+				data[ph].sync[change.resource].push change
+			formatted_changes.push data[ph]
+		formatted_changes
+	S_RespondWithChanges: (formatted_changes)->
+		f= 'LongPoll:S_RespondWithChanges:'
 		req_needs_response= []
-		for change in sorted_changes
+		for change in formatted_changes
 			_log2.debug f, "got count:#{change.count} handle: #{change.partial_handle}"
 			_log2.debug f, "got sync:", change.sync
 			h= change.partial_handle

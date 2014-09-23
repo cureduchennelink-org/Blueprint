@@ -135,8 +135,9 @@ class SqlPSetItemChange
 	constructor: (@db, @log)->
 		@table= 'pset_item_changes'
 		@schema=
+			recent: ['*']
 			create: ['pset_id','pset_item_id','verb','tbl','tbl_id','prev','after','resource']
-			get_recent: ['id as count','pset_id','pset_item_id','tbl_id as id','verb','resource','prev','after']
+			next: ['id as count','pset_id','pset_item_id','tbl_id as id','verb','resource','prev','after']
 		@db.method_factory @, 'SqlPSetItemChange'
 
 	delete_items: (ctx, item_ids)->
@@ -154,11 +155,25 @@ class SqlPSetItemChange
 		.then (db_result)->
 			db_result
 
-	# Get the most recent pset item changes
-	# limit: how many records you want to limit the response to
+	# Grabs the last record inserted
+	GetMostRecentChange: (ctx)->
+		f= "DB:SqlPSetItemChange:GetMostRecentChange:"
+		ctx.log.debug f
+
+		Q.resolve()
+		.then ()=>
+
+			sql= 'SELECT '+ (@schema.recent.join ',')+ ' FROM '+ @table+
+				' WHERE di= 0 ORDER BY id DESC LIMIT 1'
+			@db.sqlQuery ctx, sql
+		.then (db_result)->
+			db_result
+
+	# Get the next set of pset item changes
 	# from: the id that you would like to start getting changes from
-	get_recent: (ctx, limit, from)->
-		f= "DB:SqlPSetItemChange:get_recent:"
+	# limit: how many records you want to limit the response to
+	GetNext: (ctx, from, limit)->
+		f= "DB:SqlPSetItemChange:GetNext:"
 		args= []
 		sql_from= ''
 		sql_limit= ''
@@ -174,8 +189,8 @@ class SqlPSetItemChange
 		Q.resolve()
 		.then ()=>
 
-			sql= 'SELECT ' + (@schema.get_recent.join ',') + ' FROM ' + @table +
-				' WHERE di= 0' + sql_from + ' ORDER BY id ' + sql_limit
+			sql= 'SELECT '+ (@schema.next.join ',')+ ' FROM '+ @table+
+				' WHERE di= 0'+ sql_from+ ' ORDER BY count '+ sql_limit
 			@db.sqlQuery ctx, sql, args
 		.then (db_result)->
 			db_result

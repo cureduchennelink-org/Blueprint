@@ -120,11 +120,49 @@ LongPoll = (function() {
   };
 
   LongPoll.prototype.C_ProcessChanges = function(sorted_changes) {
-    var change, f, h, id, nm, req_needs_response, _base, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2, _results;
+    var f, formatted_changes;
     f = 'LongPoll:C_ProcessChanges:';
+    this.S_UpdateHistoryBuffer(sorted_changes);
+    formatted_changes = this.S_FormatChanges(sorted_changes);
+    return this.S_RespondWithChanges(formatted_changes);
+  };
+
+  LongPoll.prototype.S_UpdateHistoryBuffer = function(sorted_changes) {
+    return true;
+  };
+
+  LongPoll.prototype.S_FormatChanges = function(sorted_changes) {
+    var change, change_list, data, f, formatted_changes, ph, _base, _i, _len, _name, _ref;
+    f = 'LongPoll:S_FormatChanges:';
+    data = {};
+    formatted_changes = [];
+    for (ph in sorted_changes) {
+      change_list = sorted_changes[ph];
+      data[ph] = {
+        sync: {},
+        partial_handle: ph
+      };
+      for (_i = 0, _len = change_list.length; _i < _len; _i++) {
+        change = change_list[_i];
+        if (!(data[ph].count > change.count)) {
+          data[ph].count = change.count;
+        }
+        if ((_ref = (_base = data[ph].sync)[_name = change.resource]) == null) {
+          _base[_name] = [];
+        }
+        data[ph].sync[change.resource].push(change);
+      }
+      formatted_changes.push(data[ph]);
+    }
+    return formatted_changes;
+  };
+
+  LongPoll.prototype.S_RespondWithChanges = function(formatted_changes) {
+    var change, f, h, id, nm, req_needs_response, _base, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2, _results;
+    f = 'LongPoll:S_RespondWithChanges:';
     req_needs_response = [];
-    for (_i = 0, _len = sorted_changes.length; _i < _len; _i++) {
-      change = sorted_changes[_i];
+    for (_i = 0, _len = formatted_changes.length; _i < _len; _i++) {
+      change = formatted_changes[_i];
       _log2.debug(f, "got count:" + change.count + " handle: " + change.partial_handle);
       _log2.debug(f, "got sync:", change.sync);
       h = change.partial_handle;

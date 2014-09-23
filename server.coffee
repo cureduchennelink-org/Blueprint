@@ -63,7 +63,7 @@ q_result= Q.resolve()
 for nm, service of kit.services when typeof service.server_init is 'function'
 	do(service)-> q_result= q_result.then -> service.server_init(kit)
 
-# Run Server Init Function from Kit Route Modules
+# Run Server Init Functions from Kit Route Modules
 for nm, route of kit.routes when typeof route.server_init is 'function'
 	do(route)-> q_result= q_result.then -> route.server_init(kit)
 

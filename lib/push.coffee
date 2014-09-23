@@ -13,97 +13,36 @@ class Push
 	constructor: (@kit)->
 		sdb=		kit.services.db.mysql
 		_log=		kit.services.logger.log
-		config= 	kit.services.config.push_service
+		@config= 	kit.services.config.push_service
 		@util= 		kit.services.util
-		@interval=  config.poll_interval # TODO: change to @poll_interval
+		@interval=  @config.poll_interval # TODO: change to @poll_interval
 		@interested_parties= [] # List of callbacks to call when changes are processed
 		@pset_by_name= {}
 		@count= false
-
+		@ctx= conn: null, log: _log
 	# Get the latest push count
-	# TODO: Hold on to a single connection for the push service
 	server_init: (kit)->
 		f= 'Push:server_init'
-		ctx= conn: null, log: _log
 
 		Q.resolve()
 		.then =>
 
 			# Acquire DB Connection
 			sdb.core.Acquire()
-		.then (c) =>
-			ctx.conn= c
+		.then (c)=>
+			@ctx.conn= c
 
 			# Read the latest item_change
-			sdb.pset_item_change.get_recent ctx, 1, @count
+			sdb.pset_item_change.GetMostRecentChange @ctx
 		.then (db_rows)=>
+			_log.debug f, 'got latest item_change', db_rows
 			if db_rows.length
 				@count= db_rows[0].count
 
-			# Release DB conn / Start the timer / Start listening
-			sdb.core.release ctx.conn
-			@timer= setTimeout @Poll, @interval
+			# Start Polling
+			@timer= setTimeout @S_Poll, @interval
 
 	RegisterForChanges: (cb)-> @interested_parties.push cb
-	Poll: ()=>
-		f= 'Push:Poll'
-		ctx= conn: null, log: _log
-		limit= 30
-		fromId= @count
-
-		Q.resolve()
-		.then ()->
-
-			# Acquire DB Connection
-			sdb.core.Acquire()
-		.then (c) =>
-			ctx.conn= c
-
-			# Read all pset_item_changes from last cursor
-			sdb.pset_item_change.get_recent ctx, limit, fromId # TODO: need get_next()->
-		.then (db_rows)=>
-			if db_rows.length
-				@count= db_rows[db_rows.length - 1].count
-
-			return false unless db_rows.length
-			@ProcessChanges db_rows
-		.then ()=>
-
-			# Release DB Connection / Restart the timer
-			sdb.core.release ctx.conn
-			@timer= setTimeout @Poll, @interval
-
-		.fail (e)->
-			_log.error f, e, e.stack
-	ProcessChanges: (changes)->
-		f= 'Push:ProcessChanges'
-		data= {}
-
-		Q.resolve()
-		.then ()=>
-
-			# Sort changes by pset_id/pset_item_id
-			for rec in changes
-				continue if rec.verb is 'init'
-				pid= rec.pset_id; iid= rec.pset_item_id
-				data[pid]= {} unless data[pid]
-				data[pid][iid]= {} unless data[pid][iid]
-				data[pid][iid].count= rec.count
-				data[pid][iid].sync= {} unless data[pid][iid].sync
-				data[pid][iid].sync[rec.resource]= [] unless data[pid][iid].sync[rec.resource]
-
-				rec.after= JSON.parse rec.after
-				rec.prev= JSON.parse rec.prev
-				data[pid][iid].sync[rec.resource].push _.pick rec, ['id','count','verb','prev','after']
-
-			# Update interested parties
-			sorted_changes= []
-			for pset, items of data
-				for item, push_obj of items
-					partial_handle= "#{pset}/#{item}"
-					push_obj.partial_handle= partial_handle
-					sorted_changes.push push_obj
-			cb sorted_changes for cb in @interested_parties
 	GetPushSet: (ctx, clear_pset, nm)->
 		f= 'Push:GetPushSet:'
 		_log= ctx.log
@@ -132,7 +71,7 @@ class Push
 
 			# if clear_pset is true remove all data related to pset id
 			return false unless clear_pset
-			@CleanPushSet ctx, pset_id
+			@S_CleanPushSet ctx, pset_id
 		.then (clean_result)->
 			_log.debug f, 'got clean_result:', clean_result
 
@@ -145,8 +84,48 @@ class Push
 
 			return @pset_by_name[nm]
 			# return new PushSet rec or existing @pset_by_name[nm]
-	CleanPushSet: (ctx, pset_id)->
-		f= 'Push:CleanPushSet'
+	S_Poll: ()=>
+		f= 'Push:Poll'
+		limit= @config.poll_limit
+		fromId= @count
+
+		Q.resolve()
+		.then ()=>
+
+			# Read all pset_item_changes from last cursor
+			sdb.pset_item_change.GetNext @ctx, fromId, limit
+		.then (db_rows)=>
+			if db_rows.length
+				@count= db_rows[db_rows.length - 1].count
+
+			return false unless db_rows.length # No Changes
+			sorted_changes= @S_SortChanges db_rows
+			cb sorted_changes for cb in @interested_parties
+			null
+		.then ()=>
+
+			# Restart the timer
+			@timer= setTimeout @S_Poll, @interval
+
+		.fail (e)->
+			_log.error f, e, e.stack
+	S_SortChanges: (raw_changes)->
+		f= 'Push:S_SortChanges:'
+		data= {}
+
+		# Sort the Changes by pset_id/pset_item_id
+		for rec in raw_changes
+			continue if rec.verb is 'init'
+			partial_handle= "#{rec.pset_id}/#{rec.pset_item_id}"
+			data[partial_handle]?= []
+
+			# Parse / Filter each change
+			rec.after= JSON.parse rec.after
+			rec.prev= JSON.parse rec.prev
+			data[partial_handle].push _.pick rec, ['id','count','verb','prev','after','resource']
+		data
+	S_CleanPushSet: (ctx, pset_id)->
+		f= 'Push:S_CleanPushSet'
 		_log= ctx.log
 		_log.debug f, {pset_id}
 		item_ids= []
@@ -176,8 +155,8 @@ class PushSet
 	constructor: (@pset, @util)-> # pset: id= 10, name= 'Todo'
 		@c_items= {} # Cached Push Set Items. indexed by 'xref'
 
-	itemChange: (ctx, xref, verb, prev, now, resource, tbl_id, tbl)->
-		f= "PushSet:#{@pset.name}:itemChange:"
+	ItemChange: (ctx, xref, verb, prev, now, resource, tbl_id, tbl)->
+		f= "PushSet:#{@pset.name}:ItemChange:"
 		_log= ctx.log
 		_log.debug f, { xref, verb, resource, tbl_id, tbl }
 		pset_item_id= false
@@ -191,7 +170,7 @@ class PushSet
 		.then ()=>
 
 			# Grab the pset_item's id
-			@getItem ctx, xref
+			@S_GetItem ctx, xref
 		.then (item_rec)=>
 			_log.debug f, { item_rec }
 			pset_item_id= item_rec.id
@@ -214,11 +193,22 @@ class PushSet
 			throw new E.DbError 'PUSHSET:ITEMCHANGE:UPDATE_COUNT' unless db_result.affectedRows is 1
 
 			null
+	GetPushHandle: (ctx, xref)->
+		f= "PushSet:#{@pset.name}:GetPushHandle:"
+		_log= ctx.log
+
+		Q.resolve()
+		.then ()=>
+
+			@S_GetItem ctx, xref
+		.then (item_rec)=>
+
+			"#{@pset.id}/#{item_rec.id}"
 
 	# Return item handle to endpoint on behalf of client for websock call
 	# Assumption: The caller will start a transaction
-	getItem: (ctx, xref)->
-		f= "PushSet:#{@pset.name}:getItem:"
+	S_GetItem: (ctx, xref)->
+		f= "PushSet:#{@pset.name}:S_GetItem:"
 		_log= ctx.log
 		_log.debug f, xref
 		sxref= (String xref)
@@ -236,8 +226,8 @@ class PushSet
 				@c_items[sxref]= db_rows[0]
 				return false
 
-			# If handle doesn't exist. Call @_createItem
-			@_createItem ctx, sxref
+			# If handle doesn't exist. Call @S_CreateItem
+			@S_CreateItem ctx, sxref
 		.then (new_handle)=>
 			_log.debug f, 'got new_handle:', new_handle
 			if new_handle isnt false
@@ -245,21 +235,8 @@ class PushSet
 
 			# Send back to client
 			@c_items[sxref]
-
-	getPushHandle: (ctx, xref)->
-		f= "PushSet:#{@pset.name}:getPushHandle:"
-		_log= ctx.log
-
-		Q.resolve()
-		.then ()=>
-
-			@getItem ctx, xref
-		.then (item_rec)=>
-
-			"#{@pset.id}/#{item_rec.id}"
-
-	_createItem: (ctx, xref)->
-		f= "PushSet:#{@pset.name}:_createItem:"
+	S_CreateItem: (ctx, xref)->
+		f= "PushSet:#{@pset.name}:S_CreateItem:"
 		_log= ctx.log
 		_log.debug f, xref
 		pset_id= @pset.id
@@ -283,7 +260,7 @@ class PushSet
 
 			# Insert 'init' change record for the new pset_item
 			prev= {}; after= {}; resource= null; tbl_id= null; tbl= null
-			@itemChange ctx, xref, 'init', prev, after, resource, tbl_id, tbl
+			@ItemChange ctx, xref, 'init', prev, after, resource, tbl_id, tbl
 		.then =>
 
 			# return insertId

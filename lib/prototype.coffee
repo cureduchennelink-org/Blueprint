@@ -41,7 +41,7 @@ class PrototypeModule
 
 		@endpoints["get#{@mod.name}"]=
 			verb: 'get', route: "/Prototype/#{@mod.name}"
-			use: true, wrap: 'default_wrap', version: any: @_get
+			use: true, wrap: 'default_wrap', version: any: @S_Get
 			sql_conn: true, sql_tx: true, auth_required: @mod.auth_req
 
 		for nm,dataset of @mod.datasets
@@ -52,26 +52,26 @@ class PrototypeModule
 			@resource[nm]= { idx, counter }
 			@endpoints["create#{nm}"]=
 				verb: 'post', route: "/Prototype/#{@mod.name}/#{nm}"
-				use: true, wrap: 'default_wrap', version: any: @proto_wrap @_create, nm
+				use: true, wrap: 'default_wrap', version: any: @proto_wrap @S_Create, nm
 				sql_conn: true, sql_tx: true, auth_required: @mod.auth_req
 			@endpoints["update#{nm}"]=
 				verb: 'put', route: "/Prototype/#{@mod.name}/#{nm}/:r0id/update"
-				use: true, wrap: 'default_wrap', version: any: @proto_wrap @_update, nm
+				use: true, wrap: 'default_wrap', version: any: @proto_wrap @S_Update, nm
 				sql_conn: true, sql_tx: true, auth_required: @mod.auth_req
 			@endpoints["delete#{nm}"]=
 				verb: 'del', route: "/Prototype/#{@mod.name}/#{nm}/:r0id/delete"
-				use: true, wrap: 'default_wrap', version: any: @proto_wrap @_delete, nm
+				use: true, wrap: 'default_wrap', version: any: @proto_wrap @S_Delete, nm
 				sql_conn: true, sql_tx: true, auth_required: @mod.auth_req
 
 	proto_wrap: (func, resource)->
 		return (ctx, pre_loaded)-> func ctx, pre_loaded, resource
 
 	# Private Logic
-	_get: (ctx, pre_loaded)=>
+	S_Get: (ctx, pre_loaded)=>
 		use_doc= params: {}, response: success: 'bool', push: 'string'
 		use_doc.response[nm]= 'list' for nm of @resource
 		return use_doc if ctx is 'use'
-		f= "Prototype:_get:#{@mod.name}:"
+		f= "Prototype:S_Get:#{@mod.name}:"
 		_log= ctx.log
 		result= {}
 		result[@mod.name]= {}
@@ -84,7 +84,7 @@ class PrototypeModule
 				result[@mod.name][nm].push rec for id,rec of r_obj.idx
 
 			# Load the Push Set Handle
-			@pset.getPushHandle ctx, 0
+			@pset.GetPushHandle ctx, 0
 		.then (push_handle)->
 			result.push_handle= push_handle
 
@@ -93,7 +93,7 @@ class PrototypeModule
 			send: result
 
 	# POST /Mod/Resource/:r0id
-	_create: (ctx, pre_loaded, resource)=>
+	S_Create: (ctx, pre_loaded, resource)=>
 		use_doc=
 			params: @mod.datasets[resource]
 			response: success: 'bool'
@@ -103,7 +103,7 @@ class PrototypeModule
 		conn= ctx.conn
 		_log= ctx.log
 
-		f= "Prototype:_create:#{@mod.name}:#{resource}:"
+		f= "Prototype:S_Create:#{@mod.name}:#{resource}:"
 		r= @resource[resource]
 		schema= @mod.datasets[resource]
 		rec= {}
@@ -116,21 +116,21 @@ class PrototypeModule
 		rec.id= r.counter++
 
 		Q.resolve()
-		.then =>
+		.then ()=>
 
 			# Create new record
 			r.idx[rec.id]= rec
 			result[resource]= [ rec ] # e.g. Item: [ {completed: 'yes', id: 1} ]
 
 			# Notify Push Set of Item Change
-			@pset.itemChange ctx, 0, 'add', {}, rec, resource, rec.id, null
-		.then =>
+			@pset.ItemChange ctx, 0, 'add', {}, rec, resource, rec.id, null
+		.then ()=>
 
 			# Respond to Client
 			result.success= true
 			send: result
 
-	_update: (ctx, pre_loaded, resource)=>
+	S_Update: (ctx, pre_loaded, resource)=>
 		use_doc=
 			params: @mod.datasets[resource]
 			response: success: 'bool'
@@ -140,7 +140,7 @@ class PrototypeModule
 		conn= ctx.conn
 		_log= ctx.log
 
-		f= "Prototype:_update:#{@mod.name}:#{resource}:"
+		f= "Prototype:S_Update:#{@mod.name}:#{resource}:"
 		r= @resource[resource]
 		schema= @mod.datasets[resource]
 		new_values= {}
@@ -175,8 +175,8 @@ class PrototypeModule
 				# Notify Push Set of Item Change
 				vals= _.clone new_values
 				vals= _.merge vals, id: r0id
-				@pset.itemChange ctx, 0, 'update', before, vals, resource, r0id, null
-			.then => # TODO: Have itemChange return what the push service would
+				@pset.ItemChange ctx, 0, 'update', before, vals, resource, r0id, null
+			.then => # TODO: Have ItemChange return what the push service would
 		q_result
 		.then ->
 
@@ -184,7 +184,7 @@ class PrototypeModule
 			result.success= true
 			send: result
 
-	_delete: (ctx, pre_loaded, resource)=>
+	S_Delete: (ctx, pre_loaded, resource)=>
 		use_doc=
 			params: {}, response: success: 'bool'
 		return use_doc if ctx is 'use'
@@ -192,7 +192,7 @@ class PrototypeModule
 		conn= ctx.conn
 		_log= ctx.log
 
-		f= "Prototype:_delete:#{@mod.name}:#{resource}:"
+		f= "Prototype:S_Delete:#{@mod.name}:#{resource}:"
 		r= @resource[resource]
 		before= {}
 
@@ -213,7 +213,7 @@ class PrototypeModule
 				delete r.idx["#{r0id}"]
 
 				# Notify Push Set of Item Change
-				@pset.itemChange ctx, 0, 'delete', before, {}, resource, r0id, null
+				@pset.ItemChange ctx, 0, 'delete', before, {}, resource, r0id, null
 			.then ->
 		q_result
 		.then ->
