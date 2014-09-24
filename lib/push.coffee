@@ -20,7 +20,7 @@ class Push
 		@pset_by_name= {}
 		@count= false
 		@ctx= conn: null, log: _log
-	# Get the latest push count
+
 	server_init: (kit)->
 		f= 'Push:server_init'
 
@@ -39,10 +39,8 @@ class Push
 			if db_rows.length
 				@count= db_rows[0].count
 
-			# Start Polling
-			@timer= setTimeout @S_Poll, @interval
-
 	RegisterForChanges: (cb)-> @interested_parties.push cb
+
 	GetPushSet: (ctx, clear_pset, nm)->
 		f= 'Push:GetPushSet:'
 		_log= ctx.log
@@ -84,6 +82,8 @@ class Push
 
 			return @pset_by_name[nm]
 			# return new PushSet rec or existing @pset_by_name[nm]
+	Start: ()-> @timer= setTimeout @S_Poll, @interval
+
 	S_Poll: ()=>
 		f= 'Push:Poll'
 		limit= @config.poll_limit
@@ -99,8 +99,7 @@ class Push
 				@count= db_rows[db_rows.length - 1].count
 
 			return false unless db_rows.length # No Changes
-			sorted_changes= @S_SortChanges db_rows
-			cb sorted_changes for cb in @interested_parties
+			cb db_rows for cb in @interested_parties
 			null
 		.then ()=>
 
@@ -109,21 +108,7 @@ class Push
 
 		.fail (e)->
 			_log.error f, e, e.stack
-	S_SortChanges: (raw_changes)->
-		f= 'Push:S_SortChanges:'
-		data= {}
 
-		# Sort the Changes by pset_id/pset_item_id
-		for rec in raw_changes
-			continue if rec.verb is 'init'
-			partial_handle= "#{rec.pset_id}/#{rec.pset_item_id}"
-			data[partial_handle]?= []
-
-			# Parse / Filter each change
-			rec.after= JSON.parse rec.after
-			rec.prev= JSON.parse rec.prev
-			data[partial_handle].push _.pick rec, ['id','count','verb','prev','after','resource']
-		data
 	S_CleanPushSet: (ctx, pset_id)->
 		f= 'Push:S_CleanPushSet'
 		_log= ctx.log

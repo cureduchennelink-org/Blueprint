@@ -98,6 +98,12 @@ module.exports = {
       "class": 'Push',
       file: './lib/push'
     },
+    pollMgr: {
+      enable: true,
+      name: 'pollMgr',
+      "class": 'PollManager',
+      file: './lib/poll_manager'
+    },
     ses: {
       enable: true,
       name: 'ses',
@@ -196,7 +202,8 @@ module.exports = {
   },
   push_service: {
     poll_interval: 5000,
-    poll_limit: 30
+    poll_limit: 30,
+    max_buffer_size: 1000
   },
   prototype: {
     modules: [

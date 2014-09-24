@@ -26,6 +26,7 @@ module.exports=
 		wrapper:		enable: true, name: 'wrapper',		class: 'Wrapper', 		file: './lib/wrapper'
 		prototype:		enable: true, name: 'prototype',	class: 'Prototype', 	file: './lib/prototype'
 		push:			enable: true, name: 'push',			class: 'Push', 			file: './lib/push'
+		pollMgr:		enable: true, name: 'pollMgr',		class: 'PollManager', 	file: './lib/poll_manager'
 		ses:			enable: true, name: 'ses',			class: 'SES', 			file: './lib/ses'
 		tripMgr:		enable: true, name: 'tripMgr',		class: 'TripManager', 	file: './lib/trip_manager'
 	restify:
@@ -73,6 +74,7 @@ module.exports=
 	push_service:
 		poll_interval: 5000
 		poll_limit: 30 # How many changes to process at once
+		max_buffer_size: 1000
 	prototype:
 		modules: [
 			{
