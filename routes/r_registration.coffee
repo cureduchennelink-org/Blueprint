@@ -40,7 +40,7 @@ class Registration
 
 	# Private Logic
 	_signup: (ctx, pre_loaded)=>
-		use_doc= 
+		use_doc=
 			params: fnm: 'r:S', lnm: 'r:S', eml: 'r:S'
 			response: success: 'bool'
 		return use_doc if ctx is 'use'
@@ -57,13 +57,13 @@ class Registration
 
 		Q.resolve()
 		.then ->
-			
+
 			# Verify email doesn't already exist
 			sdb.auth.get_by_cred_name ctx, p.eml
 		.then (db_rows)=>
 			_log.debug 'got ident with eml:', db_rows
 			throw new E.AccessDenied 'REGISTER:SIGNUP:EMAIL_EXISTS' unless db_rows.length is 0
-						
+
 			# Create Trip and store email, fnm, lnm in json info. Never Expires (null).
 			@tripMgr.planTrip ctx, @config.api.ident_id, { eml: p.eml, fnm: p.fnm, lnm: p.lnm }, null, 'signup'
 		.then (new_trip)=>
@@ -107,12 +107,12 @@ class Registration
 			_log.debug 'got ident with eml:', db_rows
 			throw new E.AccessDenied 'REGISTER:READ_SIGNUP:EMAIL_EXISTS' unless db_rows.length is 0
 			success= true
-			
+
 			# Return trip json info
 			send: { success, signup: trip.json}
 
 	_register_signup: (ctx, pre_loaded)=>
-		use_doc= 
+		use_doc=
 			params: fnm: 'r:S', lnm: 'r:S', eml: 'r:S', pwd: 'r:S'
 			response: success: 'bool', eml_change: 'bool'
 		return use_doc if ctx is 'use'
@@ -137,7 +137,7 @@ class Registration
 
 		Q.resolve()
 		.then =>
-			
+
 			# Retrieve trip info from Trip Manager
 			@tripMgr.getTripFromToken ctx, p.token
 		.then (trip_info)=>
@@ -154,9 +154,9 @@ class Registration
 			_log.debug f, 'got ident with eml:', db_rows
 			throw new E.AccessDenied 'REGISTER:REGISTER_SIGNUP:EMAIL_EXISTS' unless db_rows.length is 0
 			success= true
-			
+
 			# Encrypt the new password
-			@auth.encryptPassword p.pwd
+			@auth.EncryptPassword p.pwd
 		.then (pwd_hash)=>
 			new_pwd= pwd_hash
 
@@ -170,7 +170,7 @@ class Registration
 			# Insert User/Profile Record
 			new_profile= ident_id: new_ident_id, fnm: p.fnm, lnm: p.lnm
 			sdb.user.create ctx, new_profile
-		.then (db_result)=> 
+		.then (db_result)=>
 			throw new E.DbError 'REGISTER:REGISTER_SIGNUP:CREATE_PROFILE' if db_result.affectedRows isnt 1
 
 			# Return the Trip to the Trip Manager
@@ -197,7 +197,7 @@ class Registration
 			@ses.send 'verify_email_change', @make_tbl(recipient, change_trip.token)
 		.then ()->
 			success= true
-			
+
 			# Return success
 			send: { success , eml_change }
 

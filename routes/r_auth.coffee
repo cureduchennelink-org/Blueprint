@@ -60,7 +60,7 @@ class AuthRoute
 
 	# POST /Auth
 	_authenticate: (ctx, pre_loaded)=>
-		use_doc= 
+		use_doc=
 			params: client_id: 'r:S', username: 'r:S', password: 'r:S', grant_type:'r:S'
 			response:
 				access_token: 'string'
@@ -82,7 +82,7 @@ class AuthRoute
 
 			# Validate Caller Credentials if requesting password
 			return false unless p.grant_type is 'password'
-			@auth.validateCredentials ctx, p.username, p.password
+			@auth.ValidateCredentials ctx, p.username, p.password
 		.then (auth_ident_id)->
 			_log.debug f, 'got auth_ident_id:', auth_ident_id
 			result.auth_ident_id= auth_ident_id if auth_ident_id isnt false
@@ -235,7 +235,7 @@ class AuthRoute
 		.then =>
 
 			# Encrypt the new password
-			@auth.encryptPassword p.new_pwd
+			@auth.EncryptPassword p.new_pwd
 		.then (pwd_hash)->
 
 			# Update the ident password
@@ -316,7 +316,7 @@ class AuthRoute
 			throw new E.AccessDenied 'AUTH:AUTH_TRIP:INVALID_DOMAIN' if trip.domain isnt 'forgot_password'
 
 			# Encrypt the new password
-			@auth.encryptPassword p.new_pwd
+			@auth.EncryptPassword p.new_pwd
 		.then (pwd_hash)->
 
 			# Update the ident password

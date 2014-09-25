@@ -53,8 +53,8 @@ class Auth
 				else true
 		next()
 
-	validateCredentials: (ctx, username, password)->
-		f= 'Auth:_validateCredentials:'
+	ValidateCredentials: (ctx, username, password)->
+		f= 'Auth:_ValidateCredentials:'
 		_log= ctx.log ? @log
 		creds= false
 
@@ -70,15 +70,15 @@ class Auth
 			creds= db_rows[0]
 
 			# Compare given password to stored hash password
-			@comparePassword password, creds[@pwd_col]
+			@ComparePassword password, creds[@pwd_col]
 		.then (a_match)->
 			_log.debug 'got a match:', a_match
 			throw new E.OAuthError 401, 'invalid_client' if not a_match
 			creds.id
 
 
-	comparePassword: (password, compareHash)->
-		f= 'Auth:_comparePassword:'
+	ComparePassword: (password, compareHash)->
+		f= 'Auth:ComparePassword:'
 		parts= compareHash.split '.', 2
 		throw new E.ServerError 'auth_error','Missing salt on password hash' if parts.length isnt 2
 
@@ -86,7 +86,7 @@ class Auth
 		.then (key)=>
 			return if (new Buffer(key).toString 'base64') is parts[1] then true else false
 
-	encryptPassword: (password)->
+	EncryptPassword: (password)->
 		saltBuf= false
 
 		Q.resolve()

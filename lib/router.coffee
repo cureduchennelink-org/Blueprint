@@ -27,7 +27,7 @@ class Router
 		@usage= []
 		@usage_by_mod= {}
 
-	add_route: (mod, name, verb, route, func)->
+	AddRoute: (mod, name, verb, route, func)->
 		@usage_by_mod[mod]= [] unless @usage_by_mod[mod]
 		use_spec= func 'use'
 		use_rec=
