@@ -206,6 +206,7 @@ module.exports = {
     max_buffer_size: 1000
   },
   prototype: {
+    clear_psets_on_restart: true,
     modules: [
       {
         name: 'Todo',

@@ -76,6 +76,7 @@ module.exports=
 		poll_limit: 30 # How many changes to process at once
 		max_buffer_size: 1000
 	prototype:
+		clear_psets_on_restart: true
 		modules: [
 			{
 			name: 'Todo', enable: true, auth_req: false, delta: ['Item']

@@ -11,7 +11,8 @@ _log= false
 class Prototype
 	constructor: (kit)->
 		f= 'Prototype:constructor'
-		@log= kit.services.logger.log
+		@log= 		kit.services.logger.log
+		@config= 	kit.services.config.prototype
 
 	# optional server_init func
 	# Runs before server starts listening
@@ -19,7 +20,8 @@ class Prototype
 		f= 'Prototype:server_init:'
 		push=		kit.services.push
 		wrapper=	kit.services.wrapper
-		protos=		kit.services.config.prototype.modules
+		protos=		@config.modules
+		clear_pset= @config.clear_psets_on_restart
 
 		q_result= Q.resolve true
 		for mod in protos when mod.enable
@@ -27,7 +29,7 @@ class Prototype
 				q_result= q_result.then =>
 					# Initiate the Push Set
 					ctx= conn: null, log: @log
-					push.GetPushSet ctx, true, "Prototype/#{mod.name}"
+					push.GetPushSet ctx, clear_pset, "Prototype/#{mod.name}"
 				.then (pset)=>
 					kit.add_route_service mod.name, new PrototypeModule mod, pset
 					wrapper.add mod.name

@@ -155,19 +155,36 @@ class SqlPSetItemChange
 		.then (db_result)->
 			db_result
 
-	# Grabs the last record inserted
-	GetMostRecentChange: (ctx)->
-		f= "DB:SqlPSetItemChange:GetMostRecentChange:"
+	# Grabs the last record inserted for a particular pset/item
+	GetMostRecentForItem: (ctx, pset_id, pset_item_id)->
+		f= "DB:SqlPSetItemChange:GetMostRecentForItem:"
 		ctx.log.debug f
 
 		Q.resolve()
 		.then ()=>
 
 			sql= 'SELECT '+ (@schema.recent.join ',')+ ' FROM '+ @table+
-				' WHERE di= 0 ORDER BY id DESC LIMIT 1'
-			@db.sqlQuery ctx, sql
-		.then (db_result)->
-			db_result
+				' WHERE di= 0 AND pset_id= ? AND pset_item_id= ?'+
+				' ORDER BY id DESC LIMIT 1'
+			@db.sqlQuery ctx, sql, [ pset_id, pset_item_id]
+		.then (db_rows)->
+			db_rows
+
+	# Grabs the last N recent changes
+	GetMostRecentChanges: (ctx, limit)->
+		f= "DB:SqlPSetItemChange:GetMostRecentChanges:"
+		ctx.log.debug f
+
+		Q.resolve()
+		.then ()=>
+
+			sql= 'SELECT '+ (@schema.next.join ',')+ ' FROM '+
+				' (SELECT * FROM '+ @table+ ' WHERE di= 0'+
+				' ORDER BY id DESC LIMIT ?) sub'+
+				' ORDER BY id ASC'
+			@db.sqlQuery ctx, sql, [ limit]
+		.then (db_rows)->
+			db_rows
 
 	# Get the next set of pset item changes
 	# from: the id that you would like to start getting changes from
@@ -192,7 +209,7 @@ class SqlPSetItemChange
 			sql= 'SELECT '+ (@schema.next.join ',')+ ' FROM '+ @table+
 				' WHERE di= 0'+ sql_from+ ' ORDER BY count '+ sql_limit
 			@db.sqlQuery ctx, sql, args
-		.then (db_result)->
-			db_result
+		.then (db_rows)->
+			db_rows
 
 exports.SqlPSetItemChange= SqlPSetItemChange

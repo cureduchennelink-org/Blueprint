@@ -18,7 +18,7 @@ class Push
 		@interval=  @config.poll_interval # TODO: change to @poll_interval
 		@interested_parties= [] # List of callbacks to call when changes are processed
 		@pset_by_name= {}
-		@count= false
+		@count= 0
 		@ctx= conn: null, log: _log
 
 	server_init: (kit)->
@@ -32,12 +32,33 @@ class Push
 		.then (c)=>
 			@ctx.conn= c
 
+	# Called after all services and routes have been initialized
+	server_start: (kit)->
+		f= 'Push:server_start'
+
+		Q.resolve()
+		.then ()=>
+
 			# Read the latest item_change
-			sdb.pset_item_change.GetMostRecentChange @ctx
+			sdb.pset_item_change.GetMostRecentChanges @ctx, 1
 		.then (db_rows)=>
 			_log.debug f, 'got latest item_change', db_rows
 			if db_rows.length
 				@count= db_rows[0].count
+
+			# Read as far back as we have room in the buffer for
+			return [] unless db_rows.length
+			sdb.pset_item_change.GetMostRecentChanges @ctx, @config.max_buffer_size
+		.then (db_rows)=>
+
+			# Update all interested parties w/ most recent changes
+			return false unless db_rows.length # No Changes
+			cb db_rows for cb in @interested_parties
+			null
+		.then ()=>
+
+			# Start the Poller
+			@Start()
 
 	RegisterForChanges: (cb)-> @interested_parties.push cb
 
@@ -181,14 +202,22 @@ class PushSet
 	GetPushHandle: (ctx, xref)->
 		f= "PushSet:#{@pset.name}:GetPushHandle:"
 		_log= ctx.log
+		item= false
+		item_change= false
 
 		Q.resolve()
 		.then ()=>
 
 			@S_GetItem ctx, xref
 		.then (item_rec)=>
+			item= item_rec
 
-			"#{@pset.id}/#{item_rec.id}"
+			sdb.pset_item_change.GetMostRecentForItem ctx, @pset.id, item_rec.id
+		.then (db_rows)=>
+			throw new E.ServerError "PUSHSET:GET_HANDLE:NO_LATEST_CHANGE" unless db_rows.length
+			item_change= db_rows[0]
+
+			"#{@pset.id}/#{item.id}/#{item_change.id}"
 
 	# Return item handle to endpoint on behalf of client for websock call
 	# Assumption: The caller will start a transaction
@@ -197,13 +226,13 @@ class PushSet
 		_log= ctx.log
 		_log.debug f, xref
 		sxref= (String xref)
-		handle= @c_items[sxref] ? false
-		return handle if handle # Cached handle
+		item= @c_items[sxref] ? false
+		return item if item # Cached item
 
 		Q.resolve()
 		.then ()=>
 
-			# Look for existing pset handle in DB
+			# Look for existing pset item in DB
 			sdb.pset_item.get_psid_xref ctx, @pset.id, sxref
 		.then (db_rows)=>
 			_log.debug f, 'got pset_item:', db_rows
@@ -211,7 +240,7 @@ class PushSet
 				@c_items[sxref]= db_rows[0]
 				return false
 
-			# If handle doesn't exist. Call @S_CreateItem
+			# If item doesn't exist. Call @S_CreateItem
 			@S_CreateItem ctx, sxref
 		.then (new_handle)=>
 			_log.debug f, 'got new_handle:', new_handle
