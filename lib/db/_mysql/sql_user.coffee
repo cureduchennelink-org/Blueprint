@@ -9,9 +9,9 @@ E= require '../../error'
 
 
 class SqlUser
-	constructor: (db, log)->
-		@db= db
-		@log= log
+	constructor: (core, kit)->
+		@log= kit.services.logger.log
+		@db= core
 		@table= 'profile'
 		@ident_tbl= 'ident'
 		@schema=

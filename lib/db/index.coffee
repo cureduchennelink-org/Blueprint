@@ -4,6 +4,8 @@
 #	Include Database Interfaces Here
 #
 
+path= require 'path'
+
 class Db
 	constructor: (kit) ->
 		log= kit.services.logger.log
@@ -17,7 +19,8 @@ class Db
 			# Set up all enabled mysql modules
 			@mysql= core: new SqlCore config.db.mysql.pool, log
 			for nm,mod of config.db.mysql.modules when mod.enable
-				@mysql[nm]= new (require './_mysql/' + mod.file)[mod.class] @mysql.core, log
+				modPath= path.join config.processDir, mod.file
+				@mysql[nm]= new (require modPath)[mod.class] @mysql.core, kit
 
 		# MongoDB
 		if config.db.mongo.enable
@@ -28,7 +31,8 @@ class Db
 
 			# Set up all enabled Mongo Models
 			@mongo= mcore: new MCore log
-			for model in config.db.mongo.models when model.enable
-				@mongo[model.name]= require './_mongo/models/' + model.file
+			for nm, model of config.db.mongo.models when model.enable
+				modPath= path.join config.processDir, model.file
+				@mongo[model.name]= require modPath
 
 exports.Db = Db

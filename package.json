@@ -3,28 +3,18 @@
   "version": "0.1.0-140916",
   "private": "true",
   "dependencies": {
-    "async": "^0.9.0",
-    "aws-sdk": "2.0.0-rc.17",
-    "bunyan": "0.22.3",
-    "csv-parse": "0.0.5",
-    "fast-csv": "^0.5.1",
-    "fs.extra": "^1.2.1",
-    "lodash": "2.4.1",
-    "moment": "2.6.0",
-    "mongoose": "3.8.9",
-    "mysql": "2.3.0",
-    "q": "1.0.1",
-    "restify": "2.7.0",
-    "underscore": "^1.7.0",
-    "underscore.string": "^2.3.3",
-    "unzip": "^0.1.9",
-    "uuid": "^1.4.1"
+    "aws-sdk": "^2.0.17",
+    "bunyan": "^1.1.0",
+    "lodash": "^2.4.1",
+    "moment": "^2.8.3",
+    "mongoose": "^3.8.16",
+    "mysql": "^2.5.1",
+    "q": "^1.0.1",
+    "restify": "^2.8.2"
   },
   "devDependencies": {
     "chai": "^1.9.1",
     "coffee-script": "^1.4.0",
-    "grunt": "^0.4.5",
-    "grunt-contrib-coffee": "^0.11.1",
     "mocha": "^1.20.1"
   },
   "scripts": {

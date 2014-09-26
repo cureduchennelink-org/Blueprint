@@ -6,19 +6,22 @@ Q= require 'q'
 E= require '../lib/error'
 crypto= require 'crypto'
 
-ITERATIONS= 150000
-SALT_SIZE= 16
-KEY_LENGTH= 32
+ITERATIONS= false
+SALT_SIZE= false
+KEY_LENGTH= false
 
 sdb= false # MySql DB
 
 class Auth
 	constructor: (kit) ->
 		sdb= 		kit.services.db.mysql
-		@log= 		kit.services.logger
+		@log= 		kit.services.logger.log
 		@config= 	kit.services.config.auth
 		@tokenMgr= 	kit.services.tokenMgr
 		@pwd_col= 	sdb.auth.pwd_col
+		ITERATIONS= @config.pbkdf2.iterations
+		SALT_SIZE= 	@config.pbkdf2.salt_size
+		KEY_LENGTH= @config.pbkdf2.key_length
 
 	_pbkdf2: (p,buf,IT,KL)-> (Q.ninvoke crypto, 'pbkdf2', p, buf, IT, KL)
 

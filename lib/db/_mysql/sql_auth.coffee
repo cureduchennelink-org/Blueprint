@@ -6,9 +6,8 @@ Q= require 'q'
 E= require '../../error'
 
 class SqlAuth
-	constructor: (db, log)->
-		@db= db
-		@log= log
+	constructor: (@core, kit)->
+		@log= kit.services.logger.log
 		@table= 'ident'
 		@cred_col= 'eml'
 		@pwd_col= 'pwd'
@@ -19,7 +18,7 @@ class SqlAuth
 			get_by_id: ['id',@cred_col]
 			create: [@cred_col,@pwd_col]
 
-		@db.method_factory @, 'SqlAuth'
+		@core.method_factory @, 'SqlAuth'
 
 	get_auth_credentials: (ctx, cred_name)->
 		f= 'DB.SqlAuth.get_auth_credentials:'
@@ -31,7 +30,7 @@ class SqlAuth
 			# Grab the Ident Credentials
 			sql= 'SELECT '+ (@schema.auth.join ',') +
 				 ' FROM '+ @table+ ' WHERE '+ @cred_col+ '= ? and di= 0'
-			@db.sqlQuery ctx, sql, [cred_name]
+			@core.sqlQuery ctx, sql, [cred_name]
 		.then (db_rows)=>
 			db_rows
 
@@ -45,7 +44,7 @@ class SqlAuth
 			# Grab the Ident Credentials
 			sql= 'SELECT '+ (@schema.get_by_cred.join ',') +
 				 ' FROM '+ @table+ ' WHERE '+ @cred_col+ '= ? and di= 0'
-			@db.sqlQuery ctx, sql, [cred_name]
+			@core.sqlQuery ctx, sql, [cred_name]
 		.then (db_rows)=>
 			db_rows
 

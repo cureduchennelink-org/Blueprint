@@ -7,9 +7,9 @@ E= require '../../error'
 
 
 class SqlTrip
-	constructor: (db, log)->
-		@db= db
-		@log= log
+	constructor: (core, kit)->
+		@log= kit.services.logger.log
+		@db= core
 		@table= 'trips'
 		@schema=
 			create: ['auth_ident_id','ident_id','token','domain','json','void','expires']

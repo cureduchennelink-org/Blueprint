@@ -7,10 +7,6 @@ E= require '../lib/error'
 crypto= require 'crypto'
 moment= require 'moment'
 
-ITERATIONS= 150000
-SALT_SIZE= 16
-KEY_LENGTH= 32
-
 sdb= false # MySql DB
 
 class AuthRoute

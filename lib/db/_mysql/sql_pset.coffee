@@ -7,7 +7,9 @@ E= require '../../error'
 
 
 class SqlPSet
-	constructor: (@db, @log)->
+	constructor: (core, kit)->
+		@log= kit.services.logger.log
+		@db= core
 		@table= 'psets'
 		@schema=
 			create: ['name']
@@ -63,7 +65,9 @@ class SqlPSet
 exports.SqlPSet= SqlPSet
 
 class SqlPSetItem
-	constructor: (@db, @log)->
+	constructor: (core, kit)->
+		@log= kit.services.logger.log
+		@db= core
 		@table= 'pset_items'
 		@schema=
 			create: ['pset_id', 'xref']
@@ -132,7 +136,9 @@ class SqlPSetItem
 exports.SqlPSetItem= SqlPSetItem
 
 class SqlPSetItemChange
-	constructor: (@db, @log)->
+	constructor: (core, kit)->
+		@log= kit.services.logger.log
+		@db= core
 		@table= 'pset_item_changes'
 		@schema=
 			recent: ['*']

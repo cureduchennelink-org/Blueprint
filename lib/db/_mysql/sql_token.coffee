@@ -8,9 +8,9 @@ E= require '../../error'
 table= 'ident_tokens'
 
 class SqlToken
-	constructor: (db, log)->
-		@log= log
-		@db= db
+	constructor: (core, kit)->
+		@log= kit.services.logger.log
+		@db= core
 		@schema=
 			find: ['ident_id','client']
 			insert: ['token','ident_id','client','exp','cr']

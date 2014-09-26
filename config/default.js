@@ -16,19 +16,19 @@ module.exports = {
       enable: true,
       name: 'Auth',
       "class": 'AuthRoute',
-      file: './routes/r_auth'
+      file: 'node_modules/blueprint/routes/r_auth'
     },
     Poll: {
       enable: true,
       name: 'Poll',
       "class": 'LongPoll',
-      file: './routes/r_poll'
+      file: 'node_modules/blueprint/routes/r_poll'
     },
     Registration: {
       enable: true,
       name: 'Registration',
       "class": 'Registration',
-      file: './routes/r_registration'
+      file: 'node_modules/blueprint/routes/r_registration'
     }
   },
   service_modules: {
@@ -36,85 +36,85 @@ module.exports = {
       enable: true,
       name: 'template',
       "class": 'EpicTemplate',
-      file: './lib/EpicTemplate',
+      file: 'node_modules/blueprint/lib/EpicTemplate',
       instConfig: {
-        view_path: 'views/email'
+        view_path: 'node_modules/blueprint/views/email'
       }
     },
     template_use: {
       enable: true,
       name: 'template_use',
       "class": 'EpicTemplate',
-      file: './lib/EpicTemplate',
+      file: 'node_modules/blueprint/lib/EpicTemplate',
       instConfig: {
-        view_path: 'views/use'
+        view_path: 'node_modules/blueprint/views/use'
       }
     },
     tokenMgr: {
       enable: true,
       name: 'tokenMgr',
       "class": 'TokenMgr',
-      file: './lib/token_manager'
+      file: 'node_modules/blueprint/lib/token_manager'
     },
     db: {
       enable: true,
       name: 'db',
       "class": 'Db',
-      file: './lib/db'
+      file: 'node_modules/blueprint/lib/db'
     },
     util: {
       enable: true,
       name: 'util',
       "class": 'Util',
-      file: './lib/util'
+      file: 'node_modules/blueprint/lib/util'
     },
     auth: {
       enable: true,
       name: 'auth',
       "class": 'Auth',
-      file: './lib/auth'
+      file: 'node_modules/blueprint/lib/auth'
     },
     router: {
       enable: true,
       name: 'router',
       "class": 'Router',
-      file: './lib/router'
+      file: 'node_modules/blueprint/lib/router'
     },
     wrapper: {
       enable: true,
       name: 'wrapper',
       "class": 'Wrapper',
-      file: './lib/wrapper'
+      file: 'node_modules/blueprint/lib/wrapper'
     },
     prototype: {
       enable: true,
       name: 'prototype',
       "class": 'Prototype',
-      file: './lib/prototype'
+      file: 'node_modules/blueprint/lib/prototype'
     },
     push: {
       enable: true,
       name: 'push',
       "class": 'Push',
-      file: './lib/push'
+      file: 'node_modules/blueprint/lib/push'
     },
     pollMgr: {
       enable: true,
       name: 'pollMgr',
       "class": 'PollManager',
-      file: './lib/poll_manager'
+      file: 'node_modules/blueprint/lib/poll_manager'
     },
     ses: {
       enable: true,
       name: 'ses',
       "class": 'SES',
-      file: './lib/ses'
+      file: 'node_modules/blueprint/lib/ses'
     },
     tripMgr: {
       enable: true,
       name: 'tripMgr',
       "class": 'TripManager',
-      file: './lib/trip_manager'
+      file: 'node_modules/blueprint/lib/trip_manager'
     }
   },
   restify: {
@@ -131,6 +131,11 @@ module.exports = {
   },
   auth: {
     key: 'jQ9PhcT3Xz',
+    pbkdf2: {
+      iterations: 150000,
+      salt_size: 16,
+      key_length: 32
+    },
     bearer: 'blueprint',
     refreshTokenExpiration: 30 * 24 * 60 * 60,
     accessTokenExpiration: 10 * 60
@@ -154,50 +159,49 @@ module.exports = {
         auth: {
           enable: true,
           "class": 'SqlAuth',
-          file: 'sql_auth'
+          file: 'node_modules/blueprint/lib/db/_mysql/sql_auth'
         },
         user: {
           enable: true,
           "class": 'SqlUser',
-          file: 'sql_user'
+          file: 'node_modules/blueprint/lib/db/_mysql/sql_user'
         },
         token: {
           enable: true,
           "class": 'SqlToken',
-          file: 'sql_token'
+          file: 'node_modules/blueprint/lib/db/_mysql/sql_token'
         },
         trip: {
           enable: true,
           "class": 'SqlTrip',
-          file: 'sql_trip'
+          file: 'node_modules/blueprint/lib/db/_mysql/sql_trip'
         },
         pset: {
           enable: true,
           "class": 'SqlPSet',
-          file: 'sql_pset'
+          file: 'node_modules/blueprint/lib/db/_mysql/sql_pset'
         },
         pset_item: {
           enable: true,
           "class": 'SqlPSetItem',
-          file: 'sql_pset'
+          file: 'node_modules/blueprint/lib/db/_mysql/sql_pset'
         },
         pset_item_change: {
           enable: true,
           "class": 'SqlPSetItemChange',
-          file: 'sql_pset'
+          file: 'node_modules/blueprint/lib/db/_mysql/sql_pset'
         }
       }
     },
     mongo: {
       enable: false,
       options: 'mongodb://localhost/mydb',
-      models: [
-        {
+      models: {
+        Workout: {
           enable: true,
-          name: 'Workout',
-          file: 'workout'
+          file: 'node_modules/blueprint/lib/db/_mongo/models/workout'
         }
-      ]
+      }
     }
   },
   push_service: {
