@@ -14,7 +14,7 @@ CREATE TABLE profile (
 	,	avatar_path		VARCHAR( 128) DEFAULT NULL /* 'path to web resource' */
 	,	prog_lang		VARCHAR( 128) DEFAULT NULL /* 'programming language' */
 	,	skill_lvl		INT			  DEFAULT NULL /* 'skill level (0-5)' */
-) TYPE = INNODB ;
+) ENGINE = INNODB ;
 
 set @password := 'ACqX5b7oFXZHOozGZo809A==.wXrhYtmmqLFL8Hvr6LIo0XF+Xq1RMAhEoKF54Pw+5RA=';
 INSERT INTO ident (eml,pwd,cr) VALUES

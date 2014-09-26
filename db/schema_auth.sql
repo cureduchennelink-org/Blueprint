@@ -16,7 +16,7 @@ CREATE TABLE ident (
 	/* Credentials*/
 	,	eml		VARCHAR( 128) UNIQUE DEFAULT NULL /* 'email' */
 	,	pwd		VARCHAR( 128) DEFAULT NULL /* 'password' */
-) TYPE = INNODB ;
+) ENGINE= INNODB ;
 
 /* Then insert some recs for testing: */
 INSERT INTO ident (id,eml,cr) VALUES
@@ -36,5 +36,5 @@ CREATE TABLE ident_tokens (
 	,	exp				DATETIME		NOT NULL
 	,	client			VARCHAR(  32 )
 	,	token			VARCHAR(  32 )	NOT NULL
-) TYPE=INNODB ;
+) ENGINE= INNODB ;
 CREATE UNIQUE INDEX ix_ident_tokens_token ON ident_tokens(token);

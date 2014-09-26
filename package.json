@@ -1,6 +1,6 @@
 {
   "name": "blueprint",
-  "version": "0.1.0-140916",
+  "version": "0.1.0-140926",
   "private": "true",
   "dependencies": {
     "aws-sdk": "^2.0.17",

@@ -10,7 +10,7 @@ CREATE TABLE psets (
 	,	mo		TIMESTAMP		DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP /* 'modified' */
 
 	,	name	VARCHAR( 128) DEFAULT NULL /* Name of the Class of Push Set */
-) TYPE = INNODB ;
+) ENGINE = INNODB ;
 
 DROP   TABLE pset_items;
 CREATE TABLE pset_items (
@@ -22,7 +22,7 @@ CREATE TABLE pset_items (
 
 	,	xref		VARCHAR( 128) DEFAULT NULL /* external table reference */
 	,	count		INT			  DEFAULT 0 /* change count */
-) TYPE = INNODB ;
+) ENGINE = INNODB ;
 
 DROP   TABLE pset_item_changes;
 CREATE TABLE pset_item_changes (
@@ -39,5 +39,5 @@ CREATE TABLE pset_item_changes (
 	,	resource		VARCHAR(1024) DEFAULT NULL /* 'name of the resource - client visible' */
 	,	prev			VARCHAR(1024) DEFAULT NULL /* 'fields and values before change' */
 	,	after			VARCHAR(1024) DEFAULT NULL /* 'fields and values after change' */
-) TYPE = INNODB ;
+) ENGINE = INNODB ;
 

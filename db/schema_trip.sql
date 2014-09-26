@@ -15,4 +15,4 @@ CREATE TABLE trips (
 	,	returned		DATETIME		DEFAULT NULL /* return date of trip */
 	,	expires			DATETIME		DEFAULT NULL /* 'when the trip will expire' */
 
-) TYPE = INNODB ;
+) ENGINE = INNODB ;

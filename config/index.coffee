@@ -25,8 +25,9 @@ module.exports= ()->
 	_log 'Environment specified:', env
 	_log 'Config Dir specified:', configDir
 
-	envPath= path.join execDir, configDir, env+ '.js'
-	_log 'Env Config Path:', envPath
+	if configDir
+		envPath= path.join execDir, configDir, env+ '.js'
+		_log 'Env Config Path:', envPath
 	if fileExists envPath
 		_log 'Environment configuration found:', envPath
 		_.merge config, require envPath
