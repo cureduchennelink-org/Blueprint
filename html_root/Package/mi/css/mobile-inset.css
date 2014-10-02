@@ -1,0 +1,83 @@
+.mi-iphone-6-v {
+	background: url(../images/iphone6white.png) no-repeat ;
+	position: absolute;
+	height: 1000px;
+}
+.mi-iphone-6-v div.phone-bg {
+	width: 375px;
+	max-height: 667px;
+	height: 667px;
+	overflow-y: hidden;
+	margin: 69px;
+	margin-top: 162px;
+	overflow: scroll;
+}
+
+
+/* iPhone 6 black, Horizontal */
+
+.mi-iphone-6-h {
+	background: url(../images/iphone6black_hor.png) no-repeat;
+	position: absolute;
+	height: 500px;
+}
+.mi-iphone-6-h div.phone-bg {
+	width: 667px;
+	max-height: 375px;
+	height: 375px;
+	overflow-y: hidden;
+	margin: 162px;
+	margin-top: 67px;
+	overflow: scroll;
+}
+
+/* iPhone 6 Plus white */
+
+.mi-iphone-6-plus-v {
+	background: url(../images/iphone6pluswhite.png) no-repeat;
+	position: absolute;
+	height: 1100px;
+}
+.mi-iphone-6-plus-v div.phone-bg {
+	width: 422px;
+	max-height: 737px;
+	height: 737px;
+	overflow-y: hidden;
+	margin: 98px;
+	margin-top: 157px;
+	overflow: scroll;
+}
+
+/* iPhone 6 Plus white, Horizontal */
+
+.mi-iphone-6-plus-h {
+	background: url(../images/iphone6pluswhite_hor.png) no-repeat;
+	position: absolute;
+	height: 600px;
+}
+.mi-iphone-6-plus-h div.phone-bg {
+	width: 737px;
+	max-height: 422px;
+	height: 415px;
+	overflow-y: hidden;
+	margin: 157px;
+	margin-top: 106px;
+	overflow: scroll;
+}
+
+/* iPad Air white */
+
+.mi-ipad-air-v {
+	background: url(../images/ipad_air_white.png) no-repeat;
+	position: absolute;
+	height: 1200px;
+}
+.mi-ipad-air-v div.phone-bg {
+	width: 660px;
+	max-height: 875px;
+	height: 875px;
+	overflow-y: hidden;
+	margin: 200px;
+	margin-top: 201px;
+	overflow: scroll;
+}
