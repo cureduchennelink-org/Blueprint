@@ -24,21 +24,24 @@ describe 'Kit', ()->
 	it 'should have a place to store services and routes', ()->
 		kit.should.have.property 'services'
 		kit.should.have.property 'routes'
+		kit.should.respondTo 'add_service'
+		kit.should.respondTo 'new_service'
+		kit.should.respondTo 'add_route_service'
+		kit.should.respondTo 'new_route_service'
 
 	it 'should add a function or object to services', ()->
 		kit.add_service 'my_object', p1: 1, p2:2
 		kit.services.should.have.property 'my_object'
 		kit.services.my_object.p1.should.equal 1
-
 		kit.add_service 'mockFunc', mockFunc
 		kit.services['mockFunc']()
 		funcTarget.should.be.true
 
-	it 'should create a new instance and add to service', ()->
+	it 'should create a new instance and add to services', ()->
 		funcTarget= false
 		funcTarget.should.be.false
 		kit.new_service 'my_service', MockService, ['my_arg']
-		kit.services.should.have.property 'my_service'
+		kit.services.my_service.should.be.an.instanceof MockService
 		kit.services.my_service.val.should.equal 'my_arg'
 		funcTarget.should.be.true
 
@@ -46,6 +49,6 @@ describe 'Kit', ()->
 		funcTarget= false
 		funcTarget.should.be.false
 		kit.new_route_service 'my_route', MockRoute, ['my_arg']
-		kit.routes.should.have.property 'my_route'
+		kit.routes.my_route.should.be.an.instanceof MockRoute
 		kit.routes.my_route.val.should.equal 'my_arg'
 		funcTarget.should.be.true

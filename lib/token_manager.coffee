@@ -44,9 +44,6 @@ class TokenMgr
 
 		# Validate Token Expiration
 		token= JSON.parse (new Buffer (urlSafeBase64DecodeFix parts[0]), 'base64').toString 'utf8'
-		@log.debug 'tkmgr:', token
-		@log.debug 'moment:', moment().unix()
-		@log.debug 'expired: ', token.exp < moment().unix()
 		if (isNaN token.exp) or token.exp < moment().unix()
 			return err: 'Token Expired'
 
