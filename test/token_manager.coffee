@@ -83,7 +83,6 @@ describe 'Token Manager', ()->
 		# Verify token is expired 1 second after is expired
 		setTimeout ()->
 			result= tkmgr.decodeAndValidate expiring_token, KEY
-			_log {result}
 			result.should.have.property 'err'
 			result.err.should.equal 'Token Expired'
 			done()
