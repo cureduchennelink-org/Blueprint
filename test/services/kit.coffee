@@ -1,5 +1,5 @@
 chai= 	require 'chai'
-{Kit}= 	require  '../lib/kit'
+{Kit}= 	require  '../../lib/kit'
 
 chai.should()
 

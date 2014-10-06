@@ -46,11 +46,11 @@ class Auth
 			message: result.err
 			token: result.token
 			authId: if result.token then result.token.iid else null
-			authorize: (skip_response)->
+			authorize: (skip_response)=>
 				if not req.auth.authId
 					return false if skip_response
 					error= new E.OAuthError 401, 'invalid_token', req.auth.message
-					res.setHeader 'WWW-Authenticate', "Bearer realm=\"#{@config.auth.bearer}\""
+					res.setHeader 'WWW-Authenticate', "Bearer realm=\"#{@config.bearer}\""
 					res.send error
 					return next()
 				else true
@@ -67,7 +67,6 @@ class Auth
 			# Grab User Credentials
 			sdb.auth.get_auth_credentials ctx, username
 		.then (db_rows)=>
-			_log.debug 'got credentials:', db_rows
 			if db_rows.length isnt 1 or not db_rows[0][@pwd_col]
 				throw new E.OAuthError 401, 'invalid_client'
 			creds= db_rows[0]
@@ -75,7 +74,6 @@ class Auth
 			# Compare given password to stored hash password
 			@ComparePassword password, creds[@pwd_col]
 		.then (a_match)->
-			_log.debug 'got a match:', a_match
 			throw new E.OAuthError 401, 'invalid_client' if not a_match
 			creds.id
 

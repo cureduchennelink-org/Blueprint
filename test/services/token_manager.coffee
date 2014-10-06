@@ -1,8 +1,8 @@
 _= 		require 'lodash'
 moment= require 'moment'
 chai= 	require 'chai'
-{Kit}= 	require  '../lib/kit'
-{TokenMgr}= require '../lib/token_manager'
+{Kit}= 	require  '../../lib/kit'
+{TokenMgr}= require '../../lib/token_manager'
 
 chai.should()
 
