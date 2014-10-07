@@ -51,7 +51,7 @@ Workout = (function() {
     f = 'Workout:_get:';
     _log.debug(f, p);
     return Q.resolve().then(function() {
-      return odb.mcore.find(odb.Workout, {});
+      return odb.core.find(odb.Workout, {});
     }).then(function(docs) {
       return {
         send: {
@@ -104,7 +104,7 @@ Workout = (function() {
       return newWorkout.FindSimilarTypes();
     }).then(function(docs) {
       _log.debug('got similar Types:', docs);
-      return odb.mcore.create(odb.Workout, opts);
+      return odb.core.create(odb.Workout, opts);
     }).then(function() {
       return {
         send: {

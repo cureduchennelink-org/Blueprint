@@ -30,7 +30,7 @@ class Db
 			mongoose.connect config.db.mongo.options
 
 			# Set up all enabled Mongo Models
-			@mongo= mcore: new MCore log
+			@mongo= core: new MCore log
 			for nm, model of config.db.mongo.models when model.enable
 				modPath= path.join config.processDir, model.file
 				@mongo[model.name]= require modPath

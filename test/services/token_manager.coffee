@@ -71,7 +71,7 @@ describe 'Token Manager', ()->
 		result.should.be.false
 
 	it 'should return an err object when decoding an expired access token', (done)->
-		expSecs= 5
+		expSecs= 1
 		expiring_token= tkmgr.encode {id: 42}, (moment().add expSecs, 'seconds'), KEY
 
 		# Verify valid token first

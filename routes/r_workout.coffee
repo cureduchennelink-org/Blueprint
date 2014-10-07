@@ -45,7 +45,7 @@ class Workout
 		Q.resolve()
 		.then ->
 
-			odb.mcore.find odb.Workout, {}
+			odb.core.find odb.Workout, {}
 		.then (docs)->
 			send: workouts: docs
 
@@ -81,7 +81,7 @@ class Workout
 			_log.debug 'got similar Types:', docs
 
 			# Create new Workout
-			odb.mcore.create odb.Workout, opts
+			odb.core.create odb.Workout, opts
 		.then ->
 			send: success: true, message: 'Workout created with name:' + newWorkout.name
 
