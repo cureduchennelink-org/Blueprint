@@ -15,6 +15,7 @@ Test Suite for Core Database Object.
 
 chai= 		require 'chai'
 _= 			require 'lodash'
+fs= 		require 'fs'
 mongoose= 	require 'mongoose'
 Util= 		require '../../lib/Util'
 {Kit}= 		require '../../../lib/kit'
@@ -37,20 +38,24 @@ chai.should()
 
 # Overide the DB file location for testing;
 # File path's are relative to Blueprint root directory
+bpDir= ''
+if fs.existsSync 'node_modules/blueprint/lib/db/index.js'
+	bpDir= 'node_modules/blueprint/'
+
 config= _.merge Util.config,
 	db:
 		mysql:
 			modules:
-				auth:				file: 'lib/db/_mysql/sql_auth'
-				user:				file: 'lib/db/_mysql/sql_user'
-				token:				file: 'lib/db/_mysql/sql_token'
-				trip:				file: 'lib/db/_mysql/sql_trip'
-				pset:				file: 'lib/db/_mysql/sql_pset'
-				pset_item:			file: 'lib/db/_mysql/sql_pset'
-				pset_item_change:	file: 'lib/db/_mysql/sql_pset'
+				auth:				file: bpDir+ 'lib/db/_mysql/sql_auth'
+				user:				file: bpDir+ 'lib/db/_mysql/sql_user'
+				token:				file: bpDir+ 'lib/db/_mysql/sql_token'
+				trip:				file: bpDir+ 'lib/db/_mysql/sql_trip'
+				pset:				file: bpDir+ 'lib/db/_mysql/sql_pset'
+				pset_item:			file: bpDir+ 'lib/db/_mysql/sql_pset'
+				pset_item_change:	file: bpDir+ 'lib/db/_mysql/sql_pset'
 		mongo:
             models:
-            	Workout:  file: 'lib/db/_mongo/models/workout'
+            	Workout:  file: bpDir+ 'lib/db/_mongo/models/workout'
 
 # Setup the Kit / Create DAO and add to Kit
 kit= new Kit
@@ -67,6 +72,7 @@ class Db
 ###
 describe 'DAO', ()->
 
+	# MySql Tests
 	if config.db.mysql.enable
 		describe 'MySql', ()->
 

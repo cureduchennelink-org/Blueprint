@@ -3,6 +3,7 @@ moment= 	require 'moment'
 chai= 		require 'chai'
 pChai= 		require 'chai-as-promised'
 Util= 		require '../lib/Util'
+Mock= 		require '../lib/Mock'
 {Kit}= 		require '../../lib/kit'
 {TokenMgr}= require '../../lib/token_manager'
 {Auth}= 	require '../../lib/auth'
@@ -25,13 +26,13 @@ config=
 		bearer: 'blueprint'
 		accessTokenExpiration: 10* 60 # seconds
 
-# Mock DB Service
+# Mock DB Service # TODO: Use real DAO
 mockDb=
 	mysql:
 		auth:
 			pwd_col: 'pwd'
 			cred_col: 'eml'
-			get_auth_credentials: (ctx, username)->
+			GetAuthCreds: (ctx, username)->
 				[ {id: 42, eml: 'test@email.com', pwd: encryptedPassword}]
 
 # Setup the Kit
@@ -44,7 +45,7 @@ kit.new_service 'auth', Auth
 
 _log= console.log
 
-req= new Util.MockRestifyRequest url: 'localhost/api', params: p1: 'p1', p2: 'p2'
+req= new Mock.RestifyRequest url: 'localhost/api', params: p1: 'p1', p2: 'p2'
 
 # class Auth
 #	constructor: (kit)-> [db.mysql,logger.log,config.auth,tokenMgr, sdb.auth.pwd_col]
@@ -84,7 +85,7 @@ describe 'Auth Service', ()->
 		expired_token= kit.services.tokenMgr.encode {iid: 42}, moment(), config.auth.key
 
 		it 'should parse an Authorization Header', ()->
-			req= new Util.MockRestifyRequest headers: authorization: "Bearer #{good_token}"
+			req= new Mock.RestifyRequest headers: authorization: "Bearer #{good_token}"
 			req.next_called= false
 			auth.server_use req, {}, ()-> req.next_called= true
 			req.should.have.property 'auth'
@@ -97,7 +98,7 @@ describe 'Auth Service', ()->
 
 
 		it 'should parse the query param "auth_token"', ()->
-			req= new Util.MockRestifyRequest params: auth_token: "#{good_token}"
+			req= new Mock.RestifyRequest params: auth_token: "#{good_token}"
 			req.next_called= false
 			auth.server_use req, {}, ()-> req.next_called= true
 			req.should.have.property 'auth'
@@ -110,18 +111,18 @@ describe 'Auth Service', ()->
 
 		describe 'authorize()', ()->
 			it 'should be true for authorized requests', ()->
-				req= new Util.MockRestifyRequest params: auth_token: "#{good_token}"
+				req= new Mock.RestifyRequest params: auth_token: "#{good_token}"
 				auth.server_use req, {}, ()->
 				req.auth.authorize().should.be.true
 
 			it 'should be false for an un-authorized request', ()->
-				req= new Util.MockRestifyRequest params: auth_token: "#{expired_token}"
+				req= new Mock.RestifyRequest params: auth_token: "#{expired_token}"
 				auth.server_use req, {}, ()->
 				req.auth.authorize(skip= true).should.be.false
 
 			it 'should respond with 401 for an un-authorized request', ()->
-				req= new Util.MockRestifyRequest params: auth_token: "#{expired_token}"
-				res= new Util.MockRestifyResponse
+				req= new Mock.RestifyRequest params: auth_token: "#{expired_token}"
+				res= new Mock.RestifyResponse
 				auth.server_use req, res, ()->
 				req.auth.authorize()
 				res.headers.should.have.property 'WWW-Authenticate'

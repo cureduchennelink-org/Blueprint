@@ -230,7 +230,7 @@ AuthRoute = (function() {
     }
     f = 'User:_update_email:';
     return Q.resolve().then(function() {
-      return sdb.auth.get_by_cred_name(ctx, p.new_eml);
+      return sdb.auth.GetByCredName(ctx, p.new_eml);
     }).then(function(db_rows) {
       _log.debug('got ident with new_eml:', db_rows);
       if (db_rows.length !== 0) {
@@ -290,14 +290,14 @@ AuthRoute = (function() {
         throw new E.AccessDenied('AUTH:VERIFY_EMAIL:INVALID_DOMAIN');
       }
       new_eml = (JSON.parse(trip.json)).eml;
-      return sdb.auth.get_by_id(ctx, trip.auth_ident_id);
+      return sdb.auth.GetById(ctx, trip.auth_ident_id);
     }).then(function(db_rows) {
       _log.debug('got ident:', db_rows);
       if (db_rows.length !== 1) {
         throw new E.NotFoundError('AUTH:VERIFY_EMAIL:IDENT');
       }
       ident = db_rows[0];
-      return sdb.auth.get_by_cred_name(ctx, new_eml);
+      return sdb.auth.GetByCredName(ctx, new_eml);
     }).then(function(db_rows) {
       _log.debug('got ident with new_eml:', db_rows);
       if (db_rows.length !== 0) {
@@ -396,7 +396,7 @@ AuthRoute = (function() {
     }
     f = 'Auth:_forgot_password:';
     return Q.resolve().then(function() {
-      return sdb.auth.get_by_cred_name(ctx, p.email);
+      return sdb.auth.GetByCredName(ctx, p.email);
     }).then(function(db_rows) {
       _log.debug('got ident:', db_rows);
       if (db_rows.length !== 1) {
@@ -505,7 +505,7 @@ AuthRoute = (function() {
       if (bad_token) {
         throw new E.AccessDenied('AUTH:AUTH_TRIP:BAD_TOKEN');
       }
-      return sdb.auth.get_by_id(ctx, trip.auth_ident_id);
+      return sdb.auth.GetById(ctx, trip.auth_ident_id);
     }).then(function(db_rows) {
       _log.debug('got ident:', db_rows);
       if (db_rows.length !== 1) {
@@ -527,7 +527,7 @@ AuthRoute = (function() {
     f = 'Auth:_pl_ident:';
     ctx.log.debug(f, ctx.p);
     return Q.resolve().then(function() {
-      return sdb.auth.get_by_id(ctx, ctx.auth_id);
+      return sdb.auth.GetById(ctx, ctx.auth_id);
     }).then(function(db_rows) {
       var ident;
       ctx.log.debug('got ident:', db_rows);

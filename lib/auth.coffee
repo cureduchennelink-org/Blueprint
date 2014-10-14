@@ -65,7 +65,7 @@ class Auth
 		.then ->
 
 			# Grab User Credentials
-			sdb.auth.get_auth_credentials ctx, username
+			sdb.auth.GetAuthCreds ctx, username
 		.then (db_rows)=>
 			if db_rows.length isnt 1 or not db_rows[0][@pwd_col]
 				throw new E.OAuthError 401, 'invalid_client'

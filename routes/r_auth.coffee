@@ -134,7 +134,7 @@ class AuthRoute
 		.then =>
 
 			# Verify email doesn't already exist
-			sdb.auth.get_by_cred_name ctx, p.new_eml
+			sdb.auth.GetByCredName ctx, p.new_eml
 		.then (db_rows)=>
 			_log.debug 'got ident with new_eml:', db_rows
 			throw new E.AccessDenied 'AUTH:UPDATE_EMAIL:EMAIL_EXISTS' unless db_rows.length is 0
@@ -180,14 +180,14 @@ class AuthRoute
 			new_eml= (JSON.parse trip.json).eml
 
 			# Grab existing ident record
-			sdb.auth.get_by_id ctx, trip.auth_ident_id
+			sdb.auth.GetById ctx, trip.auth_ident_id
 		.then (db_rows)=>
 			_log.debug 'got ident:', db_rows
 			throw new E.NotFoundError 'AUTH:VERIFY_EMAIL:IDENT' if db_rows.length isnt 1
 			ident= db_rows[0]
 
 			# Verify email doesn't already exist
-			sdb.auth.get_by_cred_name ctx, new_eml
+			sdb.auth.GetByCredName ctx, new_eml
 		.then (db_rows)=>
 			_log.debug 'got ident with new_eml:', db_rows
 			throw new E.AccessDenied 'AUTH:VERIFY_EMAIL:EMAIL_EXISTS' unless db_rows.length is 0
@@ -263,7 +263,7 @@ class AuthRoute
 		.then =>
 
 			# Grab Ident Credentials
-			sdb.auth.get_by_cred_name ctx, p.email
+			sdb.auth.GetByCredName ctx, p.email
 		.then (db_rows)=>
 			_log.debug 'got ident:', db_rows
 			throw new E.NotFoundError 'AUTH:FORGOT_PASSWORD:IDENT' if db_rows.length isnt 1
@@ -355,7 +355,7 @@ class AuthRoute
 			throw new E.AccessDenied 'AUTH:AUTH_TRIP:BAD_TOKEN' if bad_token
 
 			# Retrieve Ident Info
-			sdb.auth.get_by_id ctx, trip.auth_ident_id
+			sdb.auth.GetById ctx, trip.auth_ident_id
 		.then (db_rows)=>
 			_log.debug 'got ident:', db_rows
 			throw new E.NotFoundError 'AUTH:AUTH_TRIP:IDENT' if db_rows.length isnt 1
@@ -373,7 +373,7 @@ class AuthRoute
 		Q.resolve().then ->
 
 			# Retrieve Ident Info
-			sdb.auth.get_by_id ctx, ctx.auth_id
+			sdb.auth.GetById ctx, ctx.auth_id
 		.then (db_rows)=>
 			ctx.log.debug 'got ident:', db_rows
 			throw new E.NotFoundError 'AUTH:PRELOAD:IDENT' if db_rows.length isnt 1

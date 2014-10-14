@@ -20,7 +20,7 @@
     "mocha": "^1.20.1"
   },
   "scripts": {
-    "test-all": "mocha --timeout 20s --compilers coffee:coffee-script -R spec --recursive test/services test/routes",
+    "test": "mocha --timeout 20s --compilers coffee:coffee-script -R spec --recursive test/services test/routes",
     "test-services": "mocha --timeout 20s --compilers coffee:coffee-script -R spec --recursive test/services",
     "test-routes": "mocha --timeout 20s --compilers coffee:coffee-script -R spec --recursive test/routes"
   }

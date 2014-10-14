@@ -47,15 +47,14 @@ class SqlCore
 			null
 
 	# Factory for attaching common functions to SQL Modules
-	# get_collection (ctx)
-	# create (ctx, new_values)
+	# GetCollection (ctx)
 	# GetByKey (ctx, key, ids)
 	# UpdateByKey (ctx, key, ids, new_values)
 	# DisposeByIds (ctx, ids)
-	# get_by_id (ctx, id)
-	# create (ctx, new_values, re_read)
-	# update_by_id (ctx, id, new_values, re_read)
-	# delete_by_id (ctx, id)
+	# get_by_id (ctx, id) # TODO: Remove
+	# Create (ctx, new_values, re_read)
+	# UpdateById (ctx, id, new_values, re_read)
+	# DeleteById (ctx, id)
 	method_factory: (sql_mod, name)=>
 		table= 		sql_mod.table
 		ident_tbl=  sql_mod.ident_tbl
@@ -112,20 +111,23 @@ class SqlCore
 				.then (db_result)=>
 					db_result
 
-		if schema.get_collection
-			sql_mod.get_collection= (ctx)->
+		if schema.get_collection or schema.GetCollection
+			get_collection= (ctx)->
 				f= "DB:#{name}:get_collection:"
+				schema_cols= schema.get_collection ? schema.GetCollection
 
 				Q.resolve()
 				.then =>
 
-					sql= 'SELECT '+ (schema.get_collection.join ',')+ ' FROM '+ table+
+					sql= 'SELECT '+ (schema.schema_cols.join ',')+ ' FROM '+ table+
 						' WHERE di= 0'
 					sqlQuery ctx, sql
 				.then (db_rows)->
 					db_rows
+			sql_mod.get_collection= get_collection # Deprecated
+			sql_mod.GetCollection= get_collection
 
-		if schema.get_by_id
+		if schema.get_by_id # Deprecated. Use GetByKey with 'id' # TODO: Remove when nothing uses it
 			sql_mod.get_by_id= (ctx, id)->
 				f= "DB:#{name}:get_by_id:"
 
@@ -137,17 +139,18 @@ class SqlCore
 				.then (db_rows)->
 					db_rows
 
-		if schema.create
-			sql_mod.create= (ctx, new_values, re_read)->
+		if schema.create or schema.Create
+			create= (ctx, new_values, re_read)->
 				f= "DB:#{name}:create:"
-				_log.debug f, new_values
+				_log2.debug f, new_values
+				schema_cols= schema.create ? schema.Create
 				result= false
 
-				for nm, val of new_values when nm not in schema.create
+				for nm, val of new_values when nm not in schema_cols
 					throw new E.DbError "DB:CORE:BAD_INSERT_COL_#{table}_#{nm}"
 
 				Q.resolve()
-				.then =>
+				.then ()=>
 
 					cols= ['cr']; qs= ['?']; arg= [null]
 					(cols.push nm; qs.push '?'; arg.push val) for nm, val of new_values
@@ -166,14 +169,17 @@ class SqlCore
 						throw new E.NotFoundError f+'REREAD' if db_rows.length isnt 1
 						result= db_rows[0]
 					result
+			sql_mod.create= create # Deprecated
+			sql_mod.Create= create
 
-		if schema.update_by_id
-			sql_mod.update_by_id= (ctx, id, new_values, re_read)->
+		if schema.update_by_id or schema.UpdateById
+			update_by_id= (ctx, id, new_values, re_read)->
 				f= "DB:#{name}:update_by_id:"
-				_log.debug f, { id, new_values, re_read }
+				_log2.debug f, { id, new_values, re_read }
+				schema_cols= schema.update_by_id ? schema.UpdateById
 				result= false
 
-				for nm, val of new_values when nm not in schema.update_by_id
+				for nm, val of new_values when nm not in schema_cols
 					throw new E.DbError 'Invalid ' + table + ' Update Column', col: nm, value: val
 
 				Q.resolve()
@@ -197,9 +203,11 @@ class SqlCore
 						throw new E.NotFoundError f+'REREAD' if db_rows.length isnt 1
 						result= db_rows[0]
 					result
+			sql_mod.update_by_id= update_by_id # Deprecated
+			sql_mod.UpdateById= update_by_id
 
-		if schema.delete_by_id
-			sql_mod.delete_by_id= (ctx, id)->
+		if schema.delete_by_id or schema.DeleteById
+			delete_by_id= (ctx, id)->
 				f= "DB:#{name}:delete_by_id:"
 				_log.debug f, id
 
@@ -210,5 +218,7 @@ class SqlCore
 					@db.sqlQuery ctx, sql, [ id ]
 				.then (db_result)=>
 					db_result
+			sql_mod.delete_by_id= delete_by_id # Deprecated
+			sql_mod.DeleteById= delete_by_id
 
 exports.SqlCore= SqlCore
