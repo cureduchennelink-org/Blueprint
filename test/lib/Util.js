@@ -18,7 +18,10 @@ if (!config.db.mysql.enable) {
 
 config.db.mysql.pool.database += '_test';
 
-config.log.name = 'test';
+config.log = {
+  name: 'test',
+  level: 'info'
+};
 
 exports.config = config;
 

@@ -84,7 +84,6 @@ describe 'Sql Auth Module', ()->
 			# Using auth module
 			auth.GetById ctx, ident.id
 		.then (db_rows)->
-			_log.debug 'got db_rows', db_rows
 			db_rows[0].should.deep.equal {id: ident.id, eml: ident.eml}
 			done()
 
@@ -103,7 +102,6 @@ describe 'Sql Auth Module', ()->
 			# Using auth module
 			auth.GetByCredName ctx, ident.eml
 		.then (db_rows)->
-			_log.debug 'got db_rows', db_rows
 			db_rows[0].should.deep.equal ident
 			done()
 
@@ -122,7 +120,6 @@ describe 'Sql Auth Module', ()->
 			# Using auth module
 			auth.GetAuthCreds ctx, ident.eml
 		.then (db_rows)->
-			_log.debug 'got db_rows', db_rows
 			db_rows[0].should.deep.equal {id: ident.id, pwd: ident.pwd}
 			done()
 

@@ -6,7 +6,7 @@ config= (require '../../config')()
 
 throw new Error 'MYSQL NOT ENABLED' unless config.db.mysql.enable
 config.db.mysql.pool.database+= '_test' # TODO: Move to config file?
-config.log.name= 'test'
+config.log= name: 'test', level: 'info'
 exports.config= config
 
 

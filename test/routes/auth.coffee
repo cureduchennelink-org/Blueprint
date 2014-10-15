@@ -3,8 +3,6 @@ Util= 	require '../lib/Util'
 
 chai.should()
 
-console.log 'some stuff'
-
 describe 'Routes', ()->
 
 	it 'should be true', (done)->
