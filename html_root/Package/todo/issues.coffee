@@ -1,4 +1,4 @@
-window.EpicMvc.issues$todo=
+E.issues$todo=
 	default:
 		default: [
 			[ /SUCCESS/, 'Great Success']

@@ -1,19 +1,18 @@
-class Todo extends window.EpicMvc.ModelJS
-	constructor: (Epic,view_nm) ->
+class Todo extends E.ModelJS
+	constructor: (view_nm,opts) ->
 		ss =
 			show_state: 'all'
 			active_item_id: false
-		super Epic, view_nm, ss
+		super view_nm, opts, ss
 		@rest= window.rest_v1
 		@cache= window.cache_v1
 		@cache_cb= @C_SyncTodo
 		@c_is_pending= true
-	action: (act,p) ->
+		@defered= false
+	action: (ctx,act,p) ->
 		f= "Todo:action:#{act}"
 		_log1 f, p
-		r= {}
-		i= new window.EpicMvc.Issue @Epic, @view_nm, act
-		m= new window.EpicMvc.Issue @Epic, @view_nm, act
+		{r,i,m}= ctx
 		switch act
 			when "show" # p.state= (all|active|completed)
 				@show_state= p.state
@@ -24,21 +23,23 @@ class Todo extends window.EpicMvc.ModelJS
 				else
 					@active_item_id= (Number p.id)
 				@invalidateTables true
-			when "save_todo" # p.id
+			when "save_todo" # p.id, p.val
 				id= p.id
-				title= p.title
+				title= p.val
 				if id?
+					return if title is @c_todo.Item_idx[id].title
 					data= title: title
-					results= @rest.NoAuthPost "Prototype/Todo/Item/#{id}/update", f, data
-					_log2 f, 'got update results:', results
-					if results.success
-						m.add 'SUCCESS'
-						r.success= 'SUCCESS'
-						# Uncomment to update Cache immediately
-						# $.extend @c_todo.Item_idx[id], results.Item[0]
-					else
-						@rest.MakeIssue i, result
-						r.success= 'FAIL'
+					# results= @rest.NoAuthPost "Prototype/Todo/Item/#{id}/update", f, data
+					return (@rest.D_NoAuthPost "Prototype/Todo/Item/#{id}/update", f, data).then (results)->
+						_log2 f, 'got update results:', results
+						if results.success
+							m.add 'SUCCESS'+ E.nextCounter()
+							r.success= 'SUCCESS'
+							# Uncomment to update Cache immediately
+							# E.merge @c_todo.Item_idx[id], results.Item[0]
+						else
+							@rest.MakeIssue i, result
+							r.success= 'FAIL'
 				else
 					data= title: title, completed: ''
 					results= @rest.NoAuthPost 'Prototype/Todo/Item', f, data
@@ -46,6 +47,8 @@ class Todo extends window.EpicMvc.ModelJS
 					if results.success
 						m.add 'SUCCESS'
 						r.success= 'SUCCESS'
+						@defered= ctx.d
+						return @defered.promise
 						# Uncomment to update Cache immediately
 						# @c_todo.Item_idx[new_item.id]= results.Item[0]
 					else
@@ -87,7 +90,7 @@ class Todo extends window.EpicMvc.ModelJS
 					m.add 'SUCCESS'
 					r.success= 'SUCCESS'
 					# Uncomment to update Cache immediately
-					# $.extend @c_todo.Item_idx[id], results.Item[0]
+					# E.merge @c_todo.Item_idx[id], results.Item[0]
 					# @c_items= false
 					@invalidateTables true
 				else
@@ -112,13 +115,12 @@ class Todo extends window.EpicMvc.ModelJS
 					m.add 'SUCCESS'
 					r.success= 'SUCCESS'
 					# Uncomment to update Cache immediately
-					# $.extend @c_todo.Item_idx[id], { completed: 'yes' } for id in batch_ids
+					# E.merge @c_todo.Item_idx[id], { completed: 'yes' } for id in batch_ids
 					@invalidateTables true
 				else
 					@rest.MakeIssue i, result
 					r.success= 'FAIL'
-			else return super act, p
-		[r,i,m]
+			else return super ctx, act, p
 	loadTable: (tbl_nm) ->
 		f= "loadTable:#{tbl_nm}"
 		_log2 f
@@ -175,6 +177,7 @@ class Todo extends window.EpicMvc.ModelJS
 		BROKEN() if resource isnt 'Todo'
 		@c_is_pending= false
 		@c_todo= data.Todo
+		(@defered.resolve true; @defered= false) if @defered isnt false
 		@invalidateTables true
 
-window.EpicMvc.Model.Todo= Todo # Public API
+E.Model.Todo= Todo # Public API

@@ -1,0 +1,42 @@
+<header id="header">
+	<h1>todos</h1>
+	<input id="new-todo" e-enter="new_todo" placeholder="What needs to be done?" autofocus>
+</header>
+
+<e-if set="&Todo/Options/count;">
+	<section id="main">
+		<input id="toggle-all" e-click="mark_all" type="checkbox">
+		<label for="toggle-all">Mark all as complete</label>
+		<ul id="todo-list">
+			<e-foreach table="Todo/Item">
+				<li class="&Item/completed#?completed; &Item/is_editing#?editing;">
+					<div class="view">
+						<input class="toggle" e-click="mark_toggle" e-id="&Item/id;" type="checkbox" checked="&Item/completed#?bool;">
+						<label e-action="dblclick:edit_item" e-id="&Item/id;">&Item/title;</label>
+						<a e-click="delete_todo" e-id="&Item/id;" class="destroy btn"></a>
+					</div>
+					<input class="edit" defaultValue="&Item/title;" e-enter="save_todo" e-id="&Item/id;" e-blur="save_todo">
+				</li>
+			</e-foreach>
+		</ul>
+	</section>
+
+	<footer id="footer">
+		<e-if name="plural" val="&Todo/Options/not_completed_count;" ne="1"></e-if>
+		<span id="todo-count">&Todo/Options/not_completed_count; item&View/If/plural#?s; left</span>
+		<ul id="filters">
+			<li>
+				<a e-click="show" e-state="all" class="&Todo/Options/show_all#?selected;">All</a>
+			</li>
+			<li>
+				<a e-click="show" e-state="active" class="&Todo/Options/show_active#?selected;">Active</a>
+			</li>
+			<li>
+				<a e-click="show" e-state="completed"  class="&Todo/Options/show_completed#?selected;">Completed</a>
+			</li>
+		</ul>
+		<e-if set="&Todo/Options/completed_count;">
+			<a e-click="clear_completed" class="btn" id="clear-completed">Clear completed (&Todo/Options/completed_count;)</a>
+		</e-if>
+	</footer>
+</e-if>
