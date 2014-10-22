@@ -56,6 +56,8 @@ class SqlCore
 	# UpdateById (ctx, id, new_values, re_read)
 	# DeleteById (ctx, id)
 	method_factory: (sql_mod, name)=>
+		throw new E.ServerError "DB:CORE:MOD_TABLE", "table undefined for #{name}" unless sql_mod.table
+		throw new E.ServerError "DB:CORE:MOD_SCHEMA", "schema undefined for #{name}" unless sql_mod.schema
 		table= 		sql_mod.table
 		ident_tbl=  sql_mod.ident_tbl
 		schema= 	sql_mod.schema
@@ -96,7 +98,6 @@ class SqlCore
 					sqlQuery ctx, sql, arg
 				.then (db_result)=>
 					db_result
-
 
 		if schema.DisposeByIds
 			sql_mod.DisposeByIds= (ctx, ids)->

@@ -15,7 +15,8 @@ exports.config= config
 # Create data in the database
 # Cleanup data in the database (optional param?)
 
-
+exports.test_ident_id= 97 # SYSTEM - TEST ident rec id
+exports.rename= (name)-> 'bp-'+ name+ ''+ new Date().getTime()
 exports.encryptedPassword= 'xfGuZKjVkoNgQyXxYT8+Hg==.f+uw2I+dqzfOE4O82Znikrbdb0lOONBxl/xcWGsQtFI='
 
 class Db
@@ -54,6 +55,20 @@ class Db
 
 			@GetOne table, db_result.insertId
 		.then (rec)-> rec
+
+	GetByKey: (ctx, table, key, vals)->
+		throw new Error 'EMPTY_VALS' unless vals
+		vals_type= typeof vals
+
+		Q.resolve()
+		.then =>
+
+			args= if vals_type in ['number','string'] then [[vals]] else [vals]
+			sql= 'SELECT * FROM '+ table+
+				' WHERE di= 0 AND '+ key+ ' IN (?)'
+			@SqlQuery sql, args
+		.then (db_rows)->
+			db_rows
 
 exports.db= new Db config.db.mysql
 

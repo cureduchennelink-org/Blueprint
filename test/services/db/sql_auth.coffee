@@ -1,5 +1,5 @@
 ###
-Test Suite for Sql Core
+Test Suite for Sql Auth
 ###
 
 chai= 		require 'chai'

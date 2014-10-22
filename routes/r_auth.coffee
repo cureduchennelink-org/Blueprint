@@ -64,10 +64,9 @@ class AuthRoute
 				expires_in: 'number - seconds'
 				refresh_token: 'string'
 		return use_doc if ctx is 'use'
+		f= 'Auth:_authenticate:'
 		p= 	  ctx.p
 		_log= ctx.log
-
-		f= 'Auth:_authenticate:'
 		_log.debug f, p, pre_loaded
 		current_token= false
 		new_token= false
@@ -85,7 +84,7 @@ class AuthRoute
 
 			# Validate Refresh Token if requesting refresh_token
 			return false unless p.grant_type is 'refresh_token'
-			sdb.token.find_token ctx, p.refresh_token
+			sdb.token.GetNonExpiredToken ctx, p.refresh_token
 		.then (valid_token)=>
 			_log.debug f, 'got valid token:', valid_token
 			if valid_token isnt false
@@ -95,16 +94,16 @@ class AuthRoute
 			# Generate new refresh token
 			@tokenMgr.CreateToken 16
 		.then (token)=>
-			new_token= token
 
 			# Store new token, remove old token
 			current_token= p.refresh_token if p.grant_type is 'refresh_token'
-			exp= (moment().add 'seconds', @config.refreshTokenExpiration).toDate()
-			sdb.token.update_active_token ctx, result.auth_ident_id, p.client_id, exp, new_token, current_token
-		.then (refreshToken)=>
+			exp= (moment().add @config.refreshTokenExpiration, 'seconds').toDate()
+			nv= { ident_id: result.auth_ident_id, client: p.client_id, token, exp}
+			sdb.token.UpdateActiveToken ctx, nv, current_token
+		.then (ident_token)=>
 
 			# Generate Access Token
-			exp= moment().add 'seconds', @config.accessTokenExpiration
+			exp= moment().add @config.accessTokenExpiration, 'seconds'
 			accessToken= @tokenMgr.encode {iid: result.auth_ident_id}, exp, @config.key
 
 			# Return back to Client
@@ -112,7 +111,7 @@ class AuthRoute
 				access_token: accessToken
 				token_type: 'bearer'
 				expires_in: @config.accessTokenExpiration
-				refresh_token: refreshToken
+				refresh_token: ident_token.token
 
 	# POST /Auth/:auid/updateemail
 	_update_email: (ctx, pre_loaded)=>

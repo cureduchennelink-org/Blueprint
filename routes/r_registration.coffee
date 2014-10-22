@@ -46,6 +46,7 @@ class Registration
 		return use_doc if ctx is 'use'
 		_log= ctx.log
 		p= ctx.p
+		recipient= false
 		success= false
 
 		f= 'Registration:_signup:'
@@ -59,7 +60,7 @@ class Registration
 		.then ->
 
 			# Verify email doesn't already exist
-			sdb.auth.get_by_cred_name ctx, p.eml
+			sdb.auth.GetByCredName ctx, p.eml
 		.then (db_rows)=>
 			_log.debug 'got ident with eml:', db_rows
 			throw new E.AccessDenied 'REGISTER:SIGNUP:EMAIL_EXISTS' unless db_rows.length is 0
@@ -77,7 +78,7 @@ class Registration
 			success= true
 
 			# Send back to Client
-			send: { success }
+			send: { success , recipient}
 
 	_read_signup: (ctx, pre_loaded)=>
 		use_doc= params: {}, response: success: 'bool', signup: 'JSON'

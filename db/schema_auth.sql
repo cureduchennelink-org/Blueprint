@@ -22,6 +22,7 @@ CREATE TABLE ident (
 INSERT INTO ident (id,eml,cr) VALUES
 	 (99,'SYSTEM - TIMERS', NULL)
 	,(98,'SYSTEM - API', NULL)
+	,(97,'SYSTEM - TEST', NULL)
 	/* Additional System Idents descend from here */
 	;
 

@@ -5,46 +5,31 @@
 Q= require 'q'
 E= require '../../error'
 
-table= 'ident_tokens'
-
 class SqlToken
-	constructor: (core, kit)->
+	constructor: (@core, kit)->
 		@log= kit.services.logger.log
-		@db= core
+		@table= 'ident_tokens'
 		@schema=
-			find: ['ident_id','client']
-			insert: ['token','ident_id','client','exp','cr']
+			Create: ['token','ident_id','client','exp']
+			get: ['*']
+			reread: ['*']
+		@core.method_factory @, 'SqlToken'
 
-	find_token: (ctx, token)->
-		sql= 'SELECT '+ (@schema.find.join ',') + ' FROM ' + table +
+	GetNonExpiredToken: (ctx, token)->
+		sql= 'SELECT '+ (@schema.get.join ',')+ ' FROM '+ @table+
 			 ' WHERE token = ? AND exp > CURDATE()'
-		(@db.sqlQuery ctx, sql, [token])
+		(@core.sqlQuery ctx, sql, [token])
 		.then (db_rows)-> db_rows
 
-	insert_token: (ctx, token, user_id, client_id, expires)->
-		sql = 'INSERT INTO ' + table + ' ('+ (@schema.insert.join ',') + ') VALUES (?,?,?,?,NULL)'
-		(@db.sqlQuery ctx, sql, [token, user_id, client_id, expires])
-		.then (db_result)->	db_result
-
-	delete_token: (ctx, token)->
-		sql = 'DELETE FROM ' + table + ' WHERE token = ?'
-		(@db.sqlQuery ctx, sql, [token])
-		.then (db_result)-> db_result
-
-	update_active_token: (ctx, user_id, clientId, expires, new_token, current_ident_token)=>
-
-		Q.resolve()
-		.then =>
-
+	UpdateActiveToken: (ctx, new_values, current_ident_token)=>
+		Q.resolve().then ()=>
 			# Delete current refresh token if it exists
 			return false unless current_ident_token
-			@delete_token ctx, current_ident_token
+			sql= 'DELETE FROM '+ @table+ ' WHERE token = ?'
+			@core.sqlQuery ctx, sql, [current_ident_token]
 		.then (db_result)=>
-
 			# Insert New Token
-			@insert_token ctx, new_token, user_id, clientId, expires
-		.then (db_result)->
-			throw new E.DbError 'Refresh Token Insert Failed' if db_result.affectedRows isnt 1
-			new_token
+			@Create ctx, new_values, reread= true
+		.then (db_rec)=> db_rec
 
 exports.SqlToken= SqlToken
