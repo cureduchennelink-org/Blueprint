@@ -5,46 +5,52 @@
   <title>TodoMvc</title>
   <meta name="viewport" content="width=device-width, initial-scale=0.9">
 
-  <!-- 3PP Inlcuded CSS Frameworks -->
+  <!-- 3PP CSS Frameworks -->
   <link rel="stylesheet" type="text/css" href="css/font-awesome.min.css"></link>
   <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css" />
-  <style>.epic-alternatex { display: none; }</style>
 
-  <!-- 3PP Included JS Frameworks -->
-  <script type="text/javascript" src="js/jquery-2.1.1.min.js"></script>
-  <script type="text/javascript" src="js/bootstrap.min.js"></script>
-  <script type="text/javascript" src="js/EpicMvc-One-0.0.0-latest.js"></script>
+  <!-- 3PP JS Frameworks
+  <script type="text/javascript" charset="utf-8" src="js/bootstrap.min.js"></script>
+  <script type="text/javascript" charset="utf-8" src="EpicMvc/EpicMvc-One-2.0.0-latest.js"></script>
+  -->
+  <script type="text/javascript" charset="utf-8" src="js/jquery-2.1.1.min.js"></script>
 
-  <!-- Blueprint JS -->
-  <script type="text/javascript" charset="utf-8" src="Package/blueprint/Extras/RestAPI.js"     ></script>
-  <script type="text/javascript" charset="utf-8" src="Package/blueprint/Extras/LocalCache.js"  ></script>
-  <script type="text/javascript" charset="utf-8" src="Package/blueprint/Extras/Cache.js"       ></script>
-  <script type="text/javascript" charset="utf-8" src="Package/blueprint/Extras/Poll.js"        ></script>
-  <script type="text/javascript" charset="utf-8" src="Package/blueprint/Extras/Util.js"        ></script>
-  <script type="text/javascript" charset="utf-8" src="Package/blueprint/Extras/DataAction.js"  ></script>
+  <!-- EpicMvc v2.0 Dev
+  -->
+  <script type="text/javascript" charset="utf-8" src="EpicMvc/mithril.js"></script>
+  <script type="text/javascript" charset="utf-8" src="EpicMvc/coffee-script.js"> </script>
+  <script type="text/javascript" charset="utf-8" src="EpicMvc/EpicCore.js" ></script>
+  <script type="text/javascript" charset="utf-8" src="EpicMvc/Base/manifest.js" ></script>
+  <script type="text/javascript" charset="utf-8" src="EpicMvc/Dev/manifest.js" ></script>
+  <script type="text/javascript" charset="utf-8" src="EpicMvc/Proto/manifest.js" ></script>
+  <script type="text/javascript" charset="utf-8" src="EpicMvc/Dev/Extra/LoadStrategy.js" ></script>
 
-  <!-- Todo App -->
-  <script type="text/javascript" charset="utf-8" src="Package/todo/app.js" ></script>
-  <script type="text/javascript" charset="utf-8" src="Package/todo/issues.js" ></script>
-  <script type="text/javascript" charset="utf-8" src="Package/todo/Model/Todo.js" ></script>
-
-  <!-- Todo CSS -->
-  <link rel="stylesheet" type="text/css" href="Package/todo/css/todo_css.css"></link>
+  <!-- 3PP Package Manifests
+  -->
+  <script type="text/javascript" charset="utf-8" src="Package/blueprint/manifest.js" ></script>
+  <script type="text/javascript" charset="utf-8" src="Package/todo/manifest.js" ></script>
+  <script type="text/javascript" charset="utf-8" src="Package/MIP/manifest.js" ></script>
 
   <!-- Environment config -->
   <script src="config.js" type="text/javascript" charset="utf-8"></script>
 
 </head>
-<body id="base-body">
+<body id="base-body" >
 
-<!-- Init Script that sets the App in motion -->
-<script type="text/javascript">
-  _log1= Function.prototype.bind.call( console.log, console);
-  _log2= Function.prototype.bind.call( console.log, console);
-  rest_opts= window.EpicMvc.Extras.options.rest
-  rest_v1= new EpicMvc.Extras.RestAPI(rest_opts.host, rest_opts.port, rest_opts.prefix, rest_opts.version);
-  cache_v1= new EpicMvc.Extras.Cache
-  EpicMvc.Epic.run( ['Base', 'BaseDevl', 'todo'], 'LoadStrategy$BaseDevl', 'bootstrap$bootstrap', []);
+<script type="text/coffeescript">
+  # If this isnt coffeescript, it runs too soon, such that E.Thing is not defined (E.app$World not yet set)
+  window._log1= _log2
+  window.rest_opts= E.Extra.options.rest
+
+  init_func= ()->
+    window.rest_v1= new E.Extra.RestAPI(rest_opts.host, rest_opts.port, rest_opts.prefix, rest_opts.version);
+    window.cache_v1= new E.Extra.Cache
+
+  options=
+    loadDirs:
+      Base: 'EpicMvc/', Dev:  'EpicMvc/', Proto: 'EpicMvc/'
+      blueprint: 'Package/', todo: 'Package/', MIP: 'Package/'
+  E.run ['Base', 'Dev', 'Proto', 'blueprint','todo','MIP'], options, init_func
 </script>
 
 </body>

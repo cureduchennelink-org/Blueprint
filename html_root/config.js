@@ -42,5 +42,5 @@
 			};
 			break;
 	}
-	window.EpicMvc.Extras.options= opts
+	E.Extra.options= opts
 })();
