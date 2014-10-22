@@ -22,7 +22,7 @@ Cache = (function() {
       }
     };
     this.rest = window.rest_v1;
-    this.poller = new window.EpicMvc.Extras.Poll(this.rest.GetPrefix(), this.C_handlePoll);
+    this.poller = new E.Extra.Poll(this.rest.GetPrefix(), this.C_handlePoll);
     this.self_id = false;
   }
 
@@ -235,4 +235,4 @@ Cache = (function() {
 
 })();
 
-window.EpicMvc.Extras.Cache = Cache;
+E.Extra.Cache = Cache;

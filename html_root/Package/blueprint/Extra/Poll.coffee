@@ -12,7 +12,7 @@ class Poll
 		@xhr= false
 		@pending= false # A setTimeout is going?
 		@abort= false # True to suspend all activity
-		@auth_req= window.EpicMvc.Extras.options.poll.auth_req
+		@auth_req= E.Extra.options.poll.auth_req
 		@state= {}
 		@listen= {}
 	Listen: (name, push_handle) => # Use push_handle=false to remove
@@ -77,4 +77,4 @@ class Poll
 		, delay
 		return
 
-window.EpicMvc.Extras.Poll= Poll # Public API
+E.Extra.Poll= Poll # Public API

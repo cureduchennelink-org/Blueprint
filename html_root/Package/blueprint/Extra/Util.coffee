@@ -1,13 +1,3 @@
-# Supports the EpicMvc BaseDevl Package Debug Pulldown
-# Add to the content watcher array in Epic.run() command
-bdvel_watcher= ()->
-	$dur= "medium"; # Duration of Animation
-	$(".dbg-toolbar").css {"right" : 0, "top" : -46 }
-	$(".dbg-toolbar").hover ()->
-		$(this).stop().animate({top : -7 }, $dur)
-	, ()-> $(this).stop().animate {top : -46 }, $dur
-	$(".dbg-toolbar").show()
-
 # Content Watcher Pluggin to Filtering characters
 # Add to the content watcher array in Epic.run() command
 # <input class="filter-chars-input" data-filter-chars-name="myName" />
@@ -154,10 +144,16 @@ D2H_html5date= (fieldName, filtExpr, value) ->
 	else
 		value
 
-window.bdvel_watcher= bdvel_watcher
 window.filter_chars_globals= {}
 window.filter_chars_pluggin= filter_chars_pluggin
-window.EpicMvc.custom_filter= custom_filter # For &Table/column##filter-spec; processing
-window.EpicMvc.FistFilt.CHECK_birthDate= CHECK_birthDate
-window.EpicMvc.FistFilt.CHECK_phoneAny= CHECK_phoneAny
-window.EpicMvc.FistFilt.D2H_html5date= D2H_html5date
+E.custom_filter= custom_filter # For &Table/column##filter-spec; processing
+E.fistVAL$birthDate= CHECK_birthDate
+E.fistVAL$phoneAny=  CHECK_phoneAny
+E.fistD2H$html5date= D2H_html5date
+
+
+
+
+
+
+

@@ -169,4 +169,4 @@ class LocalCache
 		@dirty= false
 		return
 
-window.EpicMvc.Extras.LocalCache= LocalCache # Public API
+E.Extra.LocalCache= LocalCache # Public API

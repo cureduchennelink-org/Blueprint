@@ -20,7 +20,7 @@ Poll = (function() {
     this.xhr = false;
     this.pending = false;
     this.abort = false;
-    this.auth_req = window.EpicMvc.Extras.options.poll.auth_req;
+    this.auth_req = E.Extra.options.poll.auth_req;
     this.state = {};
     this.listen = {};
   }
@@ -146,4 +146,4 @@ Poll = (function() {
 
 })();
 
-window.EpicMvc.Extras.Poll = Poll;
+E.Extra.Poll = Poll;

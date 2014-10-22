@@ -15,7 +15,7 @@ class RestAPI
 		@refresh_timer= false
 		@auth_user= false
 		@auth_web_client= 'web-client'
-		LocalCache= new window.EpicMvc.Extras.LocalCache
+		LocalCache= new E.Extra.LocalCache
 		@localCache= -> LocalCache
 
 	CurrentToken: ()-> @token
@@ -39,10 +39,10 @@ class RestAPI
 		i.add token, params
 
 	# rest_v1.get 'User', f, data
-	Post: (r,s,d) -> @request 'POST', r, s, d
-	Get:  (r,s,d) -> @request 'GET', r, s, d
+	Post: (r,s,d) -> @Request 'POST', r, s, d
+	Get:  (r,s,d) -> @Request 'GET', r, s, d
 	Request: (type, route, debug_source, data)=>
-		f= "RestAPI:request:" # #{debug_source}:#{type}:#{route}:
+		f= "RestAPI:Request:" # #{debug_source}:#{type}:#{route}:
 		_log2 f, data, debug_source: debug_source, type: type, route: route
 		result= false
 		data?= {}
@@ -81,7 +81,43 @@ class RestAPI
 				result= error: @error.errorThrown.name, message: @error.errorThrown.message
 			else
 				result= JSON.parse @error.jqXHR.responseText
+		_log2 f, {result}
 		return result
+
+	D_NoAuthGet:  (r,s,d)-> @D_NoAuthRequest 'GET', r, s, d
+	D_NoAuthPost: (r,s,d)-> @D_NoAuthRequest 'POST', r, s, d
+	D_NoAuthRequest: (type, route, debug_source, data)=>
+		f= "RestAPI:D_NoAuthRequest:" # #{debug_source}:#{type}:#{route}:
+		_log2 f, data, debug_source: debug_source, type: type, route: route
+		result= false
+		data?= {}
+		(@D_DoData type, route, debug_source, data)
+		.then (result)->
+			if result is false
+				if @error.errorThrown.name is 'NetworkError'
+					result= error: @error.errorThrown.name, message: @error.errorThrown.message
+				else
+					result= JSON.parse @error.jqXHR.responseText
+			_log2 f, {result}
+			return result
+
+	D_DoData: (type, route, debug_source, data)=>
+		f= "RestAPI:DoData:" # #{debug_source}:#{type}:#{route}:
+		_log2 f, data, debug_source: debug_source, type: type, route: route
+		(m.request
+			background: true # Don't want 'm' to redraw the view
+			method: type
+			url: @route_prefix + route
+			data: data
+			# config: (xhr,options) ->
+			# 	xhr.setRequestHeader "Content-Type", "text/plain; charset=utf-8"
+			# 	xhr
+			# deserialize: (x)->x
+		).then null, (error) ->
+			_log2 'D_DoData:ERROR:', {error}
+			# statusCode= if typeof errorThrown is 'string' then errorThrown else errorThrown.name
+			# @error= {statusCode, jqXHR, textStatus, errorThrown }
+
 
 	DoData: (type, route, debug_source, data)=>
 		f= "RestAPI:DoData:" # #{debug_source}:#{type}:#{route}:
@@ -158,7 +194,7 @@ class RestAPI
 		return xhr
 
 	Login: (auth_user,pass) -> # Return false if not successful; persists auth_user (allow missing pass to set default email)
-		@logout()
+		@Logout()
 		@auth_user= auth_user
 		@localCache().QuickPut 'auth_user', @auth_user
 		@DoToken pass if pass # Will be false if not a valid login
@@ -181,5 +217,5 @@ class RestAPI
 		else
 			@resource_map[resource]
 
-window.EpicMvc.Extras.RestAPI= RestAPI
+E.Extra.RestAPI= RestAPI
 

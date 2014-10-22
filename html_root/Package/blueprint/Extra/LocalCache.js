@@ -226,4 +226,4 @@ LocalCache = (function() {
 
 })();
 
-window.EpicMvc.Extras.LocalCache = LocalCache;
+E.Extra.LocalCache = LocalCache;

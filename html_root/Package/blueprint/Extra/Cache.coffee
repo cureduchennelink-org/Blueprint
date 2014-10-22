@@ -12,7 +12,7 @@ class Cache
 				data_nm: 'Todo', handle: 'todo'
 				sync: true, auth_req: false
 		@rest= window.rest_v1
-		@poller= new window.EpicMvc.Extras.Poll @rest.GetPrefix(), @C_handlePoll
+		@poller= new E.Extra.Poll @rest.GetPrefix(), @C_handlePoll
 		@self_id= false
 
 	LogoutEvent: ()->
@@ -132,4 +132,4 @@ class Cache
 				$.extend self, data.clinic.users_idx[ @self_id] # Keep /User/me values
 				cb 'Self', user: [ self]
 
-window.EpicMvc.Extras.Cache= Cache # Public API
+E.Extra.Cache= Cache # Public API
