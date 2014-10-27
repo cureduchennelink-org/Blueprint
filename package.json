@@ -2,6 +2,10 @@
   "name": "blueprint",
   "version": "0.1.0-140926",
   "private": "true",
+  "repository":{
+    "type":"git",
+    "url":"git+ssh://git@bitbucket.org/dv-mobile/blueprint.git"
+    },
   "dependencies": {
     "aws-sdk": "^2.0.17",
     "bunyan": "^1.1.0",
