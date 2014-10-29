@@ -15,6 +15,7 @@ module.exports=
 		Auth:			enable: true,  	name: 'Auth',				class: 'AuthRoute', 	file: 'node_modules/blueprint/routes/r_auth'
 		Poll:			enable:	true,  	name: 'Poll', 				class: 'LongPoll', 		file: 'node_modules/blueprint/routes/r_poll'
 		Registration:	enable: true, 	name: 'Registration', 		class: 'Registration', 	file: 'node_modules/blueprint/routes/r_registration'
+		User:			enable: true, 	name: 'User', 				class: 'User', 			file: 'node_modules/blueprint/routes/r_user'
 	service_modules:
 		template:		enable: true, name: 'template',		class: 'EpicTemplate', 	file: 'node_modules/blueprint/lib/EpicTemplate', instConfig: view_path: 'node_modules/blueprint/views/email'
 		template_use:	enable: true, name: 'template_use',	class: 'EpicTemplate', 	file: 'node_modules/blueprint/lib/EpicTemplate', instConfig: view_path: 'node_modules/blueprint/views/use'
@@ -36,7 +37,7 @@ module.exports=
 		api: '/api/:Version'
 		upload: '/upload'
 	log:
-		name: 'blueprint'
+		name: 'server'
 		level: 'debug'
 	auth:
 		key : 'jQ9PhcT3Xz' # Used for crypto
@@ -86,8 +87,6 @@ module.exports=
 			datasets: # sub-resources of 'Todo'
 				Item:
 					title: 's128', completed:'n'
-				Category:
-					label: 's128'
 			data:
 				Item: [
 					{ title: 'myTitle', completed:'' }
@@ -100,6 +99,8 @@ module.exports=
 		accessKeyId: 	'AKIAI5FIAQV7AJEQOH3Q'
 		secretAccessKey: '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'
 		region: 'us-west-2'
+		options:
+			urlPrefix: 'http://localhost:9500/'
 		debug_email: 'Blueprint Debug ToAddress <jamie.hollowell@dv-mobile.com>' # Make False to send to actual email address
 		default:
 			BccAddresses: []

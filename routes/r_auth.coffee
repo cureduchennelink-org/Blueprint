@@ -15,7 +15,7 @@ class AuthRoute
 		sdb= 		kit.services.db.mysql
 		@ses= 		kit.services.ses
 		@auth= 		kit.services.auth
-		@config= 	kit.services.config.auth
+		@config= 	kit.services.config
 		@tripMgr=	kit.services.tripMgr
 		@tokenMgr= 	kit.services.tokenMgr
 
@@ -49,10 +49,10 @@ class AuthRoute
 				use: true, wrap: 'default_wrap', version: any: @_verify_email
 				sql_conn: true, sql_tx: true
 
-	# Create Table for email template
-	make_tbl: (recipient, token)->
+	make_tbl: (recipient, token, options)->
 		Trip: [ {token} ]
-		Recipient: [ email: recipient.eml ]
+		Recipient: [ recipient ]
+		Opt: [ options ]
 
 	# POST /Auth
 	_authenticate: (ctx, pre_loaded)=>
@@ -97,56 +97,56 @@ class AuthRoute
 
 			# Store new token, remove old token
 			current_token= p.refresh_token if p.grant_type is 'refresh_token'
-			exp= (moment().add @config.refreshTokenExpiration, 'seconds').toDate()
+			exp= (moment().add @config.auth.refreshTokenExpiration, 'seconds').toDate()
 			nv= { ident_id: result.auth_ident_id, client: p.client_id, token, exp}
 			sdb.token.UpdateActiveToken ctx, nv, current_token
 		.then (ident_token)=>
 
 			# Generate Access Token
-			exp= moment().add @config.accessTokenExpiration, 'seconds'
-			accessToken= @tokenMgr.encode {iid: result.auth_ident_id}, exp, @config.key
+			exp= moment().add @config.auth.accessTokenExpiration, 'seconds'
+			accessToken= @tokenMgr.encode {iid: result.auth_ident_id}, exp, @config.auth.key
 
 			# Return back to Client
 			send:
 				access_token: accessToken
 				token_type: 'bearer'
-				expires_in: @config.accessTokenExpiration
+				expires_in: @config.auth.accessTokenExpiration
 				refresh_token: ident_token.token
 
 	# POST /Auth/:auid/updateemail
 	_update_email: (ctx, pre_loaded)=>
 		use_doc=
-			params: new_eml: 'r:S'
+			params: eml: 'r:S'
 			response: success: 'bool'
 		return use_doc if ctx is 'use'
+		f= 'Auth:_update_email:'
 		p= 	  ctx.p
 		conn= ctx.conn
 		_log= ctx.log
 
 		# Verify p.usid is the same as the auth_id. Validate params.
-		throw new E.AccessDenied 'AUTH:UPDATE_EMAIL:AUTH_ID' unless (Number p.auid) is pre_loaded.auth_id
-		throw new E.MissingArg 'new_eml' if not p.new_eml
-
-		f= 'User:_update_email:'
+		if p.auid isnt 'me'
+			throw new E.AccessDenied 'AUTH:UPDATE_EMAIL:AUTH_ID' unless (Number p.auid) is pre_loaded.auth_id
+		throw new E.MissingArg 'eml' if not p.eml
 
 		Q.resolve()
-		.then =>
+		.then ()=>
 
 			# Verify email doesn't already exist
-			sdb.auth.GetByCredName ctx, p.new_eml
+			sdb.auth.GetByCredName ctx, p.eml
 		.then (db_rows)=>
-			_log.debug 'got ident with new_eml:', db_rows
+			_log.debug 'got ident with eml:', db_rows
 			throw new E.AccessDenied 'AUTH:UPDATE_EMAIL:EMAIL_EXISTS' unless db_rows.length is 0
 
 			# Create Trip and store email in json info
-			@tripMgr.planTrip ctx, pre_loaded.auth_id, { eml: p.new_eml }, null, 'update_email'
+			@tripMgr.planTrip ctx, pre_loaded.auth_id, { eml: p.eml }, null, 'update_email'
 		.then (new_trip)=>
 			_log.debug f, 'got round trip:', new_trip
 			trip= new_trip
 
 			# Send 'Verify Email' email
-			recipient= eml: p.new_eml
-			@ses.send 'verify_email_change', @make_tbl(recipient, trip.token)
+			recipient= eml: p.eml
+			@ses.send 'verify_email_change', @make_tbl recipient, trip.token, @config.ses.options
 		.then ()->
 			success= true
 
@@ -157,16 +157,15 @@ class AuthRoute
 	_verify_email: (ctx, pre_loaded)=>
 		use_doc= params: {}, response: success: 'bool'
 		return use_doc if ctx is 'use'
+		f= 'Auth:_verify_email:'
 		p= 	  ctx.p
 		_log= ctx.log
 		trip= false
 		ident= false
 		new_eml= false
 
-		f= 'Auth:_verify_email:'
-
 		Q.resolve()
-		.then =>
+		.then ()=>
 
 			# Retrieve trip info from Trip Manager
 			@tripMgr.getTripFromToken ctx, p.token
@@ -205,32 +204,32 @@ class AuthRoute
 			recipient= eml: new_eml
 			@ses.send 'email_change_confirmed', @make_tbl(recipient)
 		.then ()->
-			success= true
 
 			# Send back to Client
+			success= true
 			send: { success }
 
 	# POST/PUT /Auth/:auid/updatepassword
 	_update_password: (ctx, pre_loaded)=>
 		use_doc=
-			params: new_pwd: 'r:S'
+			params: pwd: 'r:S'
 			response: success: 'bool'
 		return use_doc if ctx is 'use'
+		f= 'Auth:_update_password:'
 		p= 	  ctx.p
 		conn= ctx.conn
 		_log= ctx.log
 
 		# Verify p.usid is the same as the auth_id. Validate params.
-		throw new E.AccessDenied 'AUTH:UPDATE_PASSWORD:AUTH_ID' unless (Number p.auid) is pre_loaded.auth_id
-		throw new E.MissingArg 'new_pwd' if not p.new_pwd
-
-		f= 'User:_update_password:'
+		if p.auid isnt 'me'
+			throw new E.AccessDenied 'AUTH:UPDATE_PASSWORD:AUTH_ID' unless (Number p.auid) is pre_loaded.auth_id
+		throw new E.MissingArg 'pwd' if not p.pwd
 
 		Q.resolve()
-		.then =>
+		.then ()=>
 
 			# Encrypt the new password
-			@auth.EncryptPassword p.new_pwd
+			@auth.EncryptPassword p.pwd
 		.then (pwd_hash)->
 
 			# Update the ident password
@@ -238,31 +237,30 @@ class AuthRoute
 		.then (db_result)->
 			_log.debug f, 'got password update result:', db_result
 			throw new E.DbError 'AUTH:UPDATE_PASSWORD:AFFECTEDROWS' if db_result.affectedRows isnt 1
-			success= true
 
 			# Send back to Client
+			success= true
 			send: { success }
 
-	# POST /AuthTrip
+	# POST /AuthChange
 	_forgot_password: (ctx, pre_loaded)=>
 		use_doc=
-			params: email: 'r:S'
+			params: eml: 'r:S'
 			response: success: 'bool'
 		return use_doc if ctx is 'use'
+		f= 'Auth:_forgot_password:'
 		p= 	  ctx.p
 		_log= ctx.log
 		ident= false
 
 		# Validate params.
-		throw new E.MissingArg 'email' if not p.email
-
-		f= 'Auth:_forgot_password:'
+		throw new E.MissingArg 'eml' if not p.eml
 
 		Q.resolve()
-		.then =>
+		.then ()=>
 
 			# Grab Ident Credentials
-			sdb.auth.GetByCredName ctx, p.email
+			sdb.auth.GetByCredName ctx, p.eml
 		.then (db_rows)=>
 			_log.debug 'got ident:', db_rows
 			throw new E.NotFoundError 'AUTH:FORGOT_PASSWORD:IDENT' if db_rows.length isnt 1
@@ -275,31 +273,30 @@ class AuthRoute
 			trip= new_trip if new_trip isnt false
 
 			# Send Forgot Email Password
-			@ses.send 'forgot_password', @make_tbl(ident, trip.token)
+			@ses.send 'forgot_password', @make_tbl ident, trip.token, @config.ses.options
 		.then ()->
-			success= true
 
 			# Send back to Client
+			success= true
 			send: { success }
 
 	# POST /AuthTrip/:token/verifyforgot
 	_verify_forgot: (ctx, pre_loaded)=>
 		use_doc=
-			params: new_pwd: 'r:S'
+			params: pwd: 'r:S'
 			response: success: 'bool'
 		return use_doc if ctx is 'use'
+		f= 'Auth:_verify_forgot:'
 		p= 	  ctx.p
 		_log= ctx.log
 		trip= false
 		success= false
 
-		f= 'Auth:_verify_forgot:'
-
 		# Verify the params
-		throw new E.MissingArg 'new_pwd' if not p.new_pwd
+		throw new E.MissingArg 'pwd' if not p.pwd
 
 		Q.resolve()
-		.then =>
+		.then ()=>
 
 			# Retrieve trip info from Trip Manager
 			@tripMgr.getTripFromToken ctx, p.token
@@ -311,8 +308,8 @@ class AuthRoute
 			throw new E.AccessDenied 'AUTH:AUTH_TRIP:INVALID_DOMAIN' if trip.domain isnt 'forgot_password'
 
 			# Encrypt the new password
-			@auth.EncryptPassword p.new_pwd
-		.then (pwd_hash)->
+			@auth.EncryptPassword p.pwd
+		.then (pwd_hash)=>
 
 			# Update the ident password
 			sdb.auth.update_by_id ctx, trip.auth_ident_id, pwd: pwd_hash
@@ -322,10 +319,10 @@ class AuthRoute
 
 			# Return the Trip to the Trip Manager
 			@tripMgr.returnFromTrip ctx, trip.id
-		.then ()->
-			success= true
+		.then ()=>
 
 			# Send back to Client
+			success= true
 			send: { success }
 
 	# GET  /AuthTrip/:token
@@ -334,16 +331,15 @@ class AuthRoute
 			params: {}
 			response: ident: 'object'
 		return use_doc if ctx is 'use'
+		f= 'Auth:_auth_trip:'
 		p= 	  ctx.p
 		_log= ctx.log
 		bad_token= false
 		trip= false
 		ident= false
 
-		f= 'Auth:_auth_trip:'
-
 		Q.resolve()
-		.then =>
+		.then ()=>
 
 			# Retrieve trip info from Trip Manager
 			@tripMgr.getTripFromToken ctx, p.token

@@ -55,7 +55,7 @@
     }
 
     User.prototype._view_profile = function(ctx, pre_loaded) {
-      var f, success, use_doc, users;
+      var f, success, use_doc, user;
       use_doc = {
         params: {},
         response: {
@@ -66,21 +66,19 @@
       if (ctx === 'use') {
         return use_doc;
       }
-      success = false;
       f = 'User:_get:';
+      success = false;
       if (pre_loaded.auth_id !== pre_loaded.user.id) {
         throw new E.AccessDenied('USER:VIEW_PROFILE:AUTH_ID');
       }
-      users = [pre_loaded.user];
-      return Q.resolve().then(function() {
-        success = true;
-        return {
-          send: {
-            success: success,
-            users: users
-          }
-        };
-      });
+      user = [pre_loaded.user];
+      success = true;
+      return {
+        send: {
+          success: success,
+          user: user
+        }
+      };
     };
 
     User.prototype._update_profile = function(ctx, pre_loaded) {
@@ -136,12 +134,13 @@
       });
     };
 
-    User.prototype._pl_user = function(ctx) {
-      var f;
+    User.prototype._pl_user = function(ctx, pre_loaded) {
+      var f, id;
       f = 'User:_pl_user:';
       ctx.log.debug(f, ctx.p);
+      id = ctx.p.usid === 'me' ? pre_loaded.auth_id : ctx.p.usid;
       return Q.resolve().then(function() {
-        return sdb.user.get_by_ident_id(ctx, ctx.p.usid);
+        return sdb.user.get_by_ident_id(ctx, id);
       }).then(function(db_rows) {
         if (db_rows.length !== 1) {
           throw new E.NotFoundError('User');

@@ -65,14 +65,15 @@
       };
     }
 
-    Registration.prototype.make_tbl = function(recipient, token) {
+    Registration.prototype.make_tbl = function(recipient, token, options) {
       return {
         Trip: [
           {
             token: token
           }
         ],
-        Recipient: [recipient]
+        Recipient: [recipient],
+        Opt: [options]
       };
     };
 
@@ -127,7 +128,7 @@
           fnm: p.fnm,
           lnm: p.lnm
         };
-        return _this.ses.send('verify_signup', _this.make_tbl(recipient, trip.token));
+        return _this.ses.send('verify_signup', _this.make_tbl(recipient, trip.token, _this.config.ses.options));
       }).then(function() {
         success = true;
         return {
@@ -168,7 +169,7 @@
           throw new E.AccessDenied('REGISTER:READ_SIGNUP:BAD_TOKEN');
         }
         trip.json = JSON.parse(trip.json);
-        return sdb.auth.get_by_cred_name(ctx, trip.json.eml);
+        return sdb.auth.GetByCredName(ctx, trip.json.eml);
       }).then(function(db_rows) {
         _log.debug('got ident with eml:', db_rows);
         if (db_rows.length !== 0) {
@@ -202,6 +203,7 @@
       if (ctx === 'use') {
         return use_doc;
       }
+      f = 'Registration:_register_signup:';
       _log = ctx.log;
       p = ctx.p;
       trip = false;
@@ -211,7 +213,6 @@
       new_ident_id = false;
       new_pwd = '';
       success = false;
-      f = 'Registration:_register_signup:';
       if (!p.eml) {
         throw new E.MissingArg('eml');
       }
@@ -236,7 +237,7 @@
         }
         trip.json = JSON.parse(trip.json);
         eml_change = eml !== trip.json.eml;
-        return sdb.auth.get_by_cred_name(ctx, eml);
+        return sdb.auth.GetByCredName(ctx, eml);
       }).then(function(db_rows) {
         _log.debug(f, 'got ident with eml:', db_rows);
         if (db_rows.length !== 0) {
@@ -251,7 +252,7 @@
           eml: trip.json.eml,
           pwd: new_pwd
         };
-        return sdb.auth.create(ctx, new_ident);
+        return sdb.auth.Create(ctx, new_ident);
       }).then(function(db_result) {
         var new_profile;
         if (db_result.affectedRows !== 1) {
@@ -263,7 +264,7 @@
           fnm: p.fnm,
           lnm: p.lnm
         };
-        return sdb.user.create(ctx, new_profile);
+        return sdb.user.Create(ctx, new_profile);
       }).then(function(db_result) {
         if (db_result.affectedRows !== 1) {
           throw new E.DbError('REGISTER:REGISTER_SIGNUP:CREATE_PROFILE');

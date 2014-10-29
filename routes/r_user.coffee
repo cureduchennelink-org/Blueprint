@@ -35,20 +35,16 @@ class User
 			params: {}
 			response: success: 'bool', users: 'list'
 		return use_doc if ctx is 'use'
-		success= false
-
 		f= 'User:_get:'
+		success= false
 
 		# Verify p.usid is the same as the auth_id
 		throw new E.AccessDenied 'USER:VIEW_PROFILE:AUTH_ID' unless pre_loaded.auth_id is pre_loaded.user.id
-		users= [pre_loaded.user]
+		user= [pre_loaded.user]
 
-		Q.resolve()
-		.then ->
-			success= true
-
-			# Respond to Client
-			send: { success, users }
+		# Respond to Client
+		success= true
+		send: { success, user }
 
 	_update_profile: (ctx, pre_loaded)->
 		use_doc=
@@ -86,13 +82,14 @@ class User
 
 	# Preload the User. Stash inside pre_loaded.user
 	# Expects ctx: conn, p.usid (/User/:usid)
-	_pl_user: (ctx)->
+	_pl_user: (ctx, pre_loaded)->
 		f= 'User:_pl_user:'
 		ctx.log.debug f, ctx.p
+		id= if ctx.p.usid is 'me' then pre_loaded.auth_id else ctx.p.usid
 
 		Q.resolve().then ->
 
-			sdb.user.get_by_ident_id ctx, ctx.p.usid
+			sdb.user.get_by_ident_id ctx, id
 		.then (db_rows) ->
 			throw new E.NotFoundError 'User' if db_rows.length isnt 1
 			db_rows[0]

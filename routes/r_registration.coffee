@@ -34,9 +34,10 @@ class Registration
 				sql_conn: true, sql_tx: true, auth_required: false
 
 	# Create Table for email template
-	make_tbl: (recipient, token)->
+	make_tbl: (recipient, token, options)->
 		Trip: [ {token} ]
 		Recipient: [ recipient ]
+		Opt: [ options ]
 
 	# Private Logic
 	_signup: (ctx, pre_loaded)=>
@@ -73,7 +74,7 @@ class Registration
 
 			# Send Signup email
 			recipient= email: p.eml, fnm: p.fnm, lnm: p.lnm
-			@ses.send 'verify_signup', @make_tbl(recipient, trip.token)
+			@ses.send 'verify_signup', @make_tbl recipient, trip.token, @config.ses.options
 		.then ()->
 			success= true
 
@@ -103,7 +104,7 @@ class Registration
 			trip.json= JSON.parse trip.json
 
 			# Verify email doesn't already exist
-			sdb.auth.get_by_cred_name ctx, trip.json.eml
+			sdb.auth.GetByCredName ctx, trip.json.eml
 		.then (db_rows)=>
 			_log.debug 'got ident with eml:', db_rows
 			throw new E.AccessDenied 'REGISTER:READ_SIGNUP:EMAIL_EXISTS' unless db_rows.length is 0
@@ -117,6 +118,7 @@ class Registration
 			params: fnm: 'r:S', lnm: 'r:S', eml: 'r:S', pwd: 'r:S'
 			response: success: 'bool', eml_change: 'bool'
 		return use_doc if ctx is 'use'
+		f= 'Registration:_register_signup:'
 		_log= ctx.log
 		p= ctx.p
 		trip= false
@@ -126,8 +128,6 @@ class Registration
 		new_ident_id= false
 		new_pwd= ''
 		success= false
-
-		f= 'Registration:_register_signup:'
 
 		# Validate a few params
 		throw new E.MissingArg 'eml' if not p.eml
@@ -150,7 +150,7 @@ class Registration
 			eml_change= eml isnt trip.json.eml
 
 			# Verify email doesn't already exist
-			sdb.auth.get_by_cred_name ctx, eml
+			sdb.auth.GetByCredName ctx, eml
 		.then (db_rows)=>
 			_log.debug f, 'got ident with eml:', db_rows
 			throw new E.AccessDenied 'REGISTER:REGISTER_SIGNUP:EMAIL_EXISTS' unless db_rows.length is 0
@@ -163,14 +163,15 @@ class Registration
 
 			# Insert Ident Record
 			new_ident= eml: trip.json.eml, pwd: new_pwd
-			sdb.auth.create ctx, new_ident
+			sdb.auth.Create ctx, new_ident
 		.then (db_result)=>
 			throw new E.DbError 'REGISTER:REGISTER_SIGNUP:CREATE_IDENT' if db_result.affectedRows isnt 1
 			new_ident_id= db_result.insertId
 
+			# TODO: FRAMEWORK: HOW TO HOOK IN TO THE EXTENDED PROFILE TABLE?
 			# Insert User/Profile Record
 			new_profile= ident_id: new_ident_id, fnm: p.fnm, lnm: p.lnm
-			sdb.user.create ctx, new_profile
+			sdb.user.Create ctx, new_profile
 		.then (db_result)=>
 			throw new E.DbError 'REGISTER:REGISTER_SIGNUP:CREATE_PROFILE' if db_result.affectedRows isnt 1
 

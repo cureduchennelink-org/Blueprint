@@ -120,7 +120,7 @@ class Wrapper
 		return (if endpoint.use isnt true then endpoint.use else route_logic req) if req is 'use'
 		ctx=
 			conn: null, p: req.params
-			log: req.log, auth_id: req.auth.authId
+			log: req.log, auth_id: req.auth?.authId
 			files: req.files, req: req
 		p= ctx.p
 		pre_loaded= {}

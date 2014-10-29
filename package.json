@@ -4,7 +4,7 @@
   "private": "true",
   "repository":{
     "type":"git",
-    "url":"git+ssh://git@bitbucket.org/dv-mobile/blueprint.git"
+    "url":"git+ssh://git@bitbucket.com/dv-mobile/blueprint.git"
     },
   "dependencies": {
     "aws-sdk": "^2.0.17",

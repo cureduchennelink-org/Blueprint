@@ -120,7 +120,7 @@ class SqlCore
 				Q.resolve()
 				.then =>
 
-					sql= 'SELECT '+ (schema.schema_cols.join ',')+ ' FROM '+ table+
+					sql= 'SELECT '+ (schema_cols.join ',')+ ' FROM '+ table+
 						' WHERE di= 0'
 					sqlQuery ctx, sql
 				.then (db_rows)->
