@@ -29,6 +29,7 @@ class SqlCore
 			throw new E.DbError 'DB:SQL:BAD_CONN' if ctx.conn is null
 			(Q.ninvoke ctx.conn, 'query', sql, args)
 			.then (rows_n_cols) ->
+				_log2.debug 'DB:SqlCore:result:', rows_n_cols[0]
 				rows_n_cols[0]
 
 	StartTransaction: (ctx)=> # Assumes conn on ctx
@@ -209,16 +210,10 @@ class SqlCore
 
 		if schema.delete_by_id or schema.DeleteById
 			delete_by_id= (ctx, id)->
-				f= "DB:#{name}:delete_by_id:"
-				_log.debug f, id
+				sql= 'DELETE FROM '+ table+ ' WHERE id= ?'
+				(sqlQuery ctx, sql, [ id ])
+				.then (db_result)=> db_result
 
-				Q.resolve()
-				.then ()=>
-
-					sql= 'DELETE FROM ' + table + ' WHERE id= ?'
-					@db.sqlQuery ctx, sql, [ id ]
-				.then (db_result)=>
-					db_result
 			sql_mod.delete_by_id= delete_by_id # Deprecated
 			sql_mod.DeleteById= delete_by_id
 
