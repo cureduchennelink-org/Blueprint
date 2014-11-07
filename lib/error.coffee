@@ -1,20 +1,20 @@
 restify = require 'restify'
 util = require 'util'
 
-InvalidArg= (param)->
+InvalidArg= (message)->
 	restify.RestError.call this,
 		statusCode: 400
-		body: {error: 'INVALID', param}
+		body: {error: 'InvalidParam', message}
 		constructorOpt: InvalidArg
 	this.name= 'Invalid Argument'
 
 util.inherits InvalidArg, restify.RestError
 exports.InvalidArg= InvalidArg
 
-MissingArg= (param)->
+MissingArg= (message)->
 	restify.RestError.call this,
 		statusCode: 400
-		body: {error: 'MISSING', param}
+		body: {error: 'MissingParam', message}
 		constructorOpt: MissingArg
 	this.name= 'Invalid Argument'
 
