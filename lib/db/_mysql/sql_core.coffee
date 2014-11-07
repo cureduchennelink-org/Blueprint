@@ -12,7 +12,7 @@ _log2= debug: ()->
 class SqlCore
 	constructor: (pool_opts, log)->
 		_log= log
-		# _log2= log # Uncomment to turn level 2 debug on
+		_log2= log if pool_opts.level2_debug
 		@pool= mysql.createPool pool_opts
 		@acquire= (callback)-> @pool.getConnection callback
 		@Acquire= Q.nbind @acquire, this

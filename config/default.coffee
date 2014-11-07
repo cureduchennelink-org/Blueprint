@@ -62,6 +62,7 @@ module.exports=
 				bigNumberStrings: true
 				waitForConnections: false
 				connectionLimit: 10
+				level2_debug: false
 			modules:
 				auth:				enable: true,	class: 'SqlAuth', 			file: 'node_modules/blueprint/lib/db/_mysql/sql_auth'
 				user:				enable: true,	class: 'SqlUser', 			file: 'node_modules/blueprint/lib/db/_mysql/sql_user'

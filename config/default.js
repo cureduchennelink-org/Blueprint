@@ -160,7 +160,8 @@
           supportBigNumbers: true,
           bigNumberStrings: true,
           waitForConnections: false,
-          connectionLimit: 10
+          connectionLimit: 10,
+          level2_debug: false
         },
         modules: {
           auth: {
