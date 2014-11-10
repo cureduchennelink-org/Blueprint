@@ -54,7 +54,7 @@ exports.start= ()->
 	server.use (req, res, next)->
 		for param of req.params
 			if req.params[param] isnt null and _.isString(req.params[param])
-				req.params[param]= req.params[param].replace /[<>]/g, "-"
+				req.params[param]= req.params[param].replace /[<>]/g, ""
 		next()
 
 	# Routes
