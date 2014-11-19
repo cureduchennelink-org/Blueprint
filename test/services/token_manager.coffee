@@ -53,24 +53,16 @@ describe 'Token Manager', ()->
 		result.token.exp.should.equal exp.unix()
 
 	it 'should return an error when decoding a bad access token', ()->
-		result= false
-		try
-			result= tkmgr.decodeAndValidate good_token+ 'BROKEN', KEY
-		catch e
-			e.statusCode.should.equal 401
-			e.body.error.should.equal 'invalid_token'
-			e.body.message.should.equal 'Bad Signature'
+		result= tkmgr.decodeAndValidate good_token+ 'BROKEN', KEY
+		result.should.have.property 'error'
+		result.error.should.equal 'Bad Signature'
 
-		try
-			parts= good_token.split '.'
-			result= tkmgr.decodeAndValidate parts[0], KEY
-		catch e
-			e.statusCode.should.equal 401
-			e.body.error.should.equal 'invalid_token'
+		parts= good_token.split '.'
+		result= tkmgr.decodeAndValidate parts[0], KEY
+		result.should.have.property 'error'
+		result.error.should.equal 'Bad Format'
 
-		result.should.be.false
-
-	it 'should return an err object when decoding an expired access token', (done)->
+	it 'should return an error when decoding an expired access token', (done)->
 		expSecs= 1
 		expiring_token= tkmgr.encode {id: 42}, (moment().add expSecs, 'seconds'), KEY
 
@@ -83,8 +75,8 @@ describe 'Token Manager', ()->
 		# Verify token is expired 1 second after is expired
 		setTimeout ()->
 			result= tkmgr.decodeAndValidate expiring_token, KEY
-			result.should.have.property 'err'
-			result.err.should.equal 'Token Expired'
+			result.should.have.property 'error'
+			result.error.should.equal 'Token Expired'
 			done()
 		, expSecs* 1000+ 1000 # + 1 second
 

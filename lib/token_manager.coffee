@@ -34,13 +34,13 @@ class TokenMgr
 	decodeAndValidate: (rawToken, key)->
 		# Validate Token Structure
 		parts= rawToken.split '.', 2
-		return new E.OAuthError 401, 'invalid_token' if parts.length isnt 2
+		return error: 'Bad Format' if parts.length isnt 2
 
 		# Validate Token Signature
 		hmac= crypto.createHmac 'sha256', key
 		hmac.update parts[0]
 		sig= urlSafeBase64EncodeFix hmac.digest 'base64'
-		return new E.OAuthError 401, 'invalid_token', 'Bad Signature' if sig isnt parts[1]
+		return error: 'Bad Signature' if sig isnt parts[1]
 
 		# Validate Token Expiration
 		token= JSON.parse (new Buffer (urlSafeBase64DecodeFix parts[0]), 'base64').toString 'utf8'
