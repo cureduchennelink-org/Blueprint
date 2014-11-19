@@ -1,0 +1,4 @@
+--compilers coffee:coffee-script
+-R spec
+--recursive
+--timeout 20s
