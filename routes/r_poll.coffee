@@ -37,7 +37,7 @@ class LongPoll
 			params: state:'{}', listen: '{}'
 			response: state: '{}', listen: '{}', sync: '{}'
 		return use_doc if req is 'use'
-		f= 'LongPoll::_LongPollRequest:'
+		f= 'LongPoll:_LongPollRequest:'
 		_log= req.log
 		p= req.params
 		id= req.id()
@@ -57,10 +57,9 @@ class LongPoll
 			@pollMgr.PollerClosed id
 
 		# Hand off request to Poll Manager
-		@pollMgr.AddPoller id, req, res, p.listen, p.state
+		@pollMgr.AddPoller id, req, res, p.listen, p.state, @long_timeout
 
-		# Timeout if no changes have occured
-		@setTimeout (=> @pollMgr.PollerTimedOut id), @long_timeout
+		# Move on
 		next()
 
 exports.LongPoll= LongPoll

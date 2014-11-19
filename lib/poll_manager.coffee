@@ -28,9 +28,10 @@ class PollManager
 	PollerClosed: (id)-> @S_CleanupPoller id # Called when a req connection is closed
 
 	# Called by LongPollRoute to add a new long-poll request
-	AddPoller: (id, req, res, listen, state)->
+	AddPoller: (id, req, res, listen, state, timeoutMillis)->
 		f= 'PollManager:AddPoller:'
-		@pollers[id]= req: req, res: res, state: state, listen: listen, handles: [], handle_map: {}
+		@pollers[id]= {req, res, state, listen, handles: [], handle_map: {}}
+		@pollers[id].timeout= setTimeout (=> @PollerTimedOut id), timeoutMillis
 
 		# Add id to registry for each handle; Map given name to handle
 		for nm, handle of listen
@@ -66,7 +67,6 @@ class PollManager
 			ph= change.pset_id+ '/'+ change.pset_item_id # partial handle
 			@data_set_idx[ph]?= []
 			@data_set_idx[ph].push idx_list[idx]
-		_log.debug f, @data_set_idx
 
 	# Remove changes from index that are no longer in the circular buffer
 	S_UnIndexChanges: (raw_changes)->
@@ -94,7 +94,7 @@ class PollManager
 	#	[ {pset_id, pset_item_id, id, count, verb, prev, after, resource}]
 	# Sort raw changes by their partial handles
 	S_SortChanges: (raw_changes)->
-		f= 'Push:S_SortChanges:'
+		f= 'PollManager:S_SortChanges:'
 		sorted_changes= {}
 
 		# Sort the Changes by pset_id/pset_item_id
@@ -109,7 +109,7 @@ class PollManager
 	#	{ '1/6': [ {id,count,verb,prev,after,resource}, ...], '2/15': [], ...}
 	# Modify sorted changes in to format Poller is expecting
 	S_FormatChanges: (sorted_changes)->
-		f= 'LongPoll:S_FormatChanges:'
+		f= 'PollManager:S_FormatChanges:'
 		data= {}
 		formatted_changes= []
 
@@ -126,7 +126,7 @@ class PollManager
 	#	[ {partial_handle, count, sync }, ... ]
 	# Respond to all Pollers that are waiting on changes
 	S_RespondWithChanges: (formatted_changes)->
-		f= 'LongPoll:S_RespondWithChanges:'
+		f= 'PollManager:S_RespondWithChanges:'
 		req_needs_response= []
 		for change in formatted_changes
 			_log2.debug f, "got count:#{change.count} handle: #{change.partial_handle}"
@@ -142,7 +142,7 @@ class PollManager
 
 	# Respond to Poller that came in to the system behind
 	S_FastForwardWithChanges: (id, formatted_changes)->
-		f= 'LongPoll:S_FastForwardWithChanges:'
+		f= 'PollManager:S_FastForwardWithChanges:'
 		for change in formatted_changes
 			_log2.debug f, "got count:#{change.count} handle: #{change.partial_handle}"
 			h= change.partial_handle
@@ -154,10 +154,11 @@ class PollManager
 
 	# Completes a long-poll request for a single Poller
 	S_Finish: (id)->
-		f= 'LongPoll:S_Finish:'
+		f= 'PollManager:S_Finish:'
 		_log2.debug f, id
 		return unless id of @pollers # Request is gone
-		{req,res,state,listen}= @pollers[id]
+		{req,res,state,listen,timeout}= @pollers[id]
+		clearTimeout timeout
 		req.connection.resume()
 		new_state= state
 		if id of @pollers_msgs
@@ -170,15 +171,16 @@ class PollManager
 
 	# Cleanup all info related to a Poller id
 	S_CleanupPoller: (id)->
-		f= 'LongPoll:S_CleanupPoller:'
+		f= 'PollManager:S_CleanupPoller:'
 		_log2.debug f, id
 		return unless id of @pollers
-		for handle in @pollers[id].handles
+		for handle in @pollers[id].handles when @registry[handle]
 			_log2.debug f, "remove id:#{id} from registry:#{handle}", @registry[handle]
 			ix= (@registry[handle].indexOf id) # TODO: BROWSERS: IE < 9 indexOf
 			@registry[handle].splice ix, 1 if ix > -1
 			delete @registry[handle] if @registry[handle].length is 0
-		delete @pollers[id]; delete @pollers_msgs[id];
+		delete @pollers[id]
+		delete @pollers_msgs[id]
 
 	# Called when changes received from Push Polling System
 	C_PushChangesReceived: (raw_changes)=>
