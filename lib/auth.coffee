@@ -40,10 +40,10 @@ class Auth
 
 		result= if token
 		then @tokenMgr.decodeAndValidate token, @config.key
-		else err: 'Missing or invalid authorization header'
+		else error: 'Missing or invalid authorization header'
 
 		req.auth=
-			message: result.err
+			message: result.error
 			token: result.token
 			authId: if result.token then result.token.iid else null
 			authorize: (skip_response)=>
