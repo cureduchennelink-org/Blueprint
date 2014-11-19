@@ -33,6 +33,6 @@ class Db
 			@mongo= core: new MCore log
 			for nm, model of config.db.mongo.models when model.enable
 				modPath= path.join config.processDir, model.file
-				@mongo[nm]= (require modPath).init mongoose
+				@mongo[nm]= (require modPath).init mongoose, @mongo.core
 
 exports.Db = Db
