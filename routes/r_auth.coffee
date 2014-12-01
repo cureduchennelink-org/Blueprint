@@ -70,6 +70,8 @@ class AuthRoute
 		_log.debug f, p, pre_loaded
 		current_token= false
 		new_token= false
+		need_refresh= true
+		expires_in= @config.auth.accessTokenExpiration
 		result= {}
 
 		Q.resolve()
@@ -91,27 +93,37 @@ class AuthRoute
 				throw new E.OAuthError 401, 'invalid_client' if valid_token.length is 0
 				result.auth_ident_id= valid_token[0].ident_id
 
+			# Validate Confidential Client if requesting client_credentials
+			return false unless p.grant_type is 'client_credentials'
+			throw new E.MissingArg 'client_secret' unless p.client_secret
+			@auth.ValidateCredentials ctx, p.client_id, p.client_secret
+		.then (auth_ident_id)->
+			_log.debug f, 'got confidential auth_ident_id:', auth_ident_id
+			if auth_ident_id isnt false
+				result.auth_ident_id= auth_ident_id
+				need_refresh= false
+
 			# Generate new refresh token
+			return false unless need_refresh
 			@tokenMgr.CreateToken 16
 		.then (token)=>
 
 			# Store new token, remove old token
+			return false unless need_refresh
 			current_token= p.refresh_token if p.grant_type is 'refresh_token'
-			exp= (moment().add @config.auth.refreshTokenExpiration, 'seconds').toDate()
+			exp= (moment().add expires_in, 'seconds').toDate()
 			nv= { ident_id: result.auth_ident_id, client: p.client_id, token, exp}
 			sdb.token.UpdateActiveToken ctx, nv, current_token
 		.then (ident_token)=>
+			if ident_token isnt false
+				refresh_token= ident_token.token
 
 			# Generate Access Token
-			exp= moment().add @config.auth.accessTokenExpiration, 'seconds'
-			accessToken= @tokenMgr.encode {iid: result.auth_ident_id}, exp, @config.auth.key
+			exp= moment().add expires_in, 'seconds'
+			access_token= @tokenMgr.encode {iid: result.auth_ident_id}, exp, @config.auth.key
 
 			# Return back to Client
-			send:
-				access_token: accessToken
-				token_type: 'bearer'
-				expires_in: @config.auth.accessTokenExpiration
-				refresh_token: ident_token.token
+			send: {access_token, token_type: 'bearer', expires_in, refresh_token}
 
 	# POST /Auth/:auid/updateemail
 	_update_email: (ctx, pre_loaded)=>

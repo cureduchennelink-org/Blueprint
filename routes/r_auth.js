@@ -129,7 +129,7 @@
     };
 
     AuthRoute.prototype._authenticate = function(ctx, pre_loaded) {
-      var current_token, f, new_token, p, result, use_doc, _log,
+      var current_token, expires_in, f, need_refresh, new_token, p, result, use_doc, _log,
         _this = this;
       use_doc = {
         params: {
@@ -154,6 +154,8 @@
       _log.debug(f, p, pre_loaded);
       current_token = false;
       new_token = false;
+      need_refresh = true;
+      expires_in = this.config.auth.accessTokenExpiration;
       result = {};
       return Q.resolve().then(function() {
         if (p.grant_type !== 'password') {
@@ -177,13 +179,32 @@
           }
           result.auth_ident_id = valid_token[0].ident_id;
         }
-        return _this.tokenMgr.CreateToken(16);
+        if (p.grant_type !== 'client_credentials') {
+          return false;
+        }
+        if (!p.client_secret) {
+          throw new E.MissingArg('client_secret');
+        }
+        return _this.auth.ValidateCredentials(ctx, p.client_id, p.client_secret);
+      }).then(function(auth_ident_id) {
+        _log.debug(f, 'got confidential auth_ident_id:', auth_ident_id);
+        if (auth_ident_id !== false) {
+          result.auth_ident_id = auth_ident_id;
+          need_refresh = false;
+        }
+        if (!need_refresh) {
+          return false;
+        }
+        return this.tokenMgr.CreateToken(16);
       }).then(function(token) {
         var exp, nv;
+        if (!need_refresh) {
+          return false;
+        }
         if (p.grant_type === 'refresh_token') {
           current_token = p.refresh_token;
         }
-        exp = (moment().add(_this.config.auth.refreshTokenExpiration, 'seconds')).toDate();
+        exp = (moment().add(expires_in, 'seconds')).toDate();
         nv = {
           ident_id: result.auth_ident_id,
           client: p.client_id,
@@ -192,17 +213,20 @@
         };
         return sdb.token.UpdateActiveToken(ctx, nv, current_token);
       }).then(function(ident_token) {
-        var accessToken, exp;
-        exp = moment().add(_this.config.auth.accessTokenExpiration, 'seconds');
-        accessToken = _this.tokenMgr.encode({
+        var access_token, exp, refresh_token;
+        if (ident_token !== false) {
+          refresh_token = ident_token.token;
+        }
+        exp = moment().add(expires_in, 'seconds');
+        access_token = _this.tokenMgr.encode({
           iid: result.auth_ident_id
         }, exp, _this.config.auth.key);
         return {
           send: {
-            access_token: accessToken,
+            access_token: access_token,
             token_type: 'bearer',
-            expires_in: _this.config.auth.accessTokenExpiration,
-            refresh_token: ident_token.token
+            expires_in: expires_in,
+            refresh_token: refresh_token
           }
         };
       });

@@ -63,13 +63,13 @@ class Wrapper
 		p= ctx.p
 		pre_loaded= {}
 		send_result= false
-		supported_grant_type= if p.grant_type in ['password','refresh_token'] then true else false
+		supported_grant_type= if p.grant_type in ['password','refresh_token','client_credentials'] then true else false
 
 		Q.resolve()
 		.then ->
 
 			# Validate client_id and grant_type
-			throw new E.OAuthError 400, 'unauthorized_client' if not p.client_id
+			throw new E.MissingArg 'client_id' if not p.client_id
 			throw new E.OAuthError 400, 'unsupported_grant_type' if not supported_grant_type
 
 			# Acquire DB Connection
