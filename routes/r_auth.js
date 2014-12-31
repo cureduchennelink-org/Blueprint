@@ -195,7 +195,7 @@
         if (!need_refresh) {
           return false;
         }
-        return this.tokenMgr.CreateToken(16);
+        return _this.tokenMgr.CreateToken(16);
       }).then(function(token) {
         var exp, nv;
         if (!need_refresh) {

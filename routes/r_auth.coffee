@@ -97,7 +97,7 @@ class AuthRoute
 			return false unless p.grant_type is 'client_credentials'
 			throw new E.MissingArg 'client_secret' unless p.client_secret
 			@auth.ValidateCredentials ctx, p.client_id, p.client_secret
-		.then (auth_ident_id)->
+		.then (auth_ident_id)=>
 			_log.debug f, 'got confidential auth_ident_id:', auth_ident_id
 			if auth_ident_id isnt false
 				result.auth_ident_id= auth_ident_id
