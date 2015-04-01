@@ -16,7 +16,7 @@ MissingArg= (message)->
 		statusCode: 400
 		body: {error: 'MissingParam', message}
 		constructorOpt: MissingArg
-	this.name= 'Invalid Argument'
+	this.name= 'Missing Argument'
 
 util.inherits MissingArg, restify.RestError
 exports.MissingArg= MissingArg
