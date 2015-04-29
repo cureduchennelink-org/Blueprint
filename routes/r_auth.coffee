@@ -71,7 +71,8 @@ class AuthRoute
 		current_token= false
 		new_token= false
 		need_refresh= true
-		expires_in= @config.auth.accessTokenExpiration
+		refresh_expires_in= @config.auth.refreshTokenExpiration
+		access_expires_in= @config.auth.accessTokenExpiration
 		result= {}
 
 		Q.resolve()
@@ -111,7 +112,7 @@ class AuthRoute
 			# Store new token, remove old token
 			return false unless need_refresh
 			current_token= p.refresh_token if p.grant_type is 'refresh_token'
-			exp= (moment().add expires_in, 'seconds').toDate()
+			exp= (moment().add refresh_expires_in, 'seconds').toDate()
 			nv= { ident_id: result.auth_ident_id, client: p.client_id, token, exp}
 			sdb.token.UpdateActiveToken ctx, nv, current_token
 		.then (ident_token)=>
@@ -119,11 +120,11 @@ class AuthRoute
 				refresh_token= ident_token.token
 
 			# Generate Access Token
-			exp= moment().add expires_in, 'seconds'
+			exp= moment().add access_expires_in, 'seconds'
 			access_token= @tokenMgr.encode {iid: result.auth_ident_id}, exp, @config.auth.key
 
 			# Return back to Client
-			send: {access_token, token_type: 'bearer', expires_in, refresh_token}
+			send: {access_token, token_type: 'bearer', expires_in: access_expires_in, refresh_token}
 
 	# POST /Auth/:auid/updateemail
 	_update_email: (ctx, pre_loaded)=>

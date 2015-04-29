@@ -129,7 +129,7 @@
     };
 
     AuthRoute.prototype._authenticate = function(ctx, pre_loaded) {
-      var current_token, expires_in, f, need_refresh, new_token, p, result, use_doc, _log,
+      var access_expires_in, current_token, f, need_refresh, new_token, p, refresh_expires_in, result, use_doc, _log,
         _this = this;
       use_doc = {
         params: {
@@ -155,7 +155,8 @@
       current_token = false;
       new_token = false;
       need_refresh = true;
-      expires_in = this.config.auth.accessTokenExpiration;
+      refresh_expires_in = this.config.auth.refreshTokenExpiration;
+      access_expires_in = this.config.auth.accessTokenExpiration;
       result = {};
       return Q.resolve().then(function() {
         if (p.grant_type !== 'password') {
@@ -204,7 +205,7 @@
         if (p.grant_type === 'refresh_token') {
           current_token = p.refresh_token;
         }
-        exp = (moment().add(expires_in, 'seconds')).toDate();
+        exp = (moment().add(refresh_expires_in, 'seconds')).toDate();
         nv = {
           ident_id: result.auth_ident_id,
           client: p.client_id,
@@ -217,7 +218,7 @@
         if (ident_token !== false) {
           refresh_token = ident_token.token;
         }
-        exp = moment().add(expires_in, 'seconds');
+        exp = moment().add(access_expires_in, 'seconds');
         access_token = _this.tokenMgr.encode({
           iid: result.auth_ident_id
         }, exp, _this.config.auth.key);
@@ -225,7 +226,7 @@
           send: {
             access_token: access_token,
             token_type: 'bearer',
-            expires_in: expires_in,
+            expires_in: access_expires_in,
             refresh_token: refresh_token
           }
         };
