@@ -246,8 +246,8 @@
       ]
     },
     ses: {
-      accessKeyId: 'AKIAI5FIAQV7AJEQOH3Q',
-      secretAccessKey: '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',
+      accessKeyId: 'ACCESS_KEY_ID',
+      secretAccessKey: 'SECRET_KEY',
       region: 'us-west-2',
       options: {
         urlPrefix: 'http://localhost:9500/'
