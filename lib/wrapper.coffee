@@ -121,7 +121,7 @@ class Wrapper
 		ctx=
 			conn: null, p: req.params
 			log: req.log, auth_id: req.auth?.authId
-			files: req.files, req: req
+			files: req.files, req: req, res: res
 		p= ctx.p
 		pre_loaded= {}
 		result= false
