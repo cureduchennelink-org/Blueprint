@@ -25,7 +25,12 @@ class SES
 	_composeMsgFrom: (spec, data)->
 		f= 'SES._composeMsgFrom:'
 		@log.debug f, spec, data
-		send_to= if @config.debug_email isnt false then @config.debug_email else data.Recipient[0]
+		send_to= false
+		if @config.debug_email isnt off
+			send_to= @config.debug_email
+		else
+			recipient= data.Recipient[0]
+			send_to= if typeof recipient is 'string' then recipient else recipient.eml
 
 		# Email Message
 		Destination: # required
