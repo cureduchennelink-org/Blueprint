@@ -31,7 +31,7 @@ module.exports=
 		ses:			enable: true, name: 'ses',			class: 'SES', 			file: 'node_modules/blueprint/lib/ses'
 		tripMgr:		enable: true, name: 'tripMgr',		class: 'TripManager', 	file: 'node_modules/blueprint/lib/trip_manager'
 	restify:
-		handlers: [ 'queryParser','bodyParser','requestLogger' ]
+		handlers: [ 'queryParser','bodyParser','requestLogger','authorizationParser' ]
 	route_prefix:
 		assests: '/s'
 		api: '/api/:Version'
@@ -48,6 +48,7 @@ module.exports=
 		bearer: 'blueprint'
 		refreshTokenExpiration: 30 * 24 * 60 * 60 # seconds (30 Days)
 		accessTokenExpiration: 10 * 60 # seconds (10 Minutes)
+		basic: api_keys: {}
 	db:
 		mysql:
 			enable: true

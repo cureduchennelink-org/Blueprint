@@ -125,7 +125,7 @@
       }
     },
     restify: {
-      handlers: ['queryParser', 'bodyParser', 'requestLogger']
+      handlers: ['queryParser', 'bodyParser', 'requestLogger', 'authorizationParser']
     },
     route_prefix: {
       assests: '/s',
@@ -145,7 +145,10 @@
       },
       bearer: 'blueprint',
       refreshTokenExpiration: 30 * 24 * 60 * 60,
-      accessTokenExpiration: 10 * 60
+      accessTokenExpiration: 10 * 60,
+      basic: {
+        api_keys: {}
+      }
     },
     db: {
       mysql: {

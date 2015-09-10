@@ -45,6 +45,20 @@ OAuthError= (code, error, message)->
 util.inherits OAuthError, restify.RestError
 exports.OAuthError= OAuthError
 
+BasicAuthError= (error, message)->
+	body= if message
+	then {error, message} else {error}
+	restify.RestError.call this,
+		statusCode: 401
+		restCode: 'BasicAuthError'
+		message: 'Invalid Basic Auth Request'
+		body: body
+		constructorOpt: BasicAuthError
+	this.name= 'OAuth 2.0 Error'
+
+util.inherits BasicAuthError, restify.RestError
+exports.BasicAuthError= BasicAuthError
+
 # token in the form 'MODULE:FUNCTION:CUSTOM_STRING'
 AccessDenied= (token, message)->
 	restify.RestError.call this,

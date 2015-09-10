@@ -56,6 +56,19 @@ class Auth
 				else true
 		next()
 
+	# Requires server.use restify.authorizationParser()
+	# 	- config: restify: handlers: ['authorizationParser']
+	# returns true or 'error_string'
+	# Add api_keys to config: auth: basic: api_keys: my_key: password: 'myPassword'
+	AuthenticateBasicAuthHeader: (req)->
+		f= 'Auth:AuthenticateBasicAuthHeader:'
+		auth= req.authorization
+		api_keys= @config.basic.api_keys
+		return 'invalid_scheme' unless auth.scheme is 'Basic'
+		return 'invalid_api_key' unless auth.basic?.username of api_keys
+		return 'invalid_password' unless auth.basic?.password is api_keys[auth.basic.username]?.password
+		return true
+
 	ValidateCredentials: (ctx, username, password)->
 		f= 'Auth:_ValidateCredentials:'
 		_log= ctx.log ? @log
