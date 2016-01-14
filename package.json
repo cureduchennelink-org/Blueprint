@@ -1,28 +1,28 @@
 {
   "name": "blueprint",
-  "version": "0.1.0-140926",
+  "version": "1.0.0-160114",
   "private": "true",
-  "repository":{
-    "type":"git",
-    "url":"git+ssh://git@bitbucket.com/dv-mobile/blueprint.git"
-    },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@bitbucket.com/dv-mobile/blueprint.git"
+  },
   "dependencies": {
-    "aws-sdk": "^2.0.17",
-    "bunyan": "^1.1.0",
-    "lodash": "^2.4.1",
-    "moment": "^2.8.3",
-    "mongoose": "^3.8.16",
-    "mysql": "^2.5.1",
-    "nedb": "^0.11.1",
-    "q": "^1.0.1",
-    "restify": "^2.8.2"
+    "aws-sdk": "^2.2.29",
+    "bunyan": "^1.5.1",
+    "lodash": "^4.0.0",
+    "moment": "^2.11.1",
+    "mongoose": "^4.3.5",
+    "mysql": "^2.10.2",
+    "nedb": "^1.6.0",
+    "q": "^1.4.1",
+    "restify": "^4.0.3"
   },
-  "devDependencies": {
-    "chai": "1.9.1",
-    "chai-as-promised": "4.1.1",
-    "coffee-script": "1.4.0",
-    "mocha": "1.20.1"
-  },
+	"devDependencies": {
+		"chai": "^3.4.1",
+		"chai-as-promised": "^5.2.0",
+		"coffee-script": "^1.10.0",
+		"mocha": "^2.3.4"
+	},
   "scripts": {
     "test": "mocha test/services test/routes",
     "test-services": "mocha test/services",
