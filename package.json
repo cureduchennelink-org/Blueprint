@@ -3,7 +3,7 @@
   "version": "0.1.0-140926",
   "repository":{
     "type":"git",
-    "url":"https://bitbucket.org/dv-mobile/blueprint.git"
+    "url":"https://bitbucket.org/dv-mobile/blueprint"
     },
   "dependencies": {
     "aws-sdk": "^2.0.17",
