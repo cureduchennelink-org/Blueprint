@@ -144,7 +144,7 @@
         key_length: 32
       },
       bearer: 'blueprint',
-      refreshTokenExpiration: 30 * 24 * 60 * 60,
+      refreshTokenExpiration: '2050-01-01 23:59:59',
       accessTokenExpiration: 10 * 60,
       basic: {
         api_keys: {}

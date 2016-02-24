@@ -46,7 +46,7 @@ module.exports=
 			salt_size:	16
 			key_length:	32
 		bearer: 'blueprint'
-		refreshTokenExpiration: 30 * 24 * 60 * 60 # seconds (30 Days)
+		refreshTokenExpiration: '2050-01-01 23:59:59'
 		accessTokenExpiration: 10 * 60 # seconds (10 Minutes)
 		basic: api_keys: {}
 	db:

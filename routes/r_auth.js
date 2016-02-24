@@ -205,7 +205,7 @@
         if (p.grant_type === 'refresh_token') {
           current_token = p.refresh_token;
         }
-        exp = (moment().add(refresh_expires_in, 'seconds')).toDate();
+        exp = refresh_expires_in;
         nv = {
           ident_id: result.auth_ident_id,
           client: p.client_id,

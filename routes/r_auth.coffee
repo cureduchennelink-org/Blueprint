@@ -112,7 +112,7 @@ class AuthRoute
 			# Store new token, remove old token
 			return false unless need_refresh
 			current_token= p.refresh_token if p.grant_type is 'refresh_token'
-			exp= (moment().add refresh_expires_in, 'seconds').toDate()
+			exp= refresh_expires_in
 			nv= { ident_id: result.auth_ident_id, client: p.client_id, token, exp}
 			sdb.token.UpdateActiveToken ctx, nv, current_token
 		.then (ident_token)=>
