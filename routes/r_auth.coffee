@@ -91,7 +91,7 @@ class AuthRoute
 		.then (valid_token)=>
 			_log.debug f, 'got valid token:', valid_token
 			if valid_token isnt false
-				throw new E.OAuthError 401, 'invalid_client' if valid_token.length is 0
+				throw new E.OAuthError 401, 'invalid_grant' if valid_token.length is 0
 				result.auth_ident_id= valid_token[0].ident_id
 
 			# Validate Confidential Client if requesting client_credentials
