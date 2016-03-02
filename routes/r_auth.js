@@ -176,7 +176,7 @@
         _log.debug(f, 'got valid token:', valid_token);
         if (valid_token !== false) {
           if (valid_token.length === 0) {
-            throw new E.OAuthError(401, 'invalid_grant');
+            throw new E.OAuthError(401, 'invalid_grant', 'Refresh token expired.');
           }
           result.auth_ident_id = valid_token[0].ident_id;
         }
