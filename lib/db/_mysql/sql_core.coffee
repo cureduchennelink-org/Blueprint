@@ -164,7 +164,7 @@ class SqlCore
 
 					return false unless re_read is true
 					throw new E.ServerError f+'REREAD_NOT_DEFINED_IN_SCHEMA' unless schema.reread
-					sql= 'SELECT ' + (schema.reread.join ',') + ' FROM ' + table + ' WHERE id= ? AND di= 0'
+					sql= 'SELECT ' + (schema.reread.join ',') + ' FROM ' + table + ' WHERE id= ?'
 					sqlQuery ctx, sql, [db_result.insertId]
 				.then (db_rows)->
 					if db_rows isnt false
@@ -198,7 +198,7 @@ class SqlCore
 
 					return false unless re_read is true
 					throw new E.ServerError f+'REREAD_NOT_DEFINED_IN_SCHEMA' unless schema.reread
-					sql= 'SELECT ' + (schema.reread.join ',') + ' FROM ' + table + ' WHERE id= ? AND di= 0'
+					sql= 'SELECT ' + (schema.reread.join ',') + ' FROM ' + table + ' WHERE id= ?'
 					sqlQuery ctx, sql, [id]
 				.then (db_rows)->
 					if db_rows isnt false
