@@ -31,7 +31,7 @@ module.exports=
 		ses:			enable: true, name: 'ses',			class: 'SES', 			file: 'node_modules/blueprint/lib/ses'
 		tripMgr:		enable: true, name: 'tripMgr',		class: 'TripManager', 	file: 'node_modules/blueprint/lib/trip_manager'
 	restify:
-		handlers: [ 'queryParser','bodyParser','requestLogger','authorizationParser' ]
+		handlers: [ 'CORS','queryParser','bodyParser','requestLogger','authorizationParser' ]
 	route_prefix:
 		assests: '/s'
 		api: '/api/:Version'

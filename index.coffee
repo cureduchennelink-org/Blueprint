@@ -38,7 +38,13 @@ exports.start= ()->
 
 	# Restify Hanlders
 	for handler in config.restify.handlers
-		server.use restify[handler]()
+		log.info "(restify handler) Server.use #{handler}", config.restify[ handler]
+		server.use restify[handler] config.restify[ handler]
+	# Handle all OPTIONS requests to a deadend (Allows CORS to work them out)
+	log.info "(restify) Server.opts", config.restify.allow_headers
+	server.opts /.*/, ( req, res ) =>
+		res.setHeader 'access-control-allow-headers', (config.restify.allow_headers ? []).join ', '
+		res.send 204
 
 	# Service Handlers
 	for nm, service of kit.services when typeof service.server_use is 'function'
