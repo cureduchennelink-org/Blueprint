@@ -49,10 +49,14 @@ class AuthRoute
 				use: true, wrap: 'default_wrap', version: any: @_verify_email
 				sql_conn: true, sql_tx: true
 
-	make_tbl: (recipient, token, options)->
+	make_tbl: (recipient, token, options, page_name, ctx)->
+		custom= if ctx and typeof @config.ses.customize is 'function'
+			@config.ses.customize ctx, page_name, recipient, token, options
+		else [custom:false]
 		Trip: [ {token} ]
 		Recipient: [ recipient ]
 		Opt: [ options ]
+		Custom: custom
 
 	# POST /Auth
 	_authenticate: (ctx, pre_loaded)=>
@@ -286,7 +290,7 @@ class AuthRoute
 			trip= new_trip if new_trip isnt false
 
 			# Send Forgot Email Password
-			@ses.send 'forgot_password', @make_tbl ident, trip.token, @config.ses.options
+			@ses.send 'forgot_password', @make_tbl ident, trip.token, @config.ses.options, 'forgot_password', ctx
 		.then ()->
 
 			# Send back to Client
