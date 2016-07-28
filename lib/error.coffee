@@ -1,6 +1,18 @@
 restify = require 'restify'
 util = require 'util'
 
+ServerControlledException= (old_code, title, text, commands, goto)->
+	throw new Error 'lib/error::ServerControlledException: Missing "goto" in function arguments' unless typeof goto is 'string'
+	commands= commands.join '~' unless typeof commands is 'string'
+	server_control= {title,text,commands,goto}
+	restify.RestError.call this,
+		statusCode: 420
+		body: {error: 'ServerControl', message: 'See server_control', old_code, server_control}
+		constructorOpt: ServerControlledException
+	this.name= 'Server Controlled Exception'
+
+util.inherits ServerControlledException, restify.RestError
+exports.ServerControlledException= ServerControlledException
 InvalidArg= (message)->
 	restify.RestError.call this,
 		statusCode: 400
