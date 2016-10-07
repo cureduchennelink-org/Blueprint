@@ -13,6 +13,7 @@ class SqlCore
 	constructor: (pool_opts, log)->
 		_log= log
 		_log2= log if pool_opts.level2_debug
+		@is_db_log_on= pool_opts.level2_debug
 		@pool= mysql.createPool pool_opts
 		@acquire= (callback)-> @pool.getConnection callback
 		@Acquire= Q.nbind @acquire, this
@@ -24,12 +25,12 @@ class SqlCore
 			conn.destroy
 
 		@sqlQuery= (ctx, sql, args)->
-			_log2.debug 'DB:SqlCore:sqlQuery:', sql
-			_log2.debug 'DB:SqlCore:args:', args if args
+			ctx.log.debug 'DB:SqlCore:sqlQuery:', sql if @is_db_log_on
+			ctx.log.debug 'DB:SqlCore:args:', args if args and @is_db_log_on
 			throw new E.DbError 'DB:SQL:BAD_CONN' if ctx.conn is null
 			(Q.ninvoke ctx.conn, 'query', sql, args)
 			.then (rows_n_cols) ->
-				_log2.debug 'DB:SqlCore:result:', rows_n_cols[0]
+				ctx.log.debug 'DB:SqlCore:result:', rows_n_cols[0] if @is_db_log_on
 				rows_n_cols[0]
 
 	StartTransaction: (ctx)=> # Assumes conn on ctx
@@ -67,7 +68,7 @@ class SqlCore
 		if schema.GetByKey
 			sql_mod.GetByKey= (ctx, key, ids)->
 				f= "DB:#{name}:GetByKey:"
-				ctx.log.debug f, key
+				ctx.log.debug f, key if @is_db_log_on
 
 				Q.resolve()
 				.then =>
@@ -82,7 +83,7 @@ class SqlCore
 		if schema.UpdateByKey
 			sql_mod.UpdateByKey= (ctx, key, ids, new_values)->
 				f= "DB:#{name}:UpdateByKey:"
-				ctx.log.debug f, key
+				ctx.log.debug f, key if @is_db_log_on
 
 				throw new E.DbError "DB:CORE:SCHEMA_UNDEFINED:UpdateByKey_#{key}" unless schema.UpdateByKey[key]
 				for nm,val of new_values when nm not in schema.UpdateByKey[key]
@@ -103,7 +104,7 @@ class SqlCore
 		if schema.DisposeByIds
 			sql_mod.DisposeByIds= (ctx, ids)->
 				f= "DB:#{name}:DisposeByIds:"
-				ctx.log.debug f, ids
+				ctx.log.debug f, ids if @is_db_log_on
 
 				Q.resolve()
 				.then =>
@@ -116,8 +117,8 @@ class SqlCore
 		if schema.get_collection or schema.GetCollection
 			get_collection= (ctx)->
 				f= "DB:#{name}:get_collection:"
+				ctx.log.debug f if @is_db_log_on
 				schema_cols= schema.get_collection ? schema.GetCollection
-
 				Q.resolve()
 				.then =>
 
@@ -132,6 +133,7 @@ class SqlCore
 		if schema.get_by_id # Deprecated. Use GetByKey with 'id' # TODO: Remove when nothing uses it
 			sql_mod.get_by_id= (ctx, id)->
 				f= "DB:#{name}:get_by_id:"
+				ctx.log.debug f, id if @is_db_log_on
 
 				Q.resolve()
 				.then =>
@@ -144,7 +146,7 @@ class SqlCore
 		if schema.create or schema.Create
 			create= (ctx, new_values, re_read)->
 				f= "DB:#{name}:create:"
-				_log2.debug f, new_values
+				ctx.log.debug f, new_values if @is_db_log_on
 				schema_cols= schema.create ? schema.Create
 				result= false
 
@@ -177,7 +179,7 @@ class SqlCore
 		if schema.update_by_id or schema.UpdateById
 			update_by_id= (ctx, id, new_values, re_read)->
 				f= "DB:#{name}:update_by_id:"
-				_log2.debug f, { id, new_values, re_read }
+				ctx.log.debug f, { id, new_values, re_read } if @is_db_log_on
 				schema_cols= schema.update_by_id ? schema.UpdateById
 				result= false
 
