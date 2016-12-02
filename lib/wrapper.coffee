@@ -13,6 +13,7 @@ config= false
 class Wrapper
 	constructor: (kit) ->
 		_log= 		kit.services.logger.log
+		_mongoLog= 		kit.services.mongoLogger
 		odb= 		kit.services.db.mongo
 		sdb= 		kit.services.db.mysql
 		config=		kit.services.config
@@ -59,7 +60,12 @@ class Wrapper
 		throw new E.ServerError 'WRAPPER:AUTH:MYSQL_NOT_ENABLED' unless config.db.mysql.enable
 		route_logic= caller.version[req.params?.Version] ? caller.version.any
 		return (if caller.use isnt true then caller.use else route_logic req) if req is 'use'
-		ctx= conn: null, p: req.params, log: req.log
+		mongoLog = req.mongoLog.make()
+		ctx=
+			conn: null,
+			p: req.params,
+			log: req.log,
+			mongoLog: mongoLog
 		p= ctx.p
 		pre_loaded= {}
 		send_result= false
@@ -94,6 +100,7 @@ class Wrapper
 			sdb.core.release ctx.conn if ctx.conn isnt null
 			res.send send_result
 			next()
+			ctx.mongoLog.close();
 
 		.fail (err) ->
 			if err.statusCode not in [ 400, 401, 403 ]
@@ -113,15 +120,22 @@ class Wrapper
 						sdb.core.release ctx.conn
 			res.send err
 			next()
+			ctx.mongoLog.close();
 
 	default: (req, res, next, endpoint) =>
 		f= "Wrapper:default:#{endpoint.name}"
 		route_logic= endpoint.version[req.params?.Version] ? endpoint.version.any
 		return (if endpoint.use isnt true then endpoint.use else route_logic req) if req is 'use'
+		mongoLog = req.mongoLog.make()
 		ctx=
-			conn: null, p: req.params
-			log: req.log, auth_id: req.auth?.authId
-			files: req.files, req: req, res: res
+			conn: null,
+			p: req.params,
+			log: req.log,
+			auth_id: req.auth?.authId,
+			mongoLog: mongoLog,
+			files: req.files,
+			req: req,
+			res: res
 		p= ctx.p
 		pre_loaded= {}
 		result= false
@@ -172,6 +186,8 @@ class Wrapper
 			sdb.core.release ctx.conn if ctx.conn isnt null
 			res.send result.send
 			next()
+			ctx.mongoLog.close();
+
 
 		.fail (err) ->
 			if err.statusCode not in [ 400, 403 ]
@@ -189,5 +205,6 @@ class Wrapper
 						sdb.core.release ctx.conn
 			res.send err
 			next()
+			ctx.mongoLog.close();
 
 exports.Wrapper= Wrapper

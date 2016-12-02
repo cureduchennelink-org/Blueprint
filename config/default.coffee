@@ -39,6 +39,9 @@ module.exports=
 	log:
 		name: 'server'
 		level: 'debug'
+	mongoLog:
+		name: 'server'
+		level: 'debug'
 	auth:
 		key : 'jQ9PhcT3Xz' # Used for crypto
 		pbkdf2:
@@ -73,10 +76,10 @@ module.exports=
 				pset_item:			enable: true,	class: 'SqlPSetItem', 		file: 'node_modules/blueprint/lib/db/_mysql/sql_pset'
 				pset_item_change:	enable: true,	class: 'SqlPSetItemChange', file: 'node_modules/blueprint/lib/db/_mysql/sql_pset'
 		mongo:
-            enable: false
-            options: 'mongodb://localhost/mydb'
-            models:
-            	Workout: enable: true, file: 'node_modules/blueprint/lib/db/_mongo/models/workout'
+				enable: false
+				options: 'mongodb://localhost/mydb'
+				models:
+					Workout: enable: true, file: 'node_modules/blueprint/lib/db/_mongo/models/workout'
 	push_service:
 		poll_interval: 5000
 		poll_limit: 30 # How many changes to process at once

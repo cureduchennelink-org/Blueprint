@@ -17,12 +17,14 @@ exports.start= ()->
 	{Kit}=		require  './lib/kit'
 	config= 	(require './config')()
 	{Logger}=	require  './lib/logger'
+	{MongoLoggerFactory}=	require  './lib/mongoLogger'
 	Error= 		require  './lib/error'
 
 	# Initialize kit and set up with core services (config, logger, error)
 	kit= new Kit
 	kit.add_service 'config', 		config					# Config Object
 	kit.new_service 'logger', 		Logger					# Bunyan Logger
+	kit.new_service 'mongoLogger', 		MongoLoggerFactory					# Mongo Logger
 	kit.add_service 'error', 		Error					# Error Objects
 
 	log= 	kit.services.logger.log
