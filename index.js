@@ -114,10 +114,19 @@
       }
     }
     return q_result.then(function() {
+      var defer, err;
       server.get(/.*/, restify.serveStatic(config.api.static_file_server));
-      return server.listen(config.api.port, function() {
-        return log.info('Server listening at', server.url);
-      });
+      defer = Q.defer();
+      try {
+        server.listen(config.api.port, function() {
+          log.info('Server listening at', server.url);
+          return defer.resolve(null);
+        });
+      } catch (_error) {
+        err = _error;
+        defer.reject(err);
+      }
+      return defer;
     }).fail(function(err) {
       log.error(err);
       log.error('SERVER FAILED TO INITIALIZE. EXITING NOW!');

@@ -88,8 +88,14 @@ exports.start= ()->
 		# Static File Server (Must be last Route Created)
 		server.get /.*/, restify.serveStatic config.api.static_file_server
 		# Listen
-		server.listen config.api.port, ()->
-			log.info 'Server listening at', server.url
+		defer= Q.defer()
+		try
+			server.listen config.api.port, ()->
+				log.info 'Server listening at', server.url
+				defer.resolve null
+		catch err
+			defer.reject err
+		return defer
 
 	.fail (err)->
 		log.error err
