@@ -95,7 +95,7 @@ exports.start= ()->
 				defer.resolve null
 		catch err
 			defer.reject err
-		return defer
+		return defer.promise
 
 	.fail (err)->
 		log.error err

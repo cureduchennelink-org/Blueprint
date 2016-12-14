@@ -126,7 +126,7 @@
         err = _error;
         defer.reject(err);
       }
-      return defer;
+      return defer.promise;
     }).fail(function(err) {
       log.error(err);
       log.error('SERVER FAILED TO INITIALIZE. EXITING NOW!');
