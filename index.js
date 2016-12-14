@@ -113,7 +113,7 @@
         })(service);
       }
     }
-    return q_result.then(function() {
+    q_result.then(function() {
       var defer, err;
       server.get(/.*/, restify.serveStatic(config.api.static_file_server));
       defer = Q.defer();
@@ -132,6 +132,7 @@
       log.error('SERVER FAILED TO INITIALIZE. EXITING NOW!');
       return process.exit(1);
     });
+    return q_result;
   };
 
 }).call(this);

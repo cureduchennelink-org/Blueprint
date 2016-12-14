@@ -101,3 +101,5 @@ exports.start= ()->
 		log.error err
 		log.error 'SERVER FAILED TO INITIALIZE. EXITING NOW!'
 		process.exit(1)
+
+	return q_result
