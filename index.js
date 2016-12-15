@@ -113,7 +113,7 @@
         })(service);
       }
     }
-    q_result.then(function() {
+    q_result = q_result.then(function() {
       var defer, err;
       server.get(/.*/, restify.serveStatic(config.api.static_file_server));
       defer = Q.defer();

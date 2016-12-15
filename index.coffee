@@ -84,7 +84,7 @@ exports.start= ()->
 		do(service)-> q_result= q_result.then -> service.server_start(kit)
 
 	# Start the Server
-	q_result.then ->
+	q_result= q_result.then ->
 		# Static File Server (Must be last Route Created)
 		server.get /.*/, restify.serveStatic config.api.static_file_server
 		# Listen
@@ -102,4 +102,4 @@ exports.start= ()->
 		log.error 'SERVER FAILED TO INITIALIZE. EXITING NOW!'
 		process.exit(1)
 
-	return q_result
+	q_result
