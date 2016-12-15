@@ -72,8 +72,12 @@ exports.start= ()->
 
 	# Run Server Init Functions from Kit Service Modules
 	q_result= Q.resolve()
-	for nm, service of kit.services when typeof service.server_init is 'function'
-		do(service)-> q_result= q_result.then -> service.server_init(kit)
+	for nm, service of kit.services
+		do(service)->
+			if typeof service.server_init is 'function'
+				q_result= q_result.then -> service.server_init kit # Single return promise w/o embedded .then
+			if typeof service.server_init_promise is 'function'
+				do(service)-> q_result= service.server_init_promise kit, q_result # will chain it's .then's
 
 	# Run Server Init Functions from Kit Route Modules
 	for nm, route of kit.routes when typeof route.server_init is 'function'
@@ -97,7 +101,10 @@ exports.start= ()->
 			defer.reject err
 		return defer.promise
 
-	.fail (err)->
+	q_result= q_result.then ->
+		log.debug 'SERVER NORMAL START'
+
+	q_result= q_result.fail (err)->
 		log.error err
 		log.error 'SERVER FAILED TO INITIALIZE. EXITING NOW!'
 		process.exit(1)
