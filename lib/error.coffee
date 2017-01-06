@@ -114,3 +114,15 @@ MongoDbError= (message)->
 
 util.inherits MongoDbError, restify.RestError
 exports.MongoDbError= MongoDbError
+
+TooManyConnectionsError= (message)->
+	restify.RestError.call this,
+		statusCode: 426
+		restCode: 'TooManyConnectionsError'
+		message: message
+		body: {error: 'too_many_connections_error', message}
+		constructorOpt: TooManyConnectionsError
+	this.name= 'Too Many ConnectionsError Error'
+
+util.inherits TooManyConnectionsError, restify.RestError
+exports.TooManyConnectionsError= TooManyConnectionsError
