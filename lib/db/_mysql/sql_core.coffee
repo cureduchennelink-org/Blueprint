@@ -24,12 +24,12 @@ class SqlCore
 			_log2.debug 'DB:SqlCore:destroy:', 'destroying conn'
 			conn.destroy
 
-		@sqlQuery= (ctx, sql, args)->
+		@sqlQuery= (ctx, sql, args)=>
 			ctx.log.debug 'DB:SqlCore:sqlQuery:', sql if @is_db_log_on
 			ctx.log.debug 'DB:SqlCore:args:', args if args and @is_db_log_on
 			throw new E.DbError 'DB:SQL:BAD_CONN' if ctx.conn is null
 			(Q.ninvoke ctx.conn, 'query', sql, args)
-			.then (rows_n_cols) ->
+			.then (rows_n_cols) =>
 				ctx.log.debug 'DB:SqlCore:result:', rows_n_cols[0] if @is_db_log_on
 				rows_n_cols[0]
 
