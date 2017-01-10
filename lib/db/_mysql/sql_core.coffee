@@ -66,7 +66,7 @@ class SqlCore
 		sqlQuery= @sqlQuery
 
 		if schema.GetByKey
-			sql_mod.GetByKey= (ctx, key, ids)->
+			sql_mod.GetByKey= (ctx, key, ids, lock)->
 				f= "DB:#{name}:GetByKey:"
 				ctx.log.debug f, key if @is_db_log_on
 
@@ -74,8 +74,9 @@ class SqlCore
 				.then =>
 
 					throw new E.DbError "DB:CORE:SCHEMA_UNDEFINED:GetByKey_#{key}" unless schema.GetByKey[key]
-					sql= 'SELECT '+ (schema.GetByKey[key].join ',')+ ' FROM '+ table+
+					sql= 'SELECT '+ (schema.GetByKey[key].join ',')+ ' FROM '+ table +
 						' WHERE di= 0 AND '+ key+ ' IN (?)'
+					sql += ' FOR UPDATE' if lock
 					sqlQuery ctx, sql, [ ids]
 				.then (db_rows)->
 					db_rows
