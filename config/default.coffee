@@ -11,6 +11,8 @@ module.exports=
 		static_file_server:
 			directory: './html_root'
 			default: 'index.html'
+	lamd:
+		connect_url: 'mongodb://localhost/lamd?w=0&journal=false'
 	route_modules:
 		Auth:			enable: true,  	name: 'Auth',				class: 'AuthRoute', 	file: 'node_modules/blueprint/routes/r_auth'
 		Poll:			enable:	true,  	name: 'Poll', 				class: 'LongPoll', 		file: 'node_modules/blueprint/routes/r_poll'
@@ -30,6 +32,7 @@ module.exports=
 		pollMgr:		enable: true, name: 'pollMgr',		class: 'PollManager', 	file: 'node_modules/blueprint/lib/poll_manager'
 		ses:			enable: true, name: 'ses',			class: 'SES', 			file: 'node_modules/blueprint/lib/ses'
 		tripMgr:		enable: true, name: 'tripMgr',		class: 'TripManager', 	file: 'node_modules/blueprint/lib/trip_manager'
+		lamd:			enable: false,name: 'lamd',			class:  'Lamd',			file: 'node_modules/blueprint//lib/lamd'
 	restify:
 		handlers: [ 'CORS','queryParser','bodyParser','requestLogger','authorizationParser' ]
 	route_prefix:

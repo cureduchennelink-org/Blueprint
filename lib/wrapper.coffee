@@ -9,6 +9,8 @@ _log= false
 odb= false
 sdb= false
 config= false
+request_count = 0
+request_count_high= 0
 
 class Wrapper
 	constructor: (kit) ->
@@ -20,7 +22,19 @@ class Wrapper
 		@router= 	kit.services.router
 		@wraps= {}
 
-	add_wrap: (mod, wrap)=> # TOOD: See where this is used
+	server_init: (kit) ->
+		@lamd= 	    kit.services.lamd
+
+	start_connection_limit: ->
+		if config.throttling.max_connections and request_count > config.throttling.max_connections
+			throw new E.TooManyConnectionsError("Max:" + config.throttling.max_connections + ", Count:" + request_count)
+		request_count++
+		request_count_high= request_count if request_count_high< request_count
+
+	end_connection_limit: ->
+		request_count-- if request_count
+
+	add_wrap: (mod, wrap)=> # TODO: See where this is used
 		@wraps[mod]= wrap
 
 	add: (mod)=>
@@ -54,7 +68,7 @@ class Wrapper
 		# Call the Route Logic.
 		route_logic req, res, next
 
-	auth: (req, res, next, caller)->
+	auth: (req, res, next, caller)=>
 		f= "Wrapper:auth"
 		throw new E.ServerError 'WRAPPER:AUTH:MYSQL_NOT_ENABLED' unless config.db.mysql.enable
 		route_logic= caller.version[req.params?.Version] ? caller.version.any
@@ -64,9 +78,12 @@ class Wrapper
 		pre_loaded= {}
 		send_result= false
 		supported_grant_type= if p.grant_type in ['password','refresh_token','client_credentials'] then true else false
+		@start_connection_limit()
+		p.request_count= request_count
+		p.request_count_high= request_count_high
 
 		Q.resolve()
-		.then ->
+		.then =>
 
 			# Validate client_id and grant_type
 			throw new E.MissingArg 'client_id' if not p.client_id
@@ -74,28 +91,29 @@ class Wrapper
 
 			# Acquire DB Connection
 			sdb.core.Acquire()
-		.then (c) ->
+		.then (c) =>
 			ctx.conn= c if c isnt false
 
 			# Start a Transaction
 			sdb.core.StartTransaction(ctx)
-		.then () ->
+		.then () =>
 
 			# Call the Auth Logic. Pass in pre_loaded variables
 			route_logic ctx, pre_loaded
-		.then (result_hash) ->
+		.then (result_hash) =>
 			send_result= result_hash.send
 
 			# Commit the transaction
 			sdb.core.sqlQuery ctx, 'COMMIT'
-		.then (db_result) ->
+		.then (db_result) =>
 
 			# Release database conn; Respond to Client
 			sdb.core.release ctx.conn if ctx.conn isnt null
 			res.send send_result
+			@end_connection_limit()
 			next()
 
-		.fail (err) ->
+		.fail (err) =>
 			if err.statusCode not in [ 400, 401, 403 ]
 				req.log.error f, '.fail', err, err.stack
 			else
@@ -112,6 +130,7 @@ class Wrapper
 						req.log.debug f, 'release db conn (successful rollback)'
 						sdb.core.release ctx.conn
 			res.send err
+			@end_connection_limit()
 			next()
 
 	default: (req, res, next, endpoint) =>
@@ -122,64 +141,88 @@ class Wrapper
 			conn: null, p: req.params
 			log: req.log, auth_id: req.auth?.authId
 			files: req.files, req: req, res: res
+			lamd:
+				start: (new Date().getTime()), route: endpoint.route, verb: endpoint.verb
+				params: req.params, headers: req.headers, req_uuid: req._id, auth_id: 0
 		p= ctx.p
 		pre_loaded= {}
 		result= false
 
 		if endpoint.auth_required or endpoint.permit
-			return next() if not req.auth.authorize()
-			pre_loaded.auth_id= req.auth.authId
+			if config.perf?.test_user_override is true and typeof p.mock_id is "string"
+				pre_loaded.auth_id= Number p.mock_id
+			else
+				return next() if not req.auth.authorize()
+				pre_loaded.auth_id= req.auth.authId
+			ctx.lamd.auth_id= pre_loaded.auth_id
+
+		@start_connection_limit() # Keep this below any logic that might return before end_* is called
+		p.request_count= ctx.lamd.request_count= request_count
+		p.request_count_high= request_count_high
 
 		Q.resolve()
-		.then ->
+		.then =>
+
+			# Acquire Mongo pool flavored Connection
+			return false unless endpoint.mongo_pool
+			throw new E.ServerError 'WRAPPER:DEFAULT:UNKNOWN_MONGO_POOL:'+ endpoint.mongo_pool unless endpoint.mongo_pool of odb.pool
+			ctx.pool= odb.pool[ endpoint.mongo_pool]
+		.then =>
 
 			# Acquire DB Connection
 			return false unless endpoint.sql_conn
 			throw new E.ServerError 'WRAPPER:DEFAULT:MYSQL_NOT_ENABLED' unless config.db.mysql.enable
 			sdb.core.Acquire()
-		.then (c) ->
+		.then (c) =>
 			ctx.conn= c if c isnt false
 
 			# Start a Transaction
 			return false unless endpoint.sql_tx
 			throw new E.ServerError 'WRAPPER:DEFAULT:MYSQL_NOT_ENABLED' unless config.db.mysql.enable
 			sdb.core.StartTransaction(ctx)
-		.then () ->
+		.then () =>
 
 			# Loop through the endpoint's pre_load functions
 			q_result = Q.resolve true
 			for nm,func of endpoint.pre_load
-				do (nm,func) ->
-					q_result= q_result.then () ->
+				do (nm,func) =>
+					q_result= q_result.then () =>
 						func ctx, pre_loaded
-					.then (pre_load_result) ->
+					.then (pre_load_result) =>
 						_log.debug f, "got #{nm}:", pre_load_result
 						pre_loaded[nm]= pre_load_result
 			q_result
-		.then ->
+		.then =>
 
 			# Call the Route Logic. Pass in pre_loaded variables
 			route_logic ctx, pre_loaded
-		.then (result_hash) ->
+		.then (result_hash) =>
 			result= result_hash
 
 			# Commit the transaction
 			return false unless endpoint.sql_conn
 			sdb.core.sqlQuery ctx, 'COMMIT'
-		.then (db_result) ->
+		.then (db_result) =>
 
 			# Release database conn; Respond to Client
+			delete ctx.pool
 			sdb.core.release ctx.conn if ctx.conn isnt null
 			res.send result.send
+			ctx.lamd.statusCode= res.statusCode
+			end = (new Date().getTime())
+			ctx.lamd.duration = end - ctx.lamd.start
+			@lamd.write ctx.lamd
+			@end_connection_limit()
 			next()
 
-		.fail (err) ->
+		.fail (err) =>
+			delete ctx.pool
 			if err.statusCode not in [ 400, 403 ]
 				req.log.error f, '.fail', err, err.stack
 			else
 				req.log.debug f, '.fail', err
 			if ctx.conn isnt null
-				ctx.conn.query 'ROLLBACK', (err)->
+				ctx.conn.query 'ROLLBACK', (err)=>
 					if err
 						req.log.warn f, 'destroy db conn (failed rollback)'
 						sdb.core.destroy ctx.conn
@@ -188,6 +231,12 @@ class Wrapper
 						req.log.debug f, 'release db conn (successful rollback)'
 						sdb.core.release ctx.conn
 			res.send err
+			ctx.lamd.statusCode= res.statusCode
+			end = (new Date().getTime())
+			ctx.lamd.duration = end - ctx.lamd.start
+			ctx.lamd.err= err
+			@lamd.write ctx.lamd
+			@end_connection_limit()
 			next()
 
 exports.Wrapper= Wrapper

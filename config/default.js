@@ -11,6 +11,9 @@
         "default": 'index.html'
       }
     },
+    lamd: {
+      connect_url: 'mongodb://localhost/lamd?w=0&journal=false'
+    },
     route_modules: {
       Auth: {
         enable: true,
@@ -121,6 +124,12 @@
         name: 'tripMgr',
         "class": 'TripManager',
         file: 'node_modules/blueprint/lib/trip_manager'
+      },
+      lamd: {
+        enable: false,
+        name: 'lamd',
+        "class": 'Lamd',
+        file: 'node_modules/blueprint//lib/lamd'
       }
     },
     restify: {

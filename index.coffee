@@ -17,17 +17,17 @@ exports.start= ()->
 	{Kit}=		require  './lib/kit'
 	config= 	(require './config')()
 	{Logger}=	require  './lib/logger'
-	Error= 		require  './lib/error'
+	ErrorMore= 	require  './lib/error'
 
 	# Initialize kit and set up with core services (config, logger, error)
 	kit= new Kit
 	kit.add_service 'config', 		config					# Config Object
 	kit.new_service 'logger', 		Logger					# Bunyan Logger
-	kit.add_service 'error', 		Error					# Error Objects
+	kit.add_service 'error', 		ErrorMore				# Error Objects
 
 	log= 	kit.services.logger.log
-	server= restify.createServer log: log 	# Create Server
-	kit.add_service 'server', server 		# Add server to kit
+	server= restify.createServer _.merge {log}, config.createServer 	# Create Server
+	kit.add_service 'server', server 									# Add server to kit
 
 	# Services
 	for nm, mod of kit.services.config.service_modules when mod.enable is true
@@ -103,6 +103,7 @@ exports.start= ()->
 
 	q_result= q_result.then ->
 		log.debug 'SERVER NORMAL START'
+		server # JCS: Return the server object, so caller (main app using DVblueprint) can do more: add Restify sniffing, etc.
 
 	q_result= q_result.fail (err)->
 		log.error err
