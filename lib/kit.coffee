@@ -13,26 +13,18 @@ class Kit
 		@services[name]= obj
 
 	new_service: (name, constructor, args)->
+		console.log {constructor}
 		_t= @
-		Obj= ->
-			c_args=[_t]
-			c_args.push arg for arg in args ? []
-			constructor.apply this, c_args
-
-		Obj.prototype= constructor.prototype
-		@services[name]= new Obj
+		_a= args ? []
+		@services[name]= new constructor _t, _a...
 
 	add_route_service: (name, obj)->
 		@routes[name]= obj
 
 	new_route_service: (name, constructor, args)->
+		console.log {constructor}
 		_t= @
-		Obj= ->
-			c_args=[_t]
-			c_args.push arg for arg in args ? []
-			constructor.apply this, c_args
-
-		Obj.prototype= constructor.prototype
-		@routes[name]= new Obj
+		_a= args ? []
+		@routes[name]= new constructor _t, _a...
 
 exports.Kit= Kit
