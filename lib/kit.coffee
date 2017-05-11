@@ -13,7 +13,6 @@ class Kit
 		@services[name]= obj
 
 	new_service: (name, constructor, args)->
-		console.log {constructor}
 		_t= @
 		_a= args ? []
 		@services[name]= new constructor _t, _a...
@@ -22,7 +21,6 @@ class Kit
 		@routes[name]= obj
 
 	new_route_service: (name, constructor, args)->
-		console.log {constructor}
 		_t= @
 		_a= args ? []
 		@routes[name]= new constructor _t, _a...
