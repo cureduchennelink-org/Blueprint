@@ -1,6 +1,8 @@
 #
 #	Default Config File
 #
+vp_email= 'node_modules/blueprint/views/email'
+vp_use= 'node_modules/blueprint/views/use'
 
 module.exports=
 	api:
@@ -16,25 +18,25 @@ module.exports=
 	lamd:
 		connect_url: 'mongodb://localhost/lamd?w=0&journal=false'
 	route_modules:
-		Auth:			enable: true,  	name: 'Auth',				class: 'AuthRoute', 	file: 'node_modules/blueprint/routes/r_auth'
-		Poll:			enable:	true,  	name: 'Poll', 				class: 'LongPoll', 		file: 'node_modules/blueprint/routes/r_poll'
-		Registration:	enable: true, 	name: 'Registration', 		class: 'Registration', 	file: 'node_modules/blueprint/routes/r_registration'
-		User:			enable: true, 	name: 'User', 				class: 'User', 			file: 'node_modules/blueprint/routes/r_user'
+		Auth:			class: 'AuthRoute', 	file: 'node_modules/blueprint/routes/r_auth'
+		Poll:			class: 'LongPoll', 		file: 'node_modules/blueprint/routes/r_poll'
+		Registration:	class: 'Registration', 	file: 'node_modules/blueprint/routes/r_registration'
+		User:			class: 'User', 			file: 'node_modules/blueprint/routes/r_user'
 	service_modules:
-		template:		enable: true, name: 'template',		class: 'EpicTemplate', 	file: 'node_modules/blueprint/lib/EpicTemplate', instConfig: view_path: 'node_modules/blueprint/views/email'
-		template_use:	enable: true, name: 'template_use',	class: 'EpicTemplate', 	file: 'node_modules/blueprint/lib/EpicTemplate', instConfig: view_path: 'node_modules/blueprint/views/use'
-		tokenMgr:		enable: true, name: 'tokenMgr',		class: 'TokenMgr', 		file: 'node_modules/blueprint/lib/token_manager'
-		db:				enable: true, name: 'db',			class: 'Db', 			file: 'node_modules/blueprint/lib/db'
-		util:			enable: true, name: 'util',			class: 'Util', 			file: 'node_modules/blueprint/lib/util'
-		auth:			enable: true, name: 'auth',			class: 'Auth', 			file: 'node_modules/blueprint/lib/auth'
-		router:			enable: true, name: 'router',		class: 'Router', 		file: 'node_modules/blueprint/lib/router'
-		wrapper:		enable: true, name: 'wrapper',		class: 'Wrapper', 		file: 'node_modules/blueprint/lib/wrapper'
-		prototype:		enable: true, name: 'prototype',	class: 'Prototype', 	file: 'node_modules/blueprint/lib/prototype'
-		push:			enable: true, name: 'push',			class: 'Push', 			file: 'node_modules/blueprint/lib/push'
-		pollMgr:		enable: true, name: 'pollMgr',		class: 'PollManager', 	file: 'node_modules/blueprint/lib/poll_manager'
-		ses:			enable: true, name: 'ses',			class: 'SES', 			file: 'node_modules/blueprint/lib/ses'
-		tripMgr:		enable: true, name: 'tripMgr',		class: 'TripManager', 	file: 'node_modules/blueprint/lib/trip_manager'
-		lamd:			enable: false,name: 'lamd',			class:  'Lamd',			file: 'node_modules/blueprint//lib/lamd'
+		template:		class: 'EpicTemplate', 	file: 'node_modules/blueprint/lib/EpicTemplate', instConfig: view_path: vp_email
+		template_use:	class: 'EpicTemplate', 	file: 'node_modules/blueprint/lib/EpicTemplate', instConfig: view_path: vp_use
+		tokenMgr:		class: 'TokenMgr', 		file: 'node_modules/blueprint/lib/token_manager'
+		db:				class: 'Db', 			file: 'node_modules/blueprint/lib/db'
+		util:			class: 'Util', 			file: 'node_modules/blueprint/lib/util'
+		auth:			class: 'Auth', 			file: 'node_modules/blueprint/lib/auth'
+		router:			class: 'Router', 		file: 'node_modules/blueprint/lib/router'
+		wrapper:		class: 'Wrapper', 		file: 'node_modules/blueprint/lib/wrapper'
+		prototype:		class: 'Prototype', 	file: 'node_modules/blueprint/lib/prototype'
+		push:			class: 'Push', 			file: 'node_modules/blueprint/lib/push'
+		pollMgr:		class: 'PollManager', 	file: 'node_modules/blueprint/lib/poll_manager'
+		ses:			class: 'SES', 			file: 'node_modules/blueprint/lib/ses'
+		tripMgr:		class: 'TripManager', 	file: 'node_modules/blueprint/lib/trip_manager'
+		lamd:			class:  'Lamd',			file: 'node_modules/blueprint//lib/lamd'
 	restify:
 		handlers: [ 'CORS','queryParser','bodyParser','requestLogger','authorizationParser' ]
 	route_prefix:
@@ -56,7 +58,6 @@ module.exports=
 		basic: api_keys: {}
 	db:
 		mysql:
-			enable: true
 			pool:
 				host: 'localhost'
 				port: 8889
@@ -70,18 +71,17 @@ module.exports=
 				connectionLimit: 10
 				level2_debug: false
 			modules:
-				auth:				enable: true,	class: 'SqlAuth', 			file: 'node_modules/blueprint/lib/db/_mysql/sql_auth'
-				user:				enable: true,	class: 'SqlUser', 			file: 'node_modules/blueprint/lib/db/_mysql/sql_user'
-				token:				enable: true,	class: 'SqlToken', 			file: 'node_modules/blueprint/lib/db/_mysql/sql_token'
-				trip:				enable: true,	class: 'SqlTrip', 			file: 'node_modules/blueprint/lib/db/_mysql/sql_trip'
-				pset:				enable: true,	class: 'SqlPSet', 			file: 'node_modules/blueprint/lib/db/_mysql/sql_pset'
-				pset_item:			enable: true,	class: 'SqlPSetItem', 		file: 'node_modules/blueprint/lib/db/_mysql/sql_pset'
-				pset_item_change:	enable: true,	class: 'SqlPSetItemChange', file: 'node_modules/blueprint/lib/db/_mysql/sql_pset'
+				auth:				class: 'SqlAuth', 			file: 'node_modules/blueprint/lib/db/_mysql/sql_auth'
+				user:				class: 'SqlUser', 			file: 'node_modules/blueprint/lib/db/_mysql/sql_user'
+				token:				class: 'SqlToken', 			file: 'node_modules/blueprint/lib/db/_mysql/sql_token'
+				trip:				class: 'SqlTrip', 			file: 'node_modules/blueprint/lib/db/_mysql/sql_trip'
+				pset:				class: 'SqlPSet', 			file: 'node_modules/blueprint/lib/db/_mysql/sql_pset'
+				pset_item:			class: 'SqlPSetItem', 		file: 'node_modules/blueprint/lib/db/_mysql/sql_pset'
+				pset_item_change:	class: 'SqlPSetItemChange', file: 'node_modules/blueprint/lib/db/_mysql/sql_pset'
 		mongo:
-			enable: false
 			options: 'mongodb://localhost/mydb'
 			models:
-				Workout: enable: true, file: 'node_modules/blueprint/lib/db/_mongo/models/workout'
+				Workout: file: 'node_modules/blueprint/lib/db/_mongo/models/workout'
 	push_service:
 		poll_interval: 5000
 		poll_limit: 30 # How many changes to process at once

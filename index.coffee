@@ -1,13 +1,12 @@
 #
-#	Server Initialization
+#	DVblueprint Initialization
 #
 
-exports.start= ()->
+exports.start= (include_server, routes_enabled, services_enabled, mysql_enabled, mysql_mods_enabled, mongo_enabled)->
+	server= false # For unit tests, may not include the restify server logic
 	# Require Node Modules
 	M= 			require 'moment'
 	Q= 			require 'q'
-	restify= 	require 'restify'
-	_= 			require 'lodash'
 	path= 		require 'path'
 
 	# Set default format for moment
@@ -24,47 +23,42 @@ exports.start= ()->
 	kit.add_service 'config', 		config					# Config Object
 	kit.new_service 'logger', 		Logger					# Bunyan Logger
 	kit.add_service 'error', 		ErrorMore				# Error Objects
-
 	log= 	kit.services.logger.log
-	server= restify.createServer _.merge {log}, config.createServer 	# Create Server
-	kit.add_service 'server', server 									# Add server to kit
+
+	# Pass inbound module enabled preferences through, for db layer's use
+	config.db.mysql.enable= mysql_enabled if mysql_enabled
+	config.db.mysql.mods_enabled= mysql_mods_enabled
+	config.db.mongo.enable= mongo_enabled if mongo_enabled
+
+	if include_server
+		server= require './lib/server'
+		server.create()
+		kit.add_service 'server', server					# Add server-service to kit
 
 	# Services
-	for nm, mod of kit.services.config.service_modules when mod.enable is true
+	for nm in services_enabled
+		mod= kit.services.config.service_modules[ nm]
+		mod.name= nm
 		log.info "Initializing #{mod.class} Service..."
 		opts= if mod.instConfig then [mod.instConfig] else null
 		servicePath= path.join config.processDir, mod.file
 		kit.new_service mod.name, (require servicePath)[mod.class], opts
 
-	# Restify Hanlders
-	for handler in config.restify.handlers
-		log.info "(restify handler) Server.use #{handler}", config.restify[ handler]
-		server.use restify[handler] config.restify[ handler]
+	server.add_restify_handlers() if server
 	# Handle all OPTIONS requests to a deadend (Allows CORS to work them out)
-	log.info "(restify) Server.opts", config.restify.allow_headers
-	server.opts /.*/, ( req, res ) =>
-		res.setHeader 'access-control-allow-headers', (config.restify.allow_headers ? []).join ', '
-		res.send 204
+	server.handle_options() if server
 
 	# Service Handlers
 	for nm, service of kit.services when typeof service.server_use is 'function'
-		server.use service.server_use
+		server.server.use service.server_use
 
-	# Parse JSON param
-	server.use (req, res, next)->
-		if "JSON" of req.params
-			_.merge req.params, JSON.parse req.params.JSON
-		next()
-
-	# Strip all <> from params
-	server.use (req, res, next)->
-		for param of req.params
-			if req.params[param] isnt null and _.isString(req.params[param])
-				req.params[param]= req.params[param].replace /[<>]/g, ""
-		next()
+	server.parse_json() if server
+	server.strip_html() if server
 
 	# Routes
-	for nm,mod of kit.services.config.route_modules when mod.enable is true
+	for nm in routes_enabled
+		mod= kit.services.config.route_modules[ nm]
+		mod.name= nm
 		log.info "Initializing #{mod.class} Routes..."
 		routePath= path.join config.processDir, mod.file
 		kit.new_route_service mod.name, (require routePath)[mod.class]
@@ -90,11 +84,10 @@ exports.start= ()->
 	# Start the Server
 	q_result= q_result.then ->
 		# Static File Server (Must be last Route Created)
-		server.get /.*/, restify.serveStatic config.api.static_file_server
-		# Listen
+		server.add_static_server()
 		defer= Q.defer()
 		try
-			server.listen config.api.port, ()->
+			server.start ->
 				log.info 'Server listening at', server.url
 				defer.resolve null
 		catch err
