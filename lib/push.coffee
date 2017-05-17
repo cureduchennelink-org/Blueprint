@@ -10,7 +10,7 @@ sdb= false
 _log= false
 
 class Push
-	constructor: (@kit)->
+	constructor: (kit)->
 		sdb=		kit.services.db.mysql
 		_log=		kit.services.logger.log
 		@config= 	kit.services.config.push_service
