@@ -2,7 +2,7 @@
 #	DVblueprint Initialization
 #
 
-exports.start= (include_server, routes_enabled, services_enabled, mysql_enabled, mysql_mods_enabled, mongo_enabled)->
+exports.start= (include_server, services_enabled, routes_enabled, mysql_enabled, mysql_mods_enabled, mongo_enabled)->
 	server= false # For unit tests, may not include the restify server logic
 	# Require Node Modules
 	M= 			require 'moment'
@@ -31,13 +31,15 @@ exports.start= (include_server, routes_enabled, services_enabled, mysql_enabled,
 	config.db.mongo.enable= mongo_enabled if mongo_enabled
 
 	if include_server
-		server= require './lib/server'
+		{Server}= require './lib/server'
+		server= new Server kit
 		server.create()
 		kit.add_service 'server', server					# Add server-service to kit
 
 	# Services
 	for nm in services_enabled
 		mod= kit.services.config.service_modules[ nm]
+		throw new Error "No such service-module: #{nm}" unless mod
 		mod.name= nm
 		log.info "Initializing #{mod.class} Service..."
 		opts= if mod.instConfig then [mod.instConfig] else null
@@ -49,8 +51,10 @@ exports.start= (include_server, routes_enabled, services_enabled, mysql_enabled,
 	server.handle_options() if server
 
 	# Service Handlers
-	for nm, service of kit.services when typeof service.server_use is 'function'
-		server.server.use service.server_use
+	if server
+		for nm, service of kit.services when typeof service.server_use is 'function'
+			log.info "Calling server.use for service: "+ nm
+			server.server.use service.server_use
 
 	server.parse_json() if server
 	server.strip_html() if server
@@ -58,6 +62,7 @@ exports.start= (include_server, routes_enabled, services_enabled, mysql_enabled,
 	# Routes
 	for nm in routes_enabled
 		mod= kit.services.config.route_modules[ nm]
+		throw new Error "No such route-module: #{nm}" unless mod
 		mod.name= nm
 		log.info "Initializing #{mod.class} Routes..."
 		routePath= path.join config.processDir, mod.file
@@ -82,21 +87,22 @@ exports.start= (include_server, routes_enabled, services_enabled, mysql_enabled,
 		do(service)-> q_result= q_result.then -> service.server_start(kit)
 
 	# Start the Server
-	q_result= q_result.then ->
-		# Static File Server (Must be last Route Created)
-		server.add_static_server()
-		defer= Q.defer()
-		try
-			server.start ->
-				log.info 'Server listening at', server.url
-				defer.resolve null
-		catch err
-			defer.reject err
-		return defer.promise
+	if server
+		q_result= q_result.then ->
+			# Static File Server (Must be last Route Created)
+			server.add_static_server()
+			defer= Q.defer()
+			try
+				server.start ->
+					log.info 'Server listening at', server.url
+					defer.resolve null
+			catch err
+				defer.reject err
+			return defer.promise
 
 	q_result= q_result.then ->
 		log.debug 'SERVER NORMAL START'
-		server # JCS: Return the server object, so caller (main app using DVblueprint) can do more: add Restify sniffing, etc.
+		kit # JCS: Return the kit so caller can get to servies (e.g. kit.services.server)
 
 	q_result= q_result.fail (err)->
 		log.error err

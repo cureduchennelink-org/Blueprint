@@ -23,26 +23,26 @@ class Server
 
 	add_restify_handlers: ->
 		for handler in @config.restify.handlers
-			log.info "(restify handler) Server.use #{handler}", @config.restify[ handler]
-			server.use restify[handler] @config.restify[ handler]
+			@log.info "(restify handler) Server.use #{handler}", @config.restify[ handler]
+			@server.use restify[handler] @config.restify[ handler]
 
 	handle_options: ->
 		# Handle all OPTIONS requests to a deadend (Allows CORS to work them out)
-		log.info "(restify) Server.opts", @config.restify.allow_headers
-		server.opts /.*/, ( req, res ) =>
+		@log.info "(restify) Server.opts", @config.restify.allow_headers
+		@server.opts /.*/, ( req, res ) =>
 			res.setHeader 'access-control-allow-headers', (@config.restify.allow_headers ? []).join ', '
 			res.send 204
 
 	parse_json: ->
 		# Parse JSON param
-		server.use (req, res, next)->
+		@server.use (req, res, next)->
 			if "JSON" of req.params
 				_.merge req.params, JSON.parse req.params.JSON
 			next()
 
 	strip_html: ->
 		# Strip all <> from params
-		server.use (req, res, next)->
+		@server.use (req, res, next)->
 			for param of req.params
 				if req.params[param] isnt null and _.isString(req.params[param])
 					req.params[param]= req.params[param].replace /[<>]/g, ""
@@ -50,12 +50,12 @@ class Server
 
 	add_static_server: ->
 		# Static File Server (Must be last Route Created)
-		server.get /.*/, restify.serveStatic @config.api.static_file_server
+		@server.get /.*/, restify.serveStatic @config.api.static_file_server
 
 	start: (cb)->
 		# Start the Server
 		# Listen
-		server.listen @config.api.port, cb
+		@server.listen @config.api.port, cb
 
 	get: -> @server
 

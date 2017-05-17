@@ -19,7 +19,10 @@ class Db
 
 			# Set up all enabled mysql modules
 			@mysql= core: new SqlCore config.db.mysql.pool, log
-			for nm,mod of config.db.mysql.modules when mod.enable
+			for nm in config.db.mysql.mods_enabled
+				mod= config.db.mysql.modules[ nm]
+				throw new Error 'UNKNOW MYSQL MODULE:'+nm unless mod
+				mod.name= nm
 				modPath= path.join config.processDir, mod.file
 				@mysql[nm]= new (require modPath)[mod.class] @mysql.core, kit
 

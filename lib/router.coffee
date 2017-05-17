@@ -23,7 +23,7 @@ class Router
 		@log= 		kit.services.logger.log
 		@pfx= 		kit.services.config.route_prefix.api
 		@template= 	kit.services.template_use
-		@server= 	kit.services.server
+		@server= 	kit.services.server.server
 		@usage= []
 		@usage_by_mod= {}
 
@@ -52,7 +52,7 @@ class Router
 
 	server_init: ()=>
 		f= 'Router:server_init'
-		@server.get @pfx, (q,r,n)=>
+		@server['get'] @pfx, (q,r,n)=>
 			if q.params.format is 'json'
 				r.send @usage
 			else
