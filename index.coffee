@@ -2,12 +2,13 @@
 #	DVblueprint Initialization
 #
 
-exports.start= (include_server, services_enabled, routes_enabled, mysql_enabled, mysql_mods_enabled, mongo_enabled)->
+exports.start= (include_server, services_enabled, routes_enabled, mysql_enabled, mysql_mods_enabled, mongo_enabled, more_config= {})->
 	server= false # For unit tests, may not include the restify server logic
 	# Require Node Modules
 	M= 			require 'moment'
 	Q= 			require 'q'
 	path= 		require 'path'
+	_= 			require 'lodash'
 
 	# Set default format for moment
 	M.defaultFormat= 'YYYY-MM-DD HH:mm:ss'
@@ -15,6 +16,7 @@ exports.start= (include_server, services_enabled, routes_enabled, mysql_enabled,
 	# Library Modules and Services
 	{Kit}=		require  './lib/kit'
 	config= 	(require './config')()
+	config= _.merge config, more_config # To allow e.g. test harness to inject a few config settings
 	{Logger}=	require  './lib/logger'
 	ErrorMore= 	require  './lib/error'
 
