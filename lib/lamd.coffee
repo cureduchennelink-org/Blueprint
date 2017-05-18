@@ -32,7 +32,7 @@ class Lamd
 	# Runs after all services are constructed, before routes added, also before server starts listening
 	server_init_promise: (kit, promise_chain)=> # Return the promise_chain
 		f= 'Lamd:server_init:'
-		server= kit.services.server
+		server= kit.services.server.server
 
 		# Load and attach mongo-client to server with one connection for writing requests
 		promise_chain= promise_chain.then => MongoClient.connect @config.connect_url #, @config.options ? {}

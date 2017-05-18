@@ -104,7 +104,7 @@ exports.start= (include_server, services_enabled, routes_enabled, mysql_enabled,
 
 	q_result= q_result.then ->
 		log.debug 'SERVER NORMAL START'
-		kit # JCS: Return the kit so caller can get to servies (e.g. kit.services.server)
+		kit # JCS: Return the kit so caller can get to servies (e.g. kit.services.server.server)
 
 	q_result= q_result.fail (err)->
 		log.error err
