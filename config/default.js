@@ -60,6 +60,10 @@
         "class": 'TokenMgr',
         file: 'node_modules/blueprint/lib/token_manager'
       },
+      event: {
+        "class": 'Event',
+        file: 'node_modules/blueprint/lib/event'
+      },
       db: {
         "class": 'Db',
         file: 'node_modules/blueprint/lib/db'

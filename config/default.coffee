@@ -26,6 +26,7 @@ module.exports=
 		template:		class: 'EpicTemplate', 	file: 'node_modules/blueprint/lib/EpicTemplate', instConfig: view_path: vp_email
 		template_use:	class: 'EpicTemplate', 	file: 'node_modules/blueprint/lib/EpicTemplate', instConfig: view_path: vp_use
 		tokenMgr:		class: 'TokenMgr', 		file: 'node_modules/blueprint/lib/token_manager'
+		event:			class: 'Event',			file: 'node_modules/blueprint/lib/event'
 		db:				class: 'Db', 			file: 'node_modules/blueprint/lib/db'
 		util:			class: 'Util', 			file: 'node_modules/blueprint/lib/util'
 		auth:			class: 'Auth', 			file: 'node_modules/blueprint/lib/auth'

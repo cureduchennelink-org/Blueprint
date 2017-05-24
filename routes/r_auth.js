@@ -22,6 +22,7 @@
       this._verify_email = bind(this._verify_email, this);
       this._update_email = bind(this._update_email, this);
       this._authenticate = bind(this._authenticate, this);
+      var ref;
       this.log = kit.services.logger.log;
       sdb = kit.services.db.mysql;
       this.ses = kit.services.ses;
@@ -29,6 +30,9 @@
       this.config = kit.services.config;
       this.tripMgr = kit.services.tripMgr;
       this.tokenMgr = kit.services.tokenMgr;
+      this.event = (ref = kit.services.event) != null ? ref : {
+        emit: function() {}
+      };
       this.endpoints = {
         authenticate: {
           verb: 'post',
@@ -230,6 +234,9 @@
           access_token = _this.tokenMgr.encode({
             iid: result.auth_ident_id
           }, exp, _this.config.auth.key);
+          _this.event.emit('r_auth.login', {
+            ident_id: result.auth_ident_id
+          });
           return {
             send: {
               access_token: access_token,

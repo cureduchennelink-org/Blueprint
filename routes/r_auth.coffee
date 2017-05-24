@@ -18,6 +18,7 @@ class AuthRoute
 		@config= 	kit.services.config
 		@tripMgr=	kit.services.tripMgr
 		@tokenMgr= 	kit.services.tokenMgr
+		@event=		kit.services.event ? emit: ->
 
 		# Authentication  Endpoints
 		@endpoints=
@@ -126,6 +127,9 @@ class AuthRoute
 			# Generate Access Token
 			exp= moment().add access_expires_in, 'seconds'
 			access_token= @tokenMgr.encode {iid: result.auth_ident_id}, exp, @config.auth.key
+
+			# Publish event for other modules
+			@event.emit 'r_auth.login', ident_id: result.auth_ident_id
 
 			# Return back to Client
 			send: {access_token, token_type: 'bearer', expires_in: access_expires_in, refresh_token}
