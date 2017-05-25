@@ -96,7 +96,7 @@ exports.start= (include_server, services_enabled, routes_enabled, mysql_enabled,
 			defer= Q.defer()
 			try
 				server.start ->
-					log.info 'Server listening at', server.url
+					log.info 'Server listening at', server.server.url
 					defer.resolve null
 			catch err
 				defer.reject err
