@@ -4,6 +4,7 @@
 
 Q= require 'q'
 E= require '../lib/error'
+_= require 'lodash'
 crypto= require 'crypto'
 moment= require 'moment'
 
@@ -86,9 +87,9 @@ class AuthRoute
 			# Validate Caller Credentials if requesting password
 			return false unless p.grant_type is 'password'
 			@auth.ValidateCredentials ctx, p.username, p.password
-		.then (auth_ident_id)->
+		.then (ident_info)->
 			_log.debug f, 'got auth_ident_id:', auth_ident_id
-			result.auth_ident_id= auth_ident_id if auth_ident_id isnt false
+			result.auth= ident_info if ident_info isnt false
 
 			# Validate Refresh Token if requesting refresh_token
 			return false unless p.grant_type is 'refresh_token'
@@ -97,16 +98,16 @@ class AuthRoute
 			_log.debug f, 'got valid token:', valid_token
 			if valid_token isnt false
 				throw new E.OAuthError 401, 'invalid_grant', 'Refresh token invalid.' if valid_token.length is 0
-				result.auth_ident_id= valid_token[0].ident_id
+				result.auth= valid_token[0]
 
 			# Validate Confidential Client if requesting client_credentials
 			return false unless p.grant_type is 'client_credentials'
 			throw new E.MissingArg 'client_secret' unless p.client_secret
 			@auth.ValidateCredentials ctx, p.client_id, p.client_secret
-		.then (auth_ident_id)=>
+		.then (ident_info)=>
 			_log.debug f, 'got confidential auth_ident_id:', auth_ident_id
-			if auth_ident_id isnt false
-				result.auth_ident_id= auth_ident_id
+			if ident_info isnt false
+				result.auth= ident_info
 				need_refresh= false
 
 			# Generate new refresh token
@@ -118,7 +119,7 @@ class AuthRoute
 			return false unless need_refresh
 			current_token= p.refresh_token if p.grant_type is 'refresh_token'
 			exp= refresh_expires_in
-			nv= { ident_id: result.auth_ident_id, client: p.client_id, token, exp}
+			nv= _.merge {client: p.client_id, token, exp}, result.auth
 			sdb.token.UpdateActiveToken ctx, nv, current_token
 		.then (ident_token)=>
 			if ident_token isnt false
@@ -126,7 +127,11 @@ class AuthRoute
 
 			# Generate Access Token
 			exp= moment().add access_expires_in, 'seconds'
-			access_token= @tokenMgr.encode {iid: result.auth_ident_id}, exp, @config.auth.key
+			i_info= iid: result.auth.id
+			# These additional entries are added if exists
+			i_info.itenant= result.auth.tenant if result.auth.tenant?
+			i_info.irole= result.auth.role if result.auth.role?
+			access_token= @tokenMgr.encode i_info, exp, @config.auth.key
 
 			# Publish event for other modules
 			@event.emit 'r_auth.login', ident_id: result.auth_ident_id

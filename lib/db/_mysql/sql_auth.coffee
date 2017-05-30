@@ -12,7 +12,7 @@ class SqlAuth
 		@cred_col= 'eml'
 		@pwd_col= 'pwd'
 		@schema=
-			auth: ['id', @pwd_col]
+			auth: ['id', 'tenant', 'role', @pwd_col]
 			cred: ['*']
 			Create: [@cred_col,@pwd_col]
 			UpdateById: [@cred_col,@pwd_col]

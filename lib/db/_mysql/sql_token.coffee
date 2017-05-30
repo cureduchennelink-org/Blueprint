@@ -10,14 +10,18 @@ class SqlToken
 		@log= kit.services.logger.log
 		@table= 'ident_tokens'
 		@schema=
-			Create: ['token','ident_id','client','exp']
-			get: ['*']
+			Create: ['token', 'ident_id', 'client', 'exp']
+			get: ['t.*', 'i.tenant', 'i.role']
 			reread: ['*']
 		@core.method_factory @, 'SqlToken'
 
 	GetNonExpiredToken: (ctx, token)->
-		sql= 'SELECT '+ (@schema.get.join ',')+ ' FROM '+ @table+
-			 ' WHERE token = ? AND exp > CURDATE()'
+		# By joining with ident table, we won't keep giving out cached creds for e.g. tenant/role
+		sql= """
+			SELECT #{@schema.get.join ','} FROM #{@table} t
+			JOIN ident i ON i.id= t.ident_id
+			WHERE token = ? AND exp > CURDATE()
+		"""
 		(@core.sqlQuery ctx, sql, [token])
 		.then (db_rows)-> db_rows
 

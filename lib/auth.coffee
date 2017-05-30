@@ -46,6 +46,8 @@ class Auth
 			message: result.error
 			token: result.token
 			authId: if result.token then result.token.iid else null
+			tenant: if result.token then result.token.itenant else null
+			role:   if result.token then result.token.irole else null
 			authorize: (skip_response)=>
 				if not req.auth.authId
 					return false if skip_response
@@ -88,7 +90,7 @@ class Auth
 			@ComparePassword password, creds[@pwd_col]
 		.then (a_match)->
 			throw new E.OAuthError 401, 'invalid_client' if not a_match
-			creds.id
+			id: creds.id, tenant: creds.tenant, role: creds.role # Encodable in auth token
 
 
 	ComparePassword: (password, compareHash)->

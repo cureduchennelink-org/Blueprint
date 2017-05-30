@@ -16,6 +16,10 @@ CREATE TABLE ident (
 	/* Credentials*/
 	,	eml		VARCHAR( 128) UNIQUE DEFAULT NULL /* 'email' */
 	,	pwd		VARCHAR( 128) DEFAULT NULL /* 'password' */
+
+	/* Additional info encoded into access token */
+	,	tenant	VARCHAR( 128) DEFAULT NULL /* tenant reference (optional) */
+	,	role	VARCHAR( 128) DEFAULT NULL /* role string (optional) */
 ) ENGINE= INNODB ;
 
 /* Then insert some recs for testing: */
