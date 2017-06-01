@@ -132,7 +132,7 @@
         defer = Q.defer();
         try {
           server.start(function() {
-            log.info('Server listening at', server.url);
+            log.info('Server listening at', server.server.url);
             return defer.resolve(null);
           });
         } catch (_error) {

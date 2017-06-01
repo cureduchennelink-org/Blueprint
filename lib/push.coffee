@@ -200,7 +200,7 @@ class PushSet
 
 			sdb.pset_item_change.GetMostRecentForItem ctx, @pset.id, item_rec.id
 		.then (db_rows)=>
-			throw new E.ServerError "PUSHSET:GET_HANDLE:NO_LATEST_CHANGE" unless db_rows.length
+			throw new E.ServerError "PUSHSET:GET_HANDLE:NO_LATEST_CHANGE", "#{@pset.id}/#{item_rec.id}/?" unless db_rows.length
 			item_change= db_rows[0]
 
 			"#{@pset.id}/#{item.id}/#{item_change.id}"
