@@ -148,19 +148,20 @@ class Wrapper
 		pre_loaded= {}
 		result= false
 
-		if endpoint.auth_required or endpoint.permit
-			if config.perf?.test_user_override is true and typeof p.mock_id is "string"
-				pre_loaded.auth_id= Number p.mock_id
-			else
-				return next() if not req.auth.authorize()
-				pre_loaded.auth_id= req.auth.authId
-			ctx.lamd.auth_id= pre_loaded.auth_id
-
-		@start_connection_limit() # Keep this below any logic that might return before end_* is called
-		p.request_count= ctx.lamd.request_count= request_count
-		p.request_count_high= request_count_high
-
 		Q.resolve()
+		.then =>
+			if endpoint.auth_required or endpoint.permit
+				if config.perf?.test_user_override is true and typeof p.mock_id is "string"
+					pre_loaded.auth_id= Number p.mock_id
+				else
+					return next() if not req.auth.authorize()
+					pre_loaded.auth_id= req.auth.authId
+				ctx.lamd.auth_id= pre_loaded.auth_id
+
+			@start_connection_limit() # Keep this below any logic that might return before end_* is called
+			p.request_count= ctx.lamd.request_count= request_count
+			p.request_count_high= request_count_high
+
 		.then =>
 
 			# Acquire Mongo pool flavored Connection

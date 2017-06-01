@@ -28,8 +28,7 @@ class Prototype
 			do(mod)=>
 				q_result= q_result.then =>
 					# Initiate the Push Set
-					ctx= conn: null, log: @log
-					push.GetPushSet ctx, clear_pset, "Prototype/#{mod.name}"
+					push.GetPushSet clear_pset, "Prototype/#{mod.name}"
 				.then (pset)=>
 					kit.add_route_service mod.name, new PrototypeModule mod, pset
 					wrapper.add mod.name
@@ -102,7 +101,6 @@ class PrototypeModule
 		use_doc.response[resource]= 'list'
 		return use_doc if ctx is 'use'
 		p= 	  ctx.p
-		conn= ctx.conn
 		_log= ctx.log
 
 		f= "Prototype:S_Create:#{@mod.name}:#{resource}:"
@@ -139,7 +137,6 @@ class PrototypeModule
 		use_doc.response[resource]= 'list'
 		return use_doc if ctx is 'use'
 		p= 	  ctx.p
-		conn= ctx.conn
 		_log= ctx.log
 
 		f= "Prototype:S_Update:#{@mod.name}:#{resource}:"
@@ -191,7 +188,6 @@ class PrototypeModule
 			params: {}, response: success: 'bool'
 		return use_doc if ctx is 'use'
 		p= 	  ctx.p
-		conn= ctx.conn
 		_log= ctx.log
 
 		f= "Prototype:S_Delete:#{@mod.name}:#{resource}:"

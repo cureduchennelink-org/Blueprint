@@ -88,7 +88,7 @@ class AuthRoute
 			return false unless p.grant_type is 'password'
 			@auth.ValidateCredentials ctx, p.username, p.password
 		.then (ident_info)->
-			_log.debug f, 'got auth_ident_id:', auth_ident_id
+			_log.debug f, 'got ident_info:', ident_info
 			result.auth= ident_info if ident_info isnt false
 
 			# Validate Refresh Token if requesting refresh_token
@@ -105,7 +105,7 @@ class AuthRoute
 			throw new E.MissingArg 'client_secret' unless p.client_secret
 			@auth.ValidateCredentials ctx, p.client_id, p.client_secret
 		.then (ident_info)=>
-			_log.debug f, 'got confidential auth_ident_id:', auth_ident_id
+			_log.debug f, 'got confidential ident_info:', ident_info
 			if ident_info isnt false
 				result.auth= ident_info
 				need_refresh= false
@@ -119,7 +119,7 @@ class AuthRoute
 			return false unless need_refresh
 			current_token= p.refresh_token if p.grant_type is 'refresh_token'
 			exp= refresh_expires_in
-			nv= _.merge {client: p.client_id, token, exp}, result.auth
+			nv= {ident_id: result.auth.id, client: p.client_id, token, exp}
 			sdb.token.UpdateActiveToken ctx, nv, current_token
 		.then (ident_token)=>
 			if ident_token isnt false
@@ -134,7 +134,7 @@ class AuthRoute
 			access_token= @tokenMgr.encode i_info, exp, @config.auth.key
 
 			# Publish event for other modules
-			@event.emit 'r_auth.login', ident_id: result.auth_ident_id
+			@event.emit 'r_auth.login', ident_id: result.auth.id
 
 			# Return back to Client
 			send: {access_token, token_type: 'bearer', expires_in: access_expires_in, refresh_token}

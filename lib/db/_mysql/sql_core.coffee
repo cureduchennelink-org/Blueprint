@@ -152,7 +152,7 @@ class SqlCore
 				result= false
 
 				for nm, val of new_values when nm not in schema_cols
-					throw new E.DbError "DB:CORE:BAD_INSERT_COL_#{table}_#{nm}"
+					throw new E.DbError "DB:CORE:BAD_INSERT_COL-#{table}-#{nm}"
 
 				Q.resolve()
 				.then ()=>

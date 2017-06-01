@@ -171,7 +171,7 @@
           return _this.auth.ValidateCredentials(ctx, p.username, p.password);
         };
       })(this)).then(function(ident_info) {
-        _log.debug(f, 'got auth_ident_id:', auth_ident_id);
+        _log.debug(f, 'got ident_info:', ident_info);
         if (ident_info !== false) {
           result.auth = ident_info;
         }
@@ -198,7 +198,7 @@
         };
       })(this)).then((function(_this) {
         return function(ident_info) {
-          _log.debug(f, 'got confidential auth_ident_id:', auth_ident_id);
+          _log.debug(f, 'got confidential ident_info:', ident_info);
           if (ident_info !== false) {
             result.auth = ident_info;
             need_refresh = false;
@@ -218,11 +218,12 @@
             current_token = p.refresh_token;
           }
           exp = refresh_expires_in;
-          nv = _.merge({
+          nv = {
+            ident_id: result.auth.id,
             client: p.client_id,
             token: token,
             exp: exp
-          }, result.auth);
+          };
           return sdb.token.UpdateActiveToken(ctx, nv, current_token);
         };
       })(this)).then((function(_this) {
@@ -243,7 +244,7 @@
           }
           access_token = _this.tokenMgr.encode(i_info, exp, _this.config.auth.key);
           _this.event.emit('r_auth.login', {
-            ident_id: result.auth_ident_id
+            ident_id: result.auth.id
           });
           return {
             send: {

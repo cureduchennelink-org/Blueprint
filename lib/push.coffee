@@ -62,47 +62,32 @@ class Push
 
 	RegisterForChanges: (cb)-> @interested_parties.push cb
 
-	GetPushSet: (ctx, clear_pset, nm)->
+	GetPushSet: (clear_pset, nm)->
 		f= 'Push:GetPushSet:'
-		_log= ctx.log
+		_log= @ctx.log
 		_log.debug f, {clear_pset}, nm
 		pset_id= false
 		pset= @pset_by_name[nm] ? false
 		return pset if pset and not clear_pset
 
 		Q.resolve()
-		.then ->
-
-			# Acquire DB Connection
-			sdb.core.Acquire()
-		.then (c) ->
-			ctx.conn= c if c isnt false
-
-			# Start a Transaction
-			sdb.core.StartTransaction(ctx)
-		.then () ->
+		.then =>
 
 			# Grab the pset, or create one if it doesn't exist
-			sdb.pset.read_or_insert ctx, nm
+			sdb.pset.read_or_insert @ctx, nm
 		.then (pset_rec)=>
 			@pset_by_name[nm]= new PushSet pset_rec, @util
 			pset_id= pset_rec.id
 
 			# if clear_pset is true remove all data related to pset id
 			return false unless clear_pset
-			@S_CleanPushSet ctx, pset_id
-		.then (clean_result)->
+			@S_CleanPushSet @ctx, pset_id
+		.then (clean_result)=>
 			_log.debug f, 'got clean_result:', clean_result
 
-			# Commit the transaction
-			sdb.core.sqlQuery ctx, 'COMMIT'
-		.then (db_result) =>
-
-			# Release DB Connection
-			sdb.core.release ctx.conn
-
-			return @pset_by_name[nm]
 			# return new PushSet rec or existing @pset_by_name[nm]
+			return @pset_by_name[nm]
+
 	Start: ()-> @timer= setTimeout @S_Poll, @interval
 
 	S_Poll: ()=>
@@ -199,6 +184,7 @@ class PushSet
 			throw new E.DbError 'PUSHSET:ITEMCHANGE:UPDATE_COUNT' unless db_result.affectedRows is 1
 
 			null
+
 	GetPushHandle: (ctx, xref)->
 		f= "PushSet:#{@pset.name}:GetPushHandle:"
 		_log= ctx.log
@@ -249,6 +235,7 @@ class PushSet
 
 			# Send back to client
 			@c_items[sxref]
+
 	S_CreateItem: (ctx, xref)->
 		f= "PushSet:#{@pset.name}:S_CreateItem:"
 		_log= ctx.log
