@@ -141,6 +141,7 @@ class Wrapper
 			conn: null, p: req.params
 			log: req.log, auth_id: req.auth?.authId
 			files: req.files, req: req, res: res
+			spec: endpoint
 			lamd:
 				start: (new Date().getTime()), route: endpoint.route, verb: endpoint.verb
 				params: req.params, headers: req.headers, req_uuid: req._id, auth_id: 0
@@ -148,16 +149,18 @@ class Wrapper
 		pre_loaded= {}
 		result= false
 
+		# 'Authorize' calls res.send so don't put this logic inside promise chain where we try to 'send' on error
+		if endpoint.auth_required or endpoint.permit
+			if config.perf?.test_user_override is true and typeof p.mock_id is "string"
+				pre_loaded.auth_id= Number p.mock_id
+			else
+				# Authorize calls res.send so don't put this logic inside promise change where we try to 'send' on error
+				return next() if not req.auth.authorize()
+				pre_loaded.auth_id= req.auth.authId
+			ctx.lamd.auth_id= pre_loaded.auth_id
+
 		Q.resolve()
 		.then =>
-			if endpoint.auth_required or endpoint.permit
-				if config.perf?.test_user_override is true and typeof p.mock_id is "string"
-					pre_loaded.auth_id= Number p.mock_id
-				else
-					return next() if not req.auth.authorize()
-					pre_loaded.auth_id= req.auth.authId
-				ctx.lamd.auth_id= pre_loaded.auth_id
-
 			@start_connection_limit() # Keep this below any logic that might return before end_* is called
 			p.request_count= ctx.lamd.request_count= request_count
 			p.request_count_high= request_count_high
@@ -208,7 +211,7 @@ class Wrapper
 			# Release database conn; Respond to Client
 			delete ctx.pool
 			sdb.core.release ctx.conn if ctx.conn isnt null
-			res.send result.send
+			res.send result.send unless endpoint.is_websock
 			ctx.lamd.statusCode= res.statusCode
 			end = (new Date().getTime())
 			ctx.lamd.duration = end - ctx.lamd.start

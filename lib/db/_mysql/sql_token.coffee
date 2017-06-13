@@ -11,7 +11,7 @@ class SqlToken
 		@table= 'ident_tokens'
 		@schema=
 			Create: ['token', 'ident_id', 'client', 'exp']
-			get: ['t.*', 'i.tenant', 'i.role']
+			get: ['i.id', 'i.tenant', 'i.role']
 			reread: ['*']
 		@core.method_factory @, 'SqlToken'
 

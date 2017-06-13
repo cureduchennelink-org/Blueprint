@@ -20,7 +20,6 @@ class LongPoll
 	constructor: (kit)->
 		_log= 		 	kit.services.logger.log
 		@config= 	 	kit.services.config
-		@event=     	kit.services.event ? emit: ->
 		@push= 		 	kit.services.push
 		@pollMgr= 	 	kit.services.pollMgr
 		@setTimeout= 	kit.services.test?.mock_setTimeout or setTimeout
@@ -54,13 +53,10 @@ class LongPoll
 		req.connection.pause()
 		req.connection.setTimeout @safe_timeout # Allow unlimited http-keepalive requests
 		req.on 'close', => # Clean up request, if unexpected close
-			_log.debug 'REQ-EVENT:CLOSE', id
 			@pollMgr.PollerClosed id
-			@event.emit 'r_poll.end', ident_id: req.auth.authId
 
 		# Hand off request to Poll Manager
 		@pollMgr.AddPoller id, req, res, p.listen, p.state, @long_timeout
-		@event.emit 'r_poll.start', ident_id: req.auth.authId
 
 		# Move on
 		next()

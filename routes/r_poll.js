@@ -12,15 +12,12 @@
   LongPoll = (function() {
     function LongPoll(kit) {
       this.LongPollRequest = bind(this.LongPollRequest, this);
-      var ref, ref1;
+      var ref;
       _log = kit.services.logger.log;
       this.config = kit.services.config;
-      this.event = (ref = kit.services.event) != null ? ref : {
-        emit: function() {}
-      };
       this.push = kit.services.push;
       this.pollMgr = kit.services.pollMgr;
-      this.setTimeout = ((ref1 = kit.services.test) != null ? ref1.mock_setTimeout : void 0) || setTimeout;
+      this.setTimeout = ((ref = kit.services.test) != null ? ref.mock_setTimeout : void 0) || setTimeout;
       this.long_timeout = this.config.api.longPollTimeout;
       this.safe_timeout = this.long_timeout + 5000;
       _log.info('Setting LongPoll Timeout to:', this.long_timeout);
@@ -71,17 +68,10 @@
       req.connection.setTimeout(this.safe_timeout);
       req.on('close', (function(_this) {
         return function() {
-          _log.debug('REQ-EVENT:CLOSE', id);
-          _this.pollMgr.PollerClosed(id);
-          return _this.event.emit('r_poll.end', {
-            ident_id: req.auth.authId
-          });
+          return _this.pollMgr.PollerClosed(id);
         };
       })(this));
       this.pollMgr.AddPoller(id, req, res, p.listen, p.state, this.long_timeout);
-      this.event.emit('r_poll.start', {
-        ident_id: req.auth.authId
-      });
       return next();
     };
 

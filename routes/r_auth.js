@@ -251,7 +251,8 @@
               access_token: access_token,
               token_type: 'bearer',
               expires_in: access_expires_in,
-              refresh_token: refresh_token
+              refresh_token: refresh_token,
+              info: i_info
             }
           };
         };

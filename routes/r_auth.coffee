@@ -137,7 +137,7 @@ class AuthRoute
 			@event.emit 'r_auth.login', ident_id: result.auth.id
 
 			# Return back to Client
-			send: {access_token, token_type: 'bearer', expires_in: access_expires_in, refresh_token}
+			send: {access_token, token_type: 'bearer', expires_in: access_expires_in, refresh_token, info: i_info}
 
 	# POST /Auth/:auid/updateemail
 	_update_email: (ctx, pre_loaded)=>
