@@ -2,7 +2,7 @@
 # Authentication Route Logic
 #
 
-Q= require 'q'
+Promise= require 'bluebird'
 E= require '../lib/error'
 _= require 'lodash'
 crypto= require 'crypto'
@@ -81,8 +81,8 @@ class AuthRoute
 		access_expires_in= @config.auth.accessTokenExpiration
 		result= {}
 
-		Q.resolve()
-		.then =>
+		Promise.resolve().bind @
+		.then ->
 
 			# Validate Caller Credentials if requesting password
 			return false unless p.grant_type is 'password'
@@ -94,7 +94,7 @@ class AuthRoute
 			# Validate Refresh Token if requesting refresh_token
 			return false unless p.grant_type is 'refresh_token'
 			sdb.token.GetNonExpiredToken ctx, p.refresh_token
-		.then (valid_token)=>
+		.then (valid_token)->
 			_log.debug f, 'got valid token:', valid_token
 			if valid_token isnt false
 				throw new E.OAuthError 401, 'invalid_grant', 'Refresh token invalid.' if valid_token.length is 0
@@ -104,7 +104,7 @@ class AuthRoute
 			return false unless p.grant_type is 'client_credentials'
 			throw new E.MissingArg 'client_secret' unless p.client_secret
 			@auth.ValidateCredentials ctx, p.client_id, p.client_secret
-		.then (ident_info)=>
+		.then (ident_info)->
 			_log.debug f, 'got confidential ident_info:', ident_info
 			if ident_info isnt false
 				result.auth= ident_info
@@ -113,7 +113,7 @@ class AuthRoute
 			# Generate new refresh token
 			return false unless need_refresh
 			@tokenMgr.CreateToken 16
-		.then (token)=>
+		.then (token)->
 
 			# Store new token, remove old token
 			return false unless need_refresh
@@ -121,7 +121,7 @@ class AuthRoute
 			exp= refresh_expires_in
 			nv= {ident_id: result.auth.id, client: p.client_id, token, exp}
 			sdb.token.UpdateActiveToken ctx, nv, current_token
-		.then (ident_token)=>
+		.then (ident_token)->
 			if ident_token isnt false
 				refresh_token= ident_token.token
 
@@ -155,18 +155,18 @@ class AuthRoute
 			throw new E.AccessDenied 'AUTH:UPDATE_EMAIL:AUTH_ID' unless (Number p.auid) is pre_loaded.auth_id
 		throw new E.MissingArg 'eml' if not p.eml
 
-		Q.resolve()
-		.then ()=>
+		Promise.resolve().bind @
+		.then ()->
 
 			# Verify email doesn't already exist
 			sdb.auth.GetByCredName ctx, p.eml
-		.then (db_rows)=>
+		.then (db_rows)->
 			_log.debug 'got ident with eml:', db_rows
 			throw new E.AccessDenied 'AUTH:UPDATE_EMAIL:EMAIL_EXISTS' unless db_rows.length is 0
 
 			# Create Trip and store email in json info
 			@tripMgr.planTrip ctx, pre_loaded.auth_id, { eml: p.eml }, null, 'update_email'
-		.then (new_trip)=>
+		.then (new_trip)->
 			_log.debug f, 'got round trip:', new_trip
 			trip= new_trip
 
@@ -190,12 +190,12 @@ class AuthRoute
 		ident= false
 		new_eml= false
 
-		Q.resolve()
-		.then ()=>
+		Promise.resolve().bind @
+		.then ()->
 
 			# Retrieve trip info from Trip Manager
 			@tripMgr.getTripFromToken ctx, p.token
-		.then (trip_info)=>
+		.then (trip_info)->
 			_log.debug f, 'got round trip:', trip_info
 			trip= trip_info
 			bad_token= trip_info.status is 'unknown' or trip_info.status isnt 'valid'
@@ -205,26 +205,26 @@ class AuthRoute
 
 			# Grab existing ident record
 			sdb.auth.GetById ctx, trip.auth_ident_id
-		.then (db_rows)=>
+		.then (db_rows)->
 			_log.debug 'got ident:', db_rows
 			throw new E.NotFoundError 'AUTH:VERIFY_EMAIL:IDENT' if db_rows.length isnt 1
 			ident= db_rows[0]
 
 			# Verify email doesn't already exist
 			sdb.auth.GetByCredName ctx, new_eml
-		.then (db_rows)=>
+		.then (db_rows)->
 			_log.debug 'got ident with new_eml:', db_rows
 			throw new E.AccessDenied 'AUTH:VERIFY_EMAIL:EMAIL_EXISTS' unless db_rows.length is 0
 
 			# Update the ident email
 			sdb.auth.update_by_id ctx, ident.id, eml: new_eml
-		.then (db_result)=>
+		.then (db_result)->
 			_log.debug f, 'got password update result:', db_result
 			throw new E.DbError 'AUTH:VERIFY_EMAIL:AFFECTEDROWS' if db_result.affectedRows isnt 1
 
 			# Return the Trip to the Trip Manager
 			@tripMgr.returnFromTrip ctx, trip.id
-		.then ()=>
+		.then ()->
 
 			# Send 'Email Confirmed' email
 			recipient= eml: new_eml
@@ -251,8 +251,8 @@ class AuthRoute
 			throw new E.AccessDenied 'AUTH:UPDATE_PASSWORD:AUTH_ID' unless (Number p.auid) is pre_loaded.auth_id
 		throw new E.MissingArg 'pwd' if not p.pwd
 
-		Q.resolve()
-		.then ()=>
+		Promise.resolve().bind @
+		.then ()->
 
 			# Encrypt the new password
 			@auth.EncryptPassword p.pwd
@@ -282,19 +282,19 @@ class AuthRoute
 		# Validate params.
 		throw new E.MissingArg 'eml' if not p.eml
 
-		Q.resolve()
-		.then ()=>
+		Promise.resolve().bind @
+		.then ()->
 
 			# Grab Ident Credentials
 			sdb.auth.GetByCredName ctx, p.eml
-		.then (db_rows)=>
+		.then (db_rows)->
 			_log.debug 'got ident:', db_rows
 			throw new E.NotFoundError 'AUTH:FORGOT_PASSWORD:IDENT' if db_rows.length isnt 1
 			ident= db_rows[0]
 
 			# Plan a Round Trip
 			@tripMgr.planTrip ctx, ident.id, {}, null, 'forgot_password'
-		.then (new_trip)=>
+		.then (new_trip)->
 			_log.debug f, 'got round trip:', new_trip
 			trip= new_trip if new_trip isnt false
 
@@ -321,12 +321,12 @@ class AuthRoute
 		# Verify the params
 		throw new E.MissingArg 'pwd' if not p.pwd
 
-		Q.resolve()
-		.then ()=>
+		Promise.resolve().bind @
+		.then ()->
 
 			# Retrieve trip info from Trip Manager
 			@tripMgr.getTripFromToken ctx, p.token
-		.then (trip_info)=>
+		.then (trip_info)->
 			_log.debug f, 'got round trip:', trip_info
 			trip= trip_info
 			bad_token= trip_info.status is 'unknown' or trip_info.status isnt 'valid'
@@ -335,17 +335,17 @@ class AuthRoute
 
 			# Encrypt the new password
 			@auth.EncryptPassword p.pwd
-		.then (pwd_hash)=>
+		.then (pwd_hash)->
 
 			# Update the ident password
 			sdb.auth.update_by_id ctx, trip.auth_ident_id, pwd: pwd_hash
-		.then (db_result)=>
+		.then (db_result)->
 			_log.debug f, 'got password update result:', db_result
 			throw new E.DbError 'AUTH:UPDATE_PASSWORD:AFFECTEDROWS' if db_result.affectedRows isnt 1
 
 			# Return the Trip to the Trip Manager
 			@tripMgr.returnFromTrip ctx, trip.id
-		.then ()=>
+		.then ()->
 
 			# Send back to Client
 			success= true
@@ -364,12 +364,12 @@ class AuthRoute
 		trip= false
 		ident= false
 
-		Q.resolve()
-		.then ()=>
+		Promise.resolve().bind @
+		.then ()->
 
 			# Retrieve trip info from Trip Manager
 			@tripMgr.getTripFromToken ctx, p.token
-		.then (trip_info)=>
+		.then (trip_info)->
 			_log.debug f, 'got round trip:', trip_info
 			trip= trip_info
 			bad_token= trip_info.status is 'unknown' or trip_info.status isnt 'valid'
@@ -377,7 +377,7 @@ class AuthRoute
 
 			# Retrieve Ident Info
 			sdb.auth.GetById ctx, trip.auth_ident_id
-		.then (db_rows)=>
+		.then (db_rows)->
 			_log.debug 'got ident:', db_rows
 			throw new E.NotFoundError 'AUTH:AUTH_TRIP:IDENT' if db_rows.length isnt 1
 			ident= db_rows[0]
@@ -391,11 +391,12 @@ class AuthRoute
 		f= 'Auth:_pl_ident:'
 		ctx.log.debug f, ctx.p
 
-		Q.resolve().then ->
+		Promise.resolve().bind @
+		.then ->
 
 			# Retrieve Ident Info
 			sdb.auth.GetById ctx, ctx.auth_id
-		.then (db_rows)=>
+		.then (db_rows)->
 			ctx.log.debug 'got ident:', db_rows
 			throw new E.NotFoundError 'AUTH:PRELOAD:IDENT' if db_rows.length isnt 1
 			ident= db_rows[0]

@@ -1,17 +1,17 @@
 {
   "name": "blueprint",
-  "version": "0.1.0-140926",
-  "repository":{
-    "type":"git",
-    "url":"https://bitbucket.org/dv-mobile/blueprint"
-    },
+  "version": "1.0.0-x",
+  "repository": {
+    "type": "git",
+    "url": "https://bitbucket.org/dv-mobile/blueprint"
+  },
   "dependencies": {
     "aws-sdk": "^2.0.17",
+    "bluebird": "^3.5.0",
     "bunyan": "^1.1.0",
     "lodash": "^2.4.1",
     "moment": "^2.8.3",
     "mysql": "^2.5.1",
-    "q": "^1.0.1",
     "restify": "^2.8.2"
   },
   "devDependencies": {
