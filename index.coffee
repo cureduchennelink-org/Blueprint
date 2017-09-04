@@ -2,11 +2,12 @@
 #	DVblueprint Initialization
 #
 
+# TODO HAVE A 'init' METHOD TO LOAD FIRST kit, config, logger AND MAYBE error WHICH TAKES PARAMS SO YOU CAN CIRCUMVENT ENV FOR E.G. TEST HARNESS DOING ONE MODULE UNIT TEST
 exports.start= (include_server, services_enabled, routes_enabled, mysql_enabled, mysql_mods_enabled, mongo_enabled, more_config= {}, more_kit= {})->
 	server= false # For unit tests, may not include the restify server logic
 	# Require Node Modules
 	M= 			require 'moment'
-	Q= 			require 'q'
+	Promise=	require 'bluebird'
 	path= 		require 'path'
 	_= 			require 'lodash'
 
@@ -73,7 +74,7 @@ exports.start= (include_server, services_enabled, routes_enabled, mysql_enabled,
 		kit.services.wrapper.add mod.name
 
 	# Run Server Init Functions from Kit Service Modules
-	q_result= Q.resolve()
+	q_result= Promise.resolve().bind @
 	for nm, service of kit.services
 		do(service)->
 			if typeof service.server_init is 'function'
@@ -94,20 +95,19 @@ exports.start= (include_server, services_enabled, routes_enabled, mysql_enabled,
 		q_result= q_result.then ->
 			# Static File Server (Must be last Route Created)
 			server.add_static_server()
-			defer= Q.defer()
-			try
-				server.start ->
-					log.info 'Server listening at', server.server.url
-					defer.resolve null
-			catch err
-				defer.reject err
-			return defer.promise
+			new Promise (resolve, reject)->
+				try
+					server.start ->
+						log.info 'Server listening at', server.server.url
+						resolve null
+				catch err
+					reject err
 
 	q_result= q_result.then ->
 		log.debug 'SERVER NORMAL START'
 		kit # JCS: Return the kit so caller can get to servies (e.g. kit.services.server.server)
 
-	q_result= q_result.fail (err)->
+	q_result= q_result.catch (err)->
 		log.error err
 		log.error 'SERVER FAILED TO INITIALIZE. EXITING NOW!'
 		process.exit(1)

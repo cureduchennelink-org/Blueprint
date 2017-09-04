@@ -1,4 +1,4 @@
-Q= 		require 'q'
+Promise=require 'bluebird'
 _= 		require 'lodash'
 http= 	require 'http'
 mysql= 	require 'mysql'
@@ -26,13 +26,13 @@ class Db
 	End: ()-> @conn.end; @conn= null
 	SqlQuery: (sql, args)=>
 		throw new E.DbError 'DB:SQL:BAD_CONN' if @conn is null
-		(Q.ninvoke @conn, 'query', sql, args)
+		(Promise.fromNode @conn, 'query', sql, args)
 		.then (rows_n_cols) ->
 			rows_n_cols[0]
 
 	# Grabs an entire record by id
 	GetOne: (table, id)->
-		Q.resolve()
+		Promise.resolve().bind @
 		.then ()=>
 
 			sql= 'SELECT * FROM '+ table+ ' WHERE id= ? AND di= 0'
@@ -43,7 +43,7 @@ class Db
 	# Inserts one record in to the database
 	# Returns the full record that was inserted
 	InsertOne: (table, new_values)->
-		Q.resolve()
+		Promise.resolve().bind @
 		.then ()=>
 
 			cols= ['cr']; qs= ['?']; arg= [null]
@@ -60,7 +60,7 @@ class Db
 		throw new Error 'EMPTY_VALS' unless vals
 		vals_type= typeof vals
 
-		Q.resolve()
+		Promise.resolve().bind @
 		.then =>
 
 			args= if vals_type in ['number','string'] then [[vals]] else [vals]

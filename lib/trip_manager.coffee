@@ -2,12 +2,12 @@
 #	Trip Manager
 #
 
-Q= require 'q'
-E= require './error'
+Promise= require 'bluebird'
 
 class TripManager
+	@deps: mysql: ['trip'], services: ['tokenMgr']
 	constructor: (kit) ->
-		@log=		kit.services.logger.log
+		@E=			kit.services.error
 		@sdb= 		kit.services.db.mysql
 		@tokenMgr=	kit.services.tokenMgr
 
@@ -15,12 +15,12 @@ class TripManager
 		f= 'TripManager:getTripFromToken'
 		trip= false
 
-		Q.resolve()
-		.then =>
+		Promise.resolve().bind @
+		.then ->
 
 			# Get the trip associated with this token
 			@sdb.trip.get_by_token ctx, token
-		.then (db_rows) ->
+		.then (db_rows)->
 			return status: 'unknown' if db_rows.length isnt 1
 			trip= db_rows[0]
 
@@ -39,31 +39,30 @@ class TripManager
 
 	planTrip: (ctx, auth_ident_id, json_obj, expires, domain)->
 		f= 'TripManager:planTrip'
-		_log= ctx.log
 		token= false
 		trip= false
 		json= JSON.stringify json_obj
 
-		Q.resolve()
-		.then =>
+		Promise.resolve().bind @
+		.then ->
 
 			# Generate New Token from Token Manager
 			@tokenMgr.CreateToken 10
-		.then (new_token)=>
-			_log.debug f, 'got new token:', new_token
+		.then (new_token)->
+			ctx.log.debug f, 'got new token:', new_token
 			token= new_token
 
 			# Create New Badge
 			# TODO: Create expires Date Object here?
 			@sdb.trip.create ctx, { auth_ident_id, json, expires, domain, token }
-		.then (db_result)=>
-			_log.debug f, 'got new trip result:', db_result
-			throw new E.DbError 'TRIPMANAGER:NEW_TRIP:CREATE' if db_result.affectedRows isnt 1
+		.then (db_result)->
+			ctx.log.debug f, 'got new trip result:', db_result
+			throw new @E.DbError 'TRIPMANAGER:NEW_TRIP:CREATE' if db_result.affectedRows isnt 1
 
 			# Grab the new Trip that was created
 			@sdb.trip.get_by_id ctx, db_result.insertId
-		.then (db_rows) =>
-			throw new E.NotFoundError 'TRIPMANAGER:NEW_TRIP:REREAD' if db_rows.length isnt 1
+		.then (db_rows)->
+			throw new @E.NotFoundError 'TRIPMANAGER:NEW_TRIP:REREAD' if db_rows.length isnt 1
 			trip= db_rows[0]
 
 			# Return new Trip
@@ -71,31 +70,29 @@ class TripManager
 
 	returnFromTrip: (ctx, trip_id, ident_id)->
 		f= 'TripManager:returnFromTrip'
-		_log= ctx.log
 		new_values= returned: new Date()
 
-		Q.resolve()
-		.then =>
+		Promise.resolve().bind @
+		.then ->
 
 			# Update 'returned' timestamp. Update ident_id when supplied
 			new_values.ident_id= ident_id if typeof ident_id is 'number'
 			@sdb.trip.update_by_id ctx, trip_id, new_values
-		.then (db_result)=>
-			_log.debug f, 'got returned trip result:', db_result
-			throw new E.DbError 'TRIPMANAGER:RETURN:UPDATE' if db_result.affectedRows isnt 1
+		.then (db_result)->
+			ctx.log.debug f, 'got returned trip result:', db_result
+			throw new @E.DbError 'TRIPMANAGER:RETURN:UPDATE' if db_result.affectedRows isnt 1
 
 	voidTrip: (ctx, trip_id)->
 		f= 'TripManager:voidTrip'
-		_log= ctx.log
 
-		Q.resolve()
-		.then =>
+		Promise.resolve().bind @
+		.then ->
 
 			# Update void
 			@sdb.trip.update_by_id ctx, trip_id, { void: 1 }
-		.then (db_result)=>
-			_log.debug f, 'got void trip result:', db_result
-			throw new E.DbError 'TRIPMANAGER:VOID:UPDATE' if db_result.affectedRows isnt 1
+		.then (db_result)->
+			ctx.log.debug f, 'got void trip result:', db_result
+			throw new @E.DbError 'TRIPMANAGER:VOID:UPDATE' if db_result.affectedRows isnt 1
 
 
 exports.TripManager= TripManager

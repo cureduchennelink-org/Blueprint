@@ -10,6 +10,6 @@ describe 'Routes', ()->
 		.then (db_rows)->
 			done()
 
-		.fail (err)->
+		.catch (err)->
 			console.log {err}
 			done err

@@ -130,11 +130,3 @@ describe 'Auth Service', ()->
 				res.data.statusCode.should.equal 401
 				res.data.body.error.should.equal 'invalid_token'
 
-
-
-
-
-
-
-
-

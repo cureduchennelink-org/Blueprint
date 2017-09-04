@@ -18,10 +18,10 @@
 #   Can hook into server middleware to log inbound requests even when they match nothing (like hacks or broken clients)
 #   Add server up/down events into MongoDB stream (will need to add 'down' logic to blueprint, that gives services time to end things?)
 
-Q= require 'q'
 {MongoClient}= require 'mongodb'
 
 class Lamd
+	@deps= services:[ 'logger'], config: 'lamd'
 	constructor: (kit)->
 		f= 'Lamd:constructor'
 		@config= kit.services.config.lamd
@@ -41,7 +41,6 @@ class Lamd
 			throw new Error f+ 'MongoDB connection is empty' if not db? # Why does MongoDB need this check?
 			@db= db
 			@collection_debug= db.collection 'debug'
-			# TODO CONSIDER IF WE NEED TO CREATE A PROMISE STACK OF CALLS TO @collection
 
 		promise_chain
 

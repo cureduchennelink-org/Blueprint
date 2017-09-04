@@ -2,7 +2,7 @@
 #	Amazon SES Module
 #
 
-Q= require 'q'
+Promise= require 'bluebird'
 AWS= require 'aws-sdk'
 
 class SES
@@ -20,7 +20,7 @@ class SES
 		spec= @config.emails[type]
 		message= @_composeMsgFrom spec, data
 		@log.debug 'SES:send:', 'sending message:', message
-		Q.ninvoke @ses, 'sendEmail', message
+		Promise.fromNode @ses, 'sendEmail', message
 
 	_composeMsgFrom: (spec, data)->
 		f= 'SES._composeMsgFrom:'

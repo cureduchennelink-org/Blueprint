@@ -12,7 +12,7 @@
     return it('should be true', function(done) {
       return (Util.db.SqlQuery('SELECT * FROM ident')).then(function(db_rows) {
         return done();
-      }).fail(function(err) {
+      })["catch"](function(err) {
         console.log({
           err: err
         });

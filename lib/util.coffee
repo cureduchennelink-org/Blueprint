@@ -4,11 +4,9 @@
 
 _= require 'lodash'
 
-_log= false
-
 class Util
+	@deps= {}
 	constructor: (kit)->
-		_log= kit.services.logger.log
 	Diff: (first, second)->
 		f= 'Util:Diff:'
 		return [first,second] if _.isEmpty first

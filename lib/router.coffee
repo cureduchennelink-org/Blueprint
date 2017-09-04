@@ -2,8 +2,6 @@
 #	Route Pre-Loader
 #
 
-Q= require 'q'
-
 log_map=
 	get:  'GET '
 	post: 'POST'
@@ -16,9 +14,8 @@ use_map=
 	put:  'PUT'
 	del:  'DEL'
 
-usage= []
-
 class Router
+	@deps: services: ['template_use', 'server'], config: 'route_prefix.api'
 	constructor: (kit) ->
 		@log= 		kit.services.logger.log
 		@pfx= 		kit.services.config.route_prefix.api
