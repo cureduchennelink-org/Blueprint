@@ -7,6 +7,7 @@
 path= require 'path'
 
 class Db
+	@deps= services: ['logger','config']
 	constructor: (kit) ->
 		log= kit.services.logger.log
 		config= kit.services.config
@@ -24,6 +25,7 @@ class Db
 				throw new Error 'UNKNOW MYSQL MODULE:'+nm unless mod
 				mod.name= nm
 				modPath= path.join config.processDir, mod.file
+				log.info "Loading MySql module #{nm}@#{modPath}::#{mod.class}"
 				@mysql[nm]= new (require modPath)[mod.class] @mysql.core, kit
 
 		# MongoDB
@@ -31,10 +33,10 @@ class Db
 			log.info 'Initializing MongoDB...'
 			@config_mongo= config.db.mongo
 			{MongoClient}= require 'mongodb'
-			{MCore}= 	require './_mongo/model_core'
+			# TODO REMOVE ALL MONGOOSE STUFF AT SOME POINT {MCore}= 	require './_mongo/model_core'
 
 			# Set up all enabled Mongo Models
-			@mongo= pool: {}, core: new MCore log
+			@mongo= pool: {} # TODO REMOVE MONGOOSE , core: new MCore log
 			for nm, model of config.db.mongo.models when model.enable
 				modPath= path.join config.processDir, model.file
 				@mongo[nm]= (require modPath).init mongoose, @mongo.core

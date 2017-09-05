@@ -31,10 +31,10 @@ class Loader
 	page: (nm) -> @_load 'page', nm
 
 class Epic
-	constructor: (@model_map) ->
+	constructor: (kit, @model_map) ->
 		@oAppConf= getFrames: -> []
-		@log1= console.log
-		@log2= console.log
+		@log1= (f, _a)-> kit.services.logger.log.debug f, _a...
+		@log2= @log1
 		@counter= 1000
 		@inst= {}
 		@tbl_data= {}
@@ -61,6 +61,7 @@ class Epic
 		@tbl_data[ model_name ]= tbl_data if tbl_data
 
 class EpicTemplate
+	@deps= services: ['logger']
 	constructor: (kit, opts)->
 		config= opts
 		@log= kit.services.logger.log
@@ -71,7 +72,7 @@ class EpicTemplate
 
 		model_map= Pageflow: Pageflow, Tag: window.EpicMvc.Model.TagExe$Base
 		model_map[ model_name]= klass for model_name,klass of config.model_map ? {}
-		@oEpic= new Epic model_map
+		@oEpic= new Epic kit, model_map
 
 		loader= new Loader config.view_path ? 'config/view'
 		@oEpic.run loader

@@ -4,6 +4,7 @@
 {EventEmitter}= require 'events'
 
 class Event extends EventEmitter
+	@deps= {}
 	constructor: (kit)->
 		@log= kit.services.logger.log
 

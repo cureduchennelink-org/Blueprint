@@ -5,6 +5,7 @@
 bunyan=  require 'bunyan'
 
 class Logger
+	@deps= services: ['config']
 	constructor: (kit)->
 		config= kit.services.config
 		@log= bunyan.createLogger config.log

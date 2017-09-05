@@ -19,6 +19,7 @@
 #   Add server up/down events into MongoDB stream (will need to add 'down' logic to blueprint, that gives services time to end things?)
 
 {MongoClient}= require 'mongodb'
+_= require 'lodash'
 
 class Lamd
 	@deps= services:[ 'logger'], config: 'lamd'
@@ -37,7 +38,7 @@ class Lamd
 		# Load and attach mongo-client to server with one connection for writing requests
 		promise_chain= promise_chain.then => MongoClient.connect @config.connect_url #, @config.options ? {}
 		promise_chain= promise_chain.then (db)=>
-			@log.debug f, db
+			@log.debug f, _.pick db, ['databaseName','options']
 			throw new Error f+ 'MongoDB connection is empty' if not db? # Why does MongoDB need this check?
 			@db= db
 			@collection_debug= db.collection 'debug'
