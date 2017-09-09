@@ -19,7 +19,7 @@ class Db
 			{SqlCore}= 	require './_mysql/sql_core'
 
 			# Set up all enabled mysql modules
-			@mysql= core: new SqlCore config.db.mysql.pool, log
+			@mysql= core: new SqlCore kit, config.db.mysql.pool
 			for nm in config.db.mysql.mods_enabled
 				mod= config.db.mysql.modules[ nm]
 				throw new Error 'UNKNOW MYSQL MODULE:'+nm unless mod

@@ -2,21 +2,18 @@
 #	Core DB Functions. Includes DB Pool
 #
 
-Q= 		require 'q'
-E= 		require '../../error'
-mysql= 	require 'mysql'
-
-_log= false
-_log2= debug: ()->
+Promise=	require 'bluebird'
+mysql=		require 'mysql'
 
 class SqlCore
-	constructor: (pool_opts, log)->
-		_log= log
-		_log2= log if pool_opts.level2_debug
+	@deps= services: ['error','logger']
+	constructor: (kit, pool_opts)->
+		@E= kit.services.error
+		_log2= if pool_opts.level2_debug then kit.services.logger.log else debug: ->
 		@is_db_log_on= pool_opts.level2_debug
 		@pool= mysql.createPool pool_opts
 		@acquire= (callback)-> @pool.getConnection callback
-		@Acquire= Q.nbind @acquire, this
+		@Acquire= Promise.promisify @acquire, context: @
 		@release= (conn)->
 			_log2.debug 'DB:SqlCore:release:', 'releasing conn'
 			conn.release()
@@ -27,25 +24,28 @@ class SqlCore
 		@sqlQuery= (ctx, sql, args)=>
 			ctx.log.debug 'DB:SqlCore:sqlQuery:', sql if @is_db_log_on
 			ctx.log.debug 'DB:SqlCore:args:', args if args and @is_db_log_on
-			throw new E.DbError 'DB:SQL:BAD_CONN' if ctx.conn is null
-			(Q.ninvoke ctx.conn, 'query', sql, args)
-			.then (rows_n_cols) =>
-				ctx.log.debug 'DB:SqlCore:result:', rows_n_cols[0] if @is_db_log_on
-				rows_n_cols[0]
+			throw new @E.DbError 'DB:SQL:BAD_CONN' if ctx.conn is null
+			query= Promise.promisify ctx.conn.query, context: ctx.conn
+			Promise.resolve().bind @
+			.then ->
+				query sql, args
+			.then (just_rows)->
+				ctx.log.debug 'DB:SqlCore:result:', just_rows if @is_db_log_on
+				just_rows
 
 	StartTransaction: (ctx)=> # Assumes conn on ctx
 		f= 'DB:SqlCore:StartTransaction'
 
-		Q.resolve()
-		.then =>
+		Promise.resolve().bind @
+		.then ->
 
 			# Initialize the transaction
 			@sqlQuery ctx, 'SET TRANSACTION ISOLATION LEVEL SERIALIZABLE'
-		.then (db_result)=>
+		.then ->
 
 			# Start the transaction
 			@sqlQuery ctx, 'START TRANSACTION'
-		.then (db_result) ->
+		.then ->
 			null
 
 	# Factory for attaching common functions to SQL Modules
@@ -58,8 +58,8 @@ class SqlCore
 	# UpdateById (ctx, id, new_values, re_read)
 	# DeleteById (ctx, id)
 	method_factory: (sql_mod, name)=>
-		throw new E.ServerError "DB:CORE:MOD_TABLE", "table undefined for #{name}" unless sql_mod.table
-		throw new E.ServerError "DB:CORE:MOD_SCHEMA", "schema undefined for #{name}" unless sql_mod.schema
+		throw new @E.ServerError "DB:CORE:MOD_TABLE", "table undefined for #{name}" unless sql_mod.table
+		throw new @E.ServerError "DB:CORE:MOD_SCHEMA", "schema undefined for #{name}" unless sql_mod.schema
 		table= 		sql_mod.table
 		ident_tbl=  sql_mod.ident_tbl
 		schema= 	sql_mod.schema
@@ -70,10 +70,10 @@ class SqlCore
 				f= "DB:#{name}:GetByKey:"
 				ctx.log.debug f, key if @is_db_log_on
 
-				Q.resolve()
-				.then =>
+				Promise.resolve().bind @
+				.then ->
 
-					throw new E.DbError "DB:CORE:SCHEMA_UNDEFINED:GetByKey_#{key}" unless schema.GetByKey[key]
+					throw new @E.DbError "DB:CORE:SCHEMA_UNDEFINED:GetByKey_#{key}" unless schema.GetByKey[key]
 					sql= 'SELECT '+ (schema.GetByKey[key].join ',')+ ' FROM '+ table +
 						' WHERE di= 0 AND '+ key+ ' IN (?)'
 					sql += ' FOR UPDATE' if lock
@@ -86,12 +86,12 @@ class SqlCore
 				f= "DB:#{name}:UpdateByKey:"
 				ctx.log.debug f, key if @is_db_log_on
 
-				throw new E.DbError "DB:CORE:SCHEMA_UNDEFINED:UpdateByKey_#{key}" unless schema.UpdateByKey[key]
+				throw new @E.DbError "DB:CORE:SCHEMA_UNDEFINED:UpdateByKey_#{key}" unless schema.UpdateByKey[key]
 				for nm,val of new_values when nm not in schema.UpdateByKey[key]
-					throw new E.DbError "UPDATE_BY_KEY:COL_NOT_IN_SCHEMA", { col: nm, value: val}
+					throw new @E.DbError "UPDATE_BY_KEY:COL_NOT_IN_SCHEMA", { col: nm, value: val}
 
-				Q.resolve()
-				.then ()=>
+				Promise.resolve().bind @
+				.then ()->
 
 					cols= []; arg=[]
 					(cols.push nm + '= ?'; arg.push val) for nm, val of new_values
@@ -99,7 +99,7 @@ class SqlCore
 					sql= 'UPDATE '+ table+ ' SET '+ (cols.join ',')+
 						' WHERE '+ key+ ' IN (?) AND di= 0'
 					sqlQuery ctx, sql, arg
-				.then (db_result)=>
+				.then (db_result)->
 					db_result
 
 		if schema.DisposeByIds
@@ -107,12 +107,13 @@ class SqlCore
 				f= "DB:#{name}:DisposeByIds:"
 				ctx.log.debug f, ids if @is_db_log_on
 
-				Q.resolve()
-				.then =>
+				# TODO JCS PERFORMANCE: SINCE sqlQuery ALREADY RETURNS A PROMISE, CONSIDER JUST CALLING IT W/O PROMISE AND TWO .THENS
+				Promise.resolve().bind @
+				.then ->
 
 					sql= 'UPDATE '+ table+ ' SET di= 1 WHERE id IN (?)'
 					sqlQuery ctx, sql, [ ids]
-				.then (db_result)=>
+				.then (db_result)->
 					db_result
 
 		if schema.get_collection or schema.GetCollection
@@ -120,8 +121,8 @@ class SqlCore
 				f= "DB:#{name}:get_collection:"
 				ctx.log.debug f if @is_db_log_on
 				schema_cols= schema.get_collection ? schema.GetCollection
-				Q.resolve()
-				.then =>
+				Promise.resolve().bind @
+				.then ->
 
 					sql= 'SELECT '+ (schema_cols.join ',')+ ' FROM '+ table+
 						' WHERE di= 0'
@@ -136,8 +137,8 @@ class SqlCore
 				f= "DB:#{name}:get_by_id:"
 				ctx.log.debug f, id if @is_db_log_on
 
-				Q.resolve()
-				.then =>
+				Promise.resolve().bind @
+				.then ->
 
 					sql= 'SELECT ' + (schema.get_by_id.join ',') + ' FROM ' + table + ' WHERE id= ? AND di= 0'
 					sqlQuery ctx, sql, [id]
@@ -152,26 +153,26 @@ class SqlCore
 				result= false
 
 				for nm, val of new_values when nm not in schema_cols
-					throw new E.DbError "DB:CORE:BAD_INSERT_COL-#{table}-#{nm}"
+					throw new @E.DbError "DB:CORE:BAD_INSERT_COL-#{table}-#{nm}"
 
-				Q.resolve()
-				.then ()=>
+				Promise.resolve().bind @
+				.then ->
 
 					cols= ['cr']; qs= ['?']; arg= [null]
 					(cols.push nm; qs.push '?'; arg.push val) for nm, val of new_values
 					sql= 'INSERT INTO ' + table + ' (' + (cols.join ',') + ') VALUES (' + (qs.join ',') + ')'
 					sqlQuery ctx, sql, arg
-				.then (db_result)=>
+				.then (db_result)->
 					result= db_result
-					throw new E.DbError f+'NO_INSERT' if db_result.affectedRows isnt 1
+					throw new @E.DbError f+'NO_INSERT' if db_result.affectedRows isnt 1
 
 					return false unless re_read is true
-					throw new E.ServerError f+'REREAD_NOT_DEFINED_IN_SCHEMA' unless schema.reread
+					throw new @E.ServerError f+'REREAD_NOT_DEFINED_IN_SCHEMA' unless schema.reread
 					sql= 'SELECT ' + (schema.reread.join ',') + ' FROM ' + table + ' WHERE id= ?'
 					sqlQuery ctx, sql, [db_result.insertId]
 				.then (db_rows)->
 					if db_rows isnt false
-						throw new E.NotFoundError f+'REREAD' if db_rows.length isnt 1
+						throw new @E.NotFoundError f+'REREAD' if db_rows.length isnt 1
 						result= db_rows[0]
 					result
 			sql_mod.create= create # Deprecated
@@ -185,10 +186,10 @@ class SqlCore
 				result= false
 
 				for nm, val of new_values when nm not in schema_cols
-					throw new E.DbError 'Invalid ' + table + ' Update Column', col: nm, value: val
+					throw new @E.DbError 'Invalid ' + table + ' Update Column', col: nm, value: val
 
-				Q.resolve()
-				.then =>
+				Promise.resolve().bind @
+				.then ->
 
 					cols= []; arg=[]
 					(cols.push nm + '= ?'; arg.push val) for nm, val of new_values
@@ -196,16 +197,16 @@ class SqlCore
 					sql= 'UPDATE ' + table + ' SET ' + (cols.join ',') +
 						' WHERE id= ? AND di= 0'
 					sqlQuery ctx, sql, arg
-				.then (db_result)=>
+				.then (db_result)->
 					result= db_result
 
 					return false unless re_read is true
-					throw new E.ServerError f+'REREAD_NOT_DEFINED_IN_SCHEMA' unless schema.reread
+					throw new @E.ServerError f+'REREAD_NOT_DEFINED_IN_SCHEMA' unless schema.reread
 					sql= 'SELECT ' + (schema.reread.join ',') + ' FROM ' + table + ' WHERE id= ?'
 					sqlQuery ctx, sql, [id]
 				.then (db_rows)->
 					if db_rows isnt false
-						throw new E.NotFoundError f+'REREAD' if db_rows.length isnt 1
+						throw new @E.NotFoundError f+'REREAD' if db_rows.length isnt 1
 						result= db_rows[0]
 					result
 			sql_mod.update_by_id= update_by_id # Deprecated

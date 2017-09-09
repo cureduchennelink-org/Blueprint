@@ -9,14 +9,9 @@
   chai.should();
 
   describe('Routes', function() {
-    return it('should be true', function(done) {
+    return it('should be true', function() {
       return (Util.db.SqlQuery('SELECT * FROM ident')).then(function(db_rows) {
-        return done();
-      })["catch"](function(err) {
-        console.log({
-          err: err
-        });
-        return done(err);
+        return true;
       });
     });
   });

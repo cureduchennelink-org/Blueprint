@@ -15,6 +15,8 @@
   };
 
   MockService = (function() {
+    MockService.deps = {};
+
     function MockService(kit, opt) {
       this.val = opt;
       kit.services['mockFunc']();

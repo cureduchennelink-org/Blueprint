@@ -8,7 +8,8 @@
           port: 3306,
           user: 'root',
           password: 'DV-mobile2012',
-          database: 'blueprint'
+          database: 'blueprint',
+          level2_debug: true
         }
       }
     }

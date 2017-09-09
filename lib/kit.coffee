@@ -9,6 +9,13 @@ class Kit
 		@services= {}
 		@routes= {}
 
+	get_service_deps_needed: (name, constructor)-> # Look at deps.services and remove any already in @services
+		d= constructor.deps
+		throw new Error "Module '#{name}' is missing @deps" unless d
+		needed= []
+		for nm in d.services or []
+			needed.push nm unless nm of @services
+
 	add_service: (name, obj)->
 		@services[name]= obj
 

@@ -2,7 +2,15 @@
 # Authentication Services
 #
 Promise= require 'bluebird'
-crypto= Promise.promisify require 'crypto'
+###
+{pbkdf2, randomBytes}= require 'crypto'
+crypto=
+	pbkdf2: Promise.promisify pbkdf2
+	randomBytes: Promise.promisify randomBytes
+###
+crypto= require 'crypto'
+crypto.p_pbkdf2=		Promise.promisify crypto.pbkdf2,		context: crypto
+crypto.p_randomBytes=	Promise.promisify crypto.randomBytes,	context: crypto
 
 class Auth
 	@deps=
@@ -19,7 +27,7 @@ class Auth
 		@SALT_SIZE= 	@config.pbkdf2.salt_size
 		@KEY_LENGTH= @config.pbkdf2.key_length
 
-	_pbkdf2: (p,buf,IT,KL)-> crypto 'pbkdf2', p, buf, IT, KL
+	_pbkdf2: (p,buf,IT,KL)-> crypto.p_pbkdf2 p, buf, IT, KL, 'sha1'
 
 	# Request Authorization Parser
 	server_use: (req, res, next)=>
@@ -104,7 +112,7 @@ class Auth
 		.then ->
 
 			# Create Salt
-			crypto 'randomBytes', @SALT_SIZE
+			crypto.p_randomBytes @SALT_SIZE
 		.then (buffer)->
 			saltBuf= buffer
 

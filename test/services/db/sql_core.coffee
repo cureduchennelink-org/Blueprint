@@ -15,9 +15,11 @@ class SqlCore
 	StartTransaction: (ctx)=>
 	method_factory: (sql_mod, name)=>
 ###
+kit= services: error: {}, logger: log:  debug: console.log
+_log= kit.services.logger.log
 
 describe 'Sql Core', ()->
-	core= new SqlCore config.db.mysql.pool, debug: console.log
+	core= new SqlCore kit, config.db.mysql.pool
 	conn= false
 
 	it 'should create a database connection pool', ()->
@@ -50,7 +52,7 @@ describe 'Sql Core', ()->
 			core.pool._freeConnections.length.should.equal 0
 
 	it 'should perform a query against a context', ()->
-		ctx= conn: null
+		ctx= conn: null, log: _log
 
 		(core.Acquire())
 		.then (c)->
@@ -63,7 +65,7 @@ describe 'Sql Core', ()->
 
 
 	it 'should start a transaction against a context', ()->
-		ctx= conn: null
+		ctx= conn: null, log: _log
 
 		(core.Acquire())
 		.then (c)->
@@ -75,7 +77,7 @@ describe 'Sql Core', ()->
 			core.StartTransaction ctx
 		.then ()->
 			null
-		.fail (err)->
+		.catch (err)->
 			err.should.match /ER_CANT_CHANGE_TX_CHARACTERISTICS/
 			core.destroy ctx.conn
 

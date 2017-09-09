@@ -15,7 +15,7 @@ urlSafeBase64EncodeFix= (str)->
 class TokenMgr
 	@deps= services: []
 	constructor: (kit)->
-		@CreateToken=( Promise.denodify @createToken).bind @
+		@CreateToken=( Promise.promisify @createToken).bind @
 
 	createToken: (length, callback)->
 		crypto.randomBytes length, (err, buf)->

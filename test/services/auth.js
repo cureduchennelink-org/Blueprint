@@ -73,6 +73,8 @@
 
   kit.new_service('tokenMgr', TokenMgr);
 
+  kit.add_service('error', E);
+
   kit.new_service('auth', Auth);
 
   _log = console.log;
@@ -111,7 +113,11 @@
       return (auth.ComparePassword('password', encryptedPassword + 'BROKEN')).should.eventually.be["false"];
     });
     it('should validate a username and password combination', function() {
-      return (auth.ValidateCredentials({}, 'test@email.com', 'password')).should.eventually.equal(42);
+      return (auth.ValidateCredentials({}, 'test@email.com', 'password')).should.eventually.deep.equal({
+        id: 42,
+        role: void 0,
+        tenant: void 0
+      });
     });
     return describe('server_use', function() {
       var expired_token, future, good_token, user_data;

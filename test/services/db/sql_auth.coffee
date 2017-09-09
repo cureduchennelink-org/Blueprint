@@ -30,21 +30,21 @@ class SqlAuth
 ###
 
 describe 'Sql Auth Module', ()->
-	core= new SqlCore config.db.mysql.pool, _log
+	core= new SqlCore kit, config.db.mysql.pool
 	auth= new SqlAuth core, kit
 	ident= false
 	conn= false
 
 	before ()->
-		vals= eml: (rename 'test@test.com'), pwd: Util.encryptedPassword
+		vals= eml: (rename 'test@test.com'), pwd: Util.encryptedPassword, role: 'r', tenant: 't'
 		(Util.db.InsertOne 'ident', vals)
 		.then (ident_rec)->
 			ident= ident_rec
 
 	after ()->
 
-	it 'should insert a username and password', (done)-> # Create (re_read)
-		ctx= conn: null
+	it 'should insert a username and password', -> # Create (re_read)
+		ctx= conn: null, log: _log
 		new_values= {}
 
 
@@ -67,14 +67,13 @@ describe 'Sql Auth Module', ()->
 			rec.eml.should.equal new_values.eml
 			rec.pwd.should.equal new_values.pwd
 			core.release ctx.conn
-			done()
 
-		.fail (err)->
+		.catch (err)->
 			_log.debug {err}
 			core.release ctx.conn unless ctx.conn is null
-			done err
+			throw err
 
-	it 'should get ident record (id,eml) by id', (done)-> # GetById
+	it 'should get ident record (id,eml) by id', -> # GetById
 		ctx= conn: null, log: _log
 
 		(core.Acquire())
@@ -84,15 +83,14 @@ describe 'Sql Auth Module', ()->
 			# Using auth module
 			auth.GetById ctx, ident.id
 		.then (db_rows)->
-			db_rows[0].should.deep.equal {id: ident.id, eml: ident.eml}
-			done()
+			db_rows[0].should.deep.equal {id: ident.id, eml: ident.eml, role: 'r', tenant: 't'}
 
-		.fail (err)->
+		.catch (err)->
 			_log.debug {err}
 			core.release ctx.conn unless ctx.conn is null
-			done err
+			throw err
 
-	it 'should get an ident record for a username', (done)-> #GetByCredName
+	it 'should get an ident record for a username', -> #GetByCredName
 		ctx= conn: null, log: _log
 
 		(core.Acquire())
@@ -103,14 +101,13 @@ describe 'Sql Auth Module', ()->
 			auth.GetByCredName ctx, ident.eml
 		.then (db_rows)->
 			db_rows[0].should.deep.equal ident
-			done()
 
-		.fail (err)->
+		.catch (err)->
 			_log.debug {err}
 			core.release ctx.conn unless ctx.conn is null
-			done err
+			throw err
 
-	it 'should get an id and password for a username', (done)-> # GetAuthCreds
+	it 'should get an id and password for a username', -> # GetAuthCreds
 		ctx= conn: null, log: _log
 
 		(core.Acquire())
@@ -120,16 +117,15 @@ describe 'Sql Auth Module', ()->
 			# Using auth module
 			auth.GetAuthCreds ctx, ident.eml
 		.then (db_rows)->
-			db_rows[0].should.deep.equal {id: ident.id, pwd: ident.pwd}
-			done()
+			db_rows[0].should.deep.equal {id: ident.id, pwd: ident.pwd, role: 'r', tenant: 't'}
 
-		.fail (err)->
+		.catch (err)->
 			_log.debug {err}
 			core.release ctx.conn unless ctx.conn is null
-			done err
+			throw err
 
-	it 'should update a username and password for an id', (done)-> # UpdateById (re_read)
-		ctx= conn: null
+	it 'should update a username and password for an id', -> # UpdateById (re_read)
+		ctx= conn: null, log: _log
 		new_values= {}
 
 
@@ -153,12 +149,11 @@ describe 'Sql Auth Module', ()->
 			rec.eml.should.equal new_values.eml
 			rec.pwd.should.equal new_values.pwd
 			core.release ctx.conn
-			done()
 
-		.fail (err)->
+		.catch (err)->
 			_log.debug {err}
 			core.release ctx.conn unless ctx.conn is null
-			done err
+			throw err
 
 
 

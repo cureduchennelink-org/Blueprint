@@ -4,13 +4,9 @@
 #	A User is the join between the ident table and the profile table.
 #
 
-Q= require 'q'
-E= require '../../error'
-
-
 class SqlUser
+	@deps: {}
 	constructor: (core, kit)->
-		@log= kit.services.logger.log
 		@db= core
 		@table= 'profile'
 		@ident_tbl= 'ident'

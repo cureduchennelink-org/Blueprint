@@ -31,6 +31,8 @@ Test Suite for Sql Token
 
   kit.add_service('config', config);
 
+  kit.add_service('error', {});
+
   kit.new_service('logger', Logger);
 
   _log = kit.services.logger.log;
@@ -46,7 +48,7 @@ Test Suite for Sql Token
 
   describe('Sql Token Module', function() {
     var core, exp_rec, exp_token, the_token, tokenDb, valid_rec, valid_token;
-    core = new SqlCore(config.db.mysql.pool, _log);
+    core = new SqlCore(kit, config.db.mysql.pool);
     tokenDb = false;
     the_token = rename('SECRET_TOKEN');
     valid_token = rename('VALID_TOKEN');
@@ -77,14 +79,7 @@ Test Suite for Sql Token
     });
     after(function() {});
     it('should be instantiated', function(done) {
-      var e;
-      try {
-        tokenDb = new SqlToken(core, kit);
-      } catch (_error) {
-        e = _error;
-        _log.error(e.body.error, e.body.message);
-        done(e);
-      }
+      tokenDb = new SqlToken(core, kit);
       tokenDb.should.be.instanceOf(SqlToken);
       return done();
     });
@@ -92,7 +87,7 @@ Test Suite for Sql Token
       tokenDb.should.have.property('table');
       return tokenDb.table.should.equal('ident_tokens');
     });
-    it('should create an ident_token using token, ident_id, client and exp', function(done) {
+    it('should create an ident_token using token, ident_id, client and exp', function() {
       var ctx, ident_token, new_values;
       ctx = {
         conn: null,
@@ -123,19 +118,18 @@ Test Suite for Sql Token
         db_rows[0].ident_id.should.equal(Util.test_ident_id);
         db_rows[0].client.should.equal(new_values.client);
         db_rows[0].exp.toString().should.equal(new_values.exp.toString());
-        core.release(ctx.conn);
-        return done();
-      }).fail(function(err) {
+        return core.release(ctx.conn);
+      })["catch"](function(err) {
         _log.error({
           err: err
         });
         if (ctx.conn !== null) {
           core.release(ctx.conn);
         }
-        return done(err);
+        throw err;
       });
     });
-    it('should not allow identical tokens to be inserted', function(done) {
+    it('should not allow identical tokens to be inserted', function() {
       var ctx, ident_token, new_values;
       ctx = {
         conn: null,
@@ -157,19 +151,12 @@ Test Suite for Sql Token
         _log.debug({
           new_rec: new_rec
         });
-        return done(new Error('Test should not have gotten here'));
-      }).fail(function(err) {
-        var e;
-        try {
-          err.code.should.equal('ER_DUP_ENTRY');
-          return done();
-        } catch (_error) {
-          e = _error;
-          return done(e);
-        }
+        return new Error('Test should not have gotten here');
+      })["catch"](function(err) {
+        return err.code.should.equal('ER_DUP_ENTRY');
       });
     });
-    it('should return a full record for a specific token if not expired', function(done) {
+    it('should return a full record for a specific token if not expired', function() {
       var ctx, ident_token, new_values;
       ctx = {
         conn: null,
@@ -181,18 +168,16 @@ Test Suite for Sql Token
         ctx.conn = c;
         return tokenDb.GetNonExpiredToken(ctx, valid_token);
       }).then(function(db_rows) {
-        db_rows.length.should.equal(1);
-        db_rows[0].should.deep.equal(valid_rec);
-        (moment(db_rows[0].exp)).unix().should.be.above(moment().unix());
-        return done();
-      }).fail(function(err) {
-        _log.error({
-          err: err
-        });
-        return done(err);
+        return db_rows.should.deep.equal([
+          {
+            id: Util.test_ident_id,
+            role: null,
+            tenant: null
+          }
+        ]);
       });
     });
-    it('should return nothing for a specific token if expired', function(done) {
+    it('should return nothing for a specific token if expired', function() {
       var ctx, ident_token, new_values;
       ctx = {
         conn: null,
@@ -204,16 +189,10 @@ Test Suite for Sql Token
         ctx.conn = c;
         return tokenDb.GetNonExpiredToken(ctx, exp_token);
       }).then(function(db_rows) {
-        db_rows.length.should.equal(0);
-        return done();
-      }).fail(function(err) {
-        _log.error({
-          err: err
-        });
-        return done(err);
+        return db_rows.length.should.equal(0);
       });
     });
-    it('should insert a new token and remove the old one if given on update', function(done) {
+    it('should insert a new token and remove the old one if given on update', function() {
       var ctx, ident_token, nv;
       ctx = {
         conn: null,
@@ -245,16 +224,14 @@ Test Suite for Sql Token
         return Util.db.GetByKey(ctx, 'ident_tokens', 'token', [valid_token]);
       }).then(function(db_rows) {
         db_rows.length.should.equal(0);
-        core.release(ctx.conn);
-        return done();
-      }).fail(function(err) {
+        return core.release(ctx.conn);
+      })["catch"](function(err) {
         _log.error({
           err: err
         });
         if (ctx.conn !== null) {
-          core.release(ctx.conn);
+          return core.release(ctx.conn);
         }
-        return done(err);
       });
     });
     return it('should insert and return a new token if not given an old one', function() {
@@ -286,14 +263,14 @@ Test Suite for Sql Token
         db_rows[0].ident_id.should.equal(Util.test_ident_id);
         db_rows[0].client.should.equal(nv.client);
         return db_rows[0].exp.toString().should.equal(nv.exp.toString());
-      }).fail(function(err) {
+      })["catch"](function(err) {
         _log.error({
           err: err
         });
         if (ctx.conn !== null) {
           core.release(ctx.conn);
         }
-        return done(err);
+        throw err;
       });
     });
   });

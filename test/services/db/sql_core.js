@@ -5,7 +5,7 @@ Test Suite for Sql Core
  */
 
 (function() {
-  var SqlCore, Util, chai, config;
+  var SqlCore, Util, _log, chai, config, kit;
 
   chai = require('chai');
 
@@ -25,11 +25,22 @@ Test Suite for Sql Core
   	method_factory: (sql_mod, name)=>
    */
 
+  kit = {
+    services: {
+      error: {},
+      logger: {
+        log: {
+          debug: console.log
+        }
+      }
+    }
+  };
+
+  _log = kit.services.logger.log;
+
   describe('Sql Core', function() {
     var conn, core;
-    core = new SqlCore(config.db.mysql.pool, {
-      debug: console.log
-    });
+    core = new SqlCore(kit, config.db.mysql.pool);
     conn = false;
     it('should create a database connection pool', function() {
       core.should.have.property('pool');
@@ -72,7 +83,8 @@ Test Suite for Sql Core
     it('should perform a query against a context', function() {
       var ctx;
       ctx = {
-        conn: null
+        conn: null,
+        log: _log
       };
       return (core.Acquire()).then(function(c) {
         ctx.conn = c;
@@ -85,7 +97,8 @@ Test Suite for Sql Core
     it('should start a transaction against a context', function() {
       var ctx;
       ctx = {
-        conn: null
+        conn: null,
+        log: _log
       };
       return (core.Acquire()).then(function(c) {
         ctx.conn = c;
@@ -94,7 +107,7 @@ Test Suite for Sql Core
         return core.StartTransaction(ctx);
       }).then(function() {
         return null;
-      }).fail(function(err) {
+      })["catch"](function(err) {
         err.should.match(/ER_CANT_CHANGE_TX_CHARACTERISTICS/);
         return core.destroy(ctx.conn);
       });

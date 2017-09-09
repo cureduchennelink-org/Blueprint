@@ -1,14 +1,13 @@
 #
 #	Push Set Database Functions
 #
-
-Q= require 'q'
-E= require '../../error'
-
+Promise= require 'bluebird'
 
 class SqlPSet
+	@deps= services: ['error','logger']
 	constructor: (core, kit)->
 		@log= kit.services.logger.log
+		@E= kit.services.error
 		@db= core
 		@table= 'psets'
 		@schema=
@@ -20,8 +19,8 @@ class SqlPSet
 		f= "DB:SqlPushSet:get_by_name:"
 		@log.debug f, name
 
-		Q.resolve()
-		.then =>
+		Promise.resolve().bind @
+		.then ->
 
 			sql= 'SELECT * FROM ' + @table + ' WHERE name= ? AND di= 0'
 			@db.sqlQuery ctx, sql, [name]
@@ -34,12 +33,12 @@ class SqlPSet
 		_log.debug f, name
 		existing_pset= false
 
-		Q.resolve()
-		.then =>
+		Promise.resolve().bind @
+		.then ->
 
 			# Look for existing PSet
 			@get_by_name ctx, name
-		.then (db_rows)=>
+		.then (db_rows)->
 			_log.debug f, 'got existing PSet:', db_rows
 			if db_rows.length > 0
 				existing_pset= db_rows[0]
@@ -47,7 +46,7 @@ class SqlPSet
 			# Create new PSet if one doesn't exist
 			return false if existing_pset
 			@create ctx, name: name
-		.then (db_result)=>
+		.then (db_result)->
 			_log.debug f, 'got create PSet result:', db_result
 			return false if db_result is false
 			id= db_result.insertId
@@ -57,7 +56,7 @@ class SqlPSet
 		.then (db_rows)->
 			_log.debug f, 'got re-read:', db_rows
 			if db_rows isnt false
-				throw new E.DbError 'DB:PUSHSET:REREAD' if db_rows.length isnt 1
+				throw new @E.DbError 'DB:PUSHSET:REREAD' if db_rows.length isnt 1
 				existing_pset= db_rows[0]
 
 			existing_pset
@@ -82,8 +81,8 @@ class SqlPSetItem
 		_log= ctx.log
 		_log.debug f, id
 
-		Q.resolve()
-		.then =>
+		Promise.resolve().bind @
+		.then ->
 
 			sql= 'SELECT id FROM ' + @table +
 				' WHERE id= ? AND di= 0 FOR UPDATE'
@@ -96,8 +95,8 @@ class SqlPSetItem
 		_log= ctx.log
 		_log.debug f, pset_id, xref
 
-		Q.resolve()
-		.then =>
+		Promise.resolve().bind @
+		.then ->
 
 			sql= 'SELECT ' + (@schema.id_xref.join ',') + ' FROM ' + @table +
 				' WHERE pset_id= ? AND xref= ? AND di= 0'
@@ -110,8 +109,8 @@ class SqlPSetItem
 		_log= ctx.log
 		_log.debug f, pset_id
 
-		Q.resolve()
-		.then =>
+		Promise.resolve().bind @
+		.then ->
 
 			sql= 'SELECT ' + (@schema.get_psid.join ',') + ' FROM ' + @table +
 				' WHERE pset_id= ? AND di= 0'
@@ -124,8 +123,8 @@ class SqlPSetItem
 		_log= ctx.log
 		_log.debug f, pset_id
 
-		Q.resolve()
-		.then =>
+		Promise.resolve().bind @
+		.then ->
 
 			sql= 'DELETE FROM ' + @table +
 				' WHERE pset_id= ?'
@@ -152,8 +151,8 @@ class SqlPSetItemChange
 		_log.debug f, item_ids
 		return affectedRows: 0 unless item_ids.length
 
-		Q.resolve()
-		.then =>
+		Promise.resolve().bind @
+		.then ->
 
 			sql= 'DELETE FROM ' + @table +
 				' WHERE pset_item_id IN (?)'
@@ -166,8 +165,8 @@ class SqlPSetItemChange
 		f= "DB:SqlPSetItemChange:GetMostRecentForItem:"
 		ctx.log.debug f
 
-		Q.resolve()
-		.then ()=>
+		Promise.resolve().bind @
+		.then ->
 
 			sql= 'SELECT '+ (@schema.recent.join ',')+ ' FROM '+ @table+
 				' WHERE di= 0 AND pset_id= ? AND pset_item_id= ?'+
@@ -181,8 +180,8 @@ class SqlPSetItemChange
 		f= "DB:SqlPSetItemChange:GetMostRecentChanges:"
 		ctx.log.debug f
 
-		Q.resolve()
-		.then ()=>
+		Promise.resolve().bind @
+		.then ->
 
 			sql= 'SELECT '+ (@schema.next.join ',')+ ' FROM '+
 				' (SELECT * FROM '+ @table+ ' WHERE di= 0'+
@@ -209,8 +208,8 @@ class SqlPSetItemChange
 			sql_limit= 'LIMIT ?'
 			args.push limit
 
-		Q.resolve()
-		.then ()=>
+		Promise.resolve().bind @
+		.then ->
 
 			sql= 'SELECT '+ (@schema.next.join ',')+ ' FROM '+ @table+
 				' WHERE di= 0'+ sql_from+ ' ORDER BY count '+ sql_limit

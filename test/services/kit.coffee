@@ -9,6 +9,7 @@ mockFunc= ()->
 	funcTarget= true
 
 class MockService
+	@deps= {}
 	constructor: (kit, opt)->
 		@val= opt
 		kit.services['mockFunc']()

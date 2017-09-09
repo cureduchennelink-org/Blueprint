@@ -1,13 +1,11 @@
 #
 #	Refresh Token Database Functions
 #
-
-Q= require 'q'
-E= require '../../error'
+Promise= require 'bluebird'
 
 class SqlToken
+	@deps: {}
 	constructor: (@core, kit)->
-		@log= kit.services.logger.log
 		@table= 'ident_tokens'
 		@schema=
 			Create: ['token', 'ident_id', 'client', 'exp']
@@ -26,14 +24,15 @@ class SqlToken
 		.then (db_rows)-> db_rows
 
 	UpdateActiveToken: (ctx, new_values, current_ident_token)=>
-		Q.resolve().then ()=>
+		Promise.resolve().bind @
+		.then ->
 			# Delete current refresh token if it exists
 			return false unless current_ident_token
 			sql= 'DELETE FROM '+ @table+ ' WHERE token = ?'
 			@core.sqlQuery ctx, sql, [current_ident_token]
-		.then (db_result)=>
+		.then (db_result)->
 			# Insert New Token
 			@Create ctx, new_values, reread= true
-		.then (db_rec)=> db_rec
+		.then (db_rec)-> db_rec
 
 exports.SqlToken= SqlToken

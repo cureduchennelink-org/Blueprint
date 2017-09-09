@@ -48,7 +48,7 @@ Test Suite for Sql Auth
 
   describe('Sql Auth Module', function() {
     var auth, conn, core, ident;
-    core = new SqlCore(config.db.mysql.pool, _log);
+    core = new SqlCore(kit, config.db.mysql.pool);
     auth = new SqlAuth(core, kit);
     ident = false;
     conn = false;
@@ -56,17 +56,20 @@ Test Suite for Sql Auth
       var vals;
       vals = {
         eml: rename('test@test.com'),
-        pwd: Util.encryptedPassword
+        pwd: Util.encryptedPassword,
+        role: 'r',
+        tenant: 't'
       };
       return (Util.db.InsertOne('ident', vals)).then(function(ident_rec) {
         return ident = ident_rec;
       });
     });
     after(function() {});
-    it('should insert a username and password', function(done) {
+    it('should insert a username and password', function() {
       var ctx, new_values;
       ctx = {
-        conn: null
+        conn: null,
+        log: _log
       };
       new_values = {};
       return (core.Acquire()).then(function(c) {
@@ -84,19 +87,18 @@ Test Suite for Sql Auth
       }).then(function(rec) {
         rec.eml.should.equal(new_values.eml);
         rec.pwd.should.equal(new_values.pwd);
-        core.release(ctx.conn);
-        return done();
-      }).fail(function(err) {
+        return core.release(ctx.conn);
+      })["catch"](function(err) {
         _log.debug({
           err: err
         });
         if (ctx.conn !== null) {
           core.release(ctx.conn);
         }
-        return done(err);
+        throw err;
       });
     });
-    it('should get ident record (id,eml) by id', function(done) {
+    it('should get ident record (id,eml) by id', function() {
       var ctx;
       ctx = {
         conn: null,
@@ -106,22 +108,23 @@ Test Suite for Sql Auth
         ctx.conn = c;
         return auth.GetById(ctx, ident.id);
       }).then(function(db_rows) {
-        db_rows[0].should.deep.equal({
+        return db_rows[0].should.deep.equal({
           id: ident.id,
-          eml: ident.eml
+          eml: ident.eml,
+          role: 'r',
+          tenant: 't'
         });
-        return done();
-      }).fail(function(err) {
+      })["catch"](function(err) {
         _log.debug({
           err: err
         });
         if (ctx.conn !== null) {
           core.release(ctx.conn);
         }
-        return done(err);
+        throw err;
       });
     });
-    it('should get an ident record for a username', function(done) {
+    it('should get an ident record for a username', function() {
       var ctx;
       ctx = {
         conn: null,
@@ -131,19 +134,18 @@ Test Suite for Sql Auth
         ctx.conn = c;
         return auth.GetByCredName(ctx, ident.eml);
       }).then(function(db_rows) {
-        db_rows[0].should.deep.equal(ident);
-        return done();
-      }).fail(function(err) {
+        return db_rows[0].should.deep.equal(ident);
+      })["catch"](function(err) {
         _log.debug({
           err: err
         });
         if (ctx.conn !== null) {
           core.release(ctx.conn);
         }
-        return done(err);
+        throw err;
       });
     });
-    it('should get an id and password for a username', function(done) {
+    it('should get an id and password for a username', function() {
       var ctx;
       ctx = {
         conn: null,
@@ -153,25 +155,27 @@ Test Suite for Sql Auth
         ctx.conn = c;
         return auth.GetAuthCreds(ctx, ident.eml);
       }).then(function(db_rows) {
-        db_rows[0].should.deep.equal({
+        return db_rows[0].should.deep.equal({
           id: ident.id,
-          pwd: ident.pwd
+          pwd: ident.pwd,
+          role: 'r',
+          tenant: 't'
         });
-        return done();
-      }).fail(function(err) {
+      })["catch"](function(err) {
         _log.debug({
           err: err
         });
         if (ctx.conn !== null) {
           core.release(ctx.conn);
         }
-        return done(err);
+        throw err;
       });
     });
-    return it('should update a username and password for an id', function(done) {
+    return it('should update a username and password for an id', function() {
       var ctx, new_values;
       ctx = {
-        conn: null
+        conn: null,
+        log: _log
       };
       new_values = {};
       return (core.Acquire()).then(function(c) {
@@ -190,16 +194,15 @@ Test Suite for Sql Auth
       }).then(function(rec) {
         rec.eml.should.equal(new_values.eml);
         rec.pwd.should.equal(new_values.pwd);
-        core.release(ctx.conn);
-        return done();
-      }).fail(function(err) {
+        return core.release(ctx.conn);
+      })["catch"](function(err) {
         _log.debug({
           err: err
         });
         if (ctx.conn !== null) {
           core.release(ctx.conn);
         }
-        return done(err);
+        throw err;
       });
     });
   });
