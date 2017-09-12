@@ -5,6 +5,7 @@
 #
 
 path= require 'path'
+MongoClient= false # Loaded if enabled, in closure for server_init
 
 class Db
 	@deps= services: ['logger','config']
