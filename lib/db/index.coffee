@@ -32,6 +32,7 @@ class Db
 		if config.db.mongo.enable
 			@config_mongo= config.db.mongo
 			log.info 'Initializing MongoDB...', {@config_mongo}
+			{MongoClient}= require 'mongodb'
 
 			# Set up all enabled Mongo Models
 			@mongo= pool: {}

@@ -45,7 +45,7 @@ class Wrapper
 		return (q,s,n)-> auth_func q, s, n, caller
 
 	default_wrap: (caller)->
-		func= @default
+		func= @['default']
 		return (q,s,n)-> func q, s, n, caller
 
 	simple_wrap: (caller)->
