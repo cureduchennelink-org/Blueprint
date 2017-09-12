@@ -144,8 +144,8 @@ module.exports=
 (function() {
 	var	opts= {
 		rest: {
-			  host: '#{api_host}'
-			, port: '#{ process.env.npm_config_elb_port ? port }'
+			  host: '#{api_host ? 'localhost'}'
+			, port: '#{ process.env.npm_config_elb_port ? 80}'
 			, prefix: 'api'
 			, version: 'v1'
 		}

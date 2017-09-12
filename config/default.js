@@ -281,7 +281,7 @@
       }
     },
     web: {
-      config_document: "(function() {\n	var	opts= {\n		rest: {\n			  host: '" + api_host + "'\n			, port: '" + ((ref = process.env.npm_config_elb_port) != null ? ref : port) + "'\n			, prefix: 'api'\n			, version: 'v1'\n		}\n		, poll: {\n			auth_req: false\n		}\n		, settings: {\n			inactivity_timer_secs: (10 * 60) // 10 minutes\n		}\n	};\n\n	E.Extra.options= opts\n})();"
+      config_document: "(function() {\n	var	opts= {\n		rest: {\n			  host: '" + (typeof api_host !== "undefined" && api_host !== null ? api_host : 'localhost') + "'\n			, port: '" + ((ref = process.env.npm_config_elb_port) != null ? ref : 80) + "'\n			, prefix: 'api'\n			, version: 'v1'\n		}\n		, poll: {\n			auth_req: false\n		}\n		, settings: {\n			inactivity_timer_secs: (10 * 60) // 10 minutes\n		}\n	};\n\n	E.Extra.options= opts\n})();"
     }
   };
 
