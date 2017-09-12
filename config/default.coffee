@@ -23,6 +23,7 @@ module.exports=
 		Registration:	class: 'Registration', 	file: 'node_modules/blueprint/routes/r_registration'
 		User:			class: 'User', 			file: 'node_modules/blueprint/routes/r_user'
 	service_modules:
+		web_config:		class: 'WebConfig',		file: 'node_modules/blueprint/lib/web_config'
 		template:		class: 'EpicTemplate', 	file: 'node_modules/blueprint/lib/EpicTemplate', instConfig: view_path: vp_email
 		template_use:	class: 'EpicTemplate', 	file: 'node_modules/blueprint/lib/EpicTemplate', instConfig: view_path: vp_use
 		tokenMgr:		class: 'TokenMgr', 		file: 'node_modules/blueprint/lib/token_manager'
@@ -137,3 +138,24 @@ module.exports=
 				model: 'Signup', tmpl: 'Top', page: 'signup_complete'
 				Subject: 'Signup Complete!'
 				Text: 'Thank yor for signing up with us! Your email address has been verified and your account has been activated!'
+		# Sample config document (see web_config service)
+		config_document: """
+(function() {
+	var	opts= {
+		rest: {
+			  host: '#{api_host}'
+			, port: '#{ process.env.npm_config_elb_port ? port }'
+			, prefix: 'api'
+			, version: 'v1'
+		}
+		, poll: {
+			auth_req: false
+		}
+		, settings: {
+			inactivity_timer_secs: (10 * 60) // 10 minutes
+		}
+	};
+
+	E.Extra.options= opts
+})();
+			"""
