@@ -278,7 +278,9 @@
           Subject: 'Signup Complete!',
           Text: 'Thank yor for signing up with us! Your email address has been verified and your account has been activated!'
         }
-      },
+      }
+    },
+    web: {
       config_document: "(function() {\n	var	opts= {\n		rest: {\n			  host: '" + api_host + "'\n			, port: '" + ((ref = process.env.npm_config_elb_port) != null ? ref : port) + "'\n			, prefix: 'api'\n			, version: 'v1'\n		}\n		, poll: {\n			auth_req: false\n		}\n		, settings: {\n			inactivity_timer_secs: (10 * 60) // 10 minutes\n		}\n	};\n\n	E.Extra.options= opts\n})();"
     }
   };

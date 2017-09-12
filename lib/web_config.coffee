@@ -3,7 +3,7 @@
 #
 
 class WebConfig
-	@deps= services: ['config'], config: 'web', server: true
+	@deps= services: ['config'], config: 'web.config_document', server: true
 	constructor: (kit)->
 		f = 'WebConfig:constructor'
 		@config = kit.services.config.web

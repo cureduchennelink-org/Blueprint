@@ -138,6 +138,7 @@ module.exports=
 				model: 'Signup', tmpl: 'Top', page: 'signup_complete'
 				Subject: 'Signup Complete!'
 				Text: 'Thank yor for signing up with us! Your email address has been verified and your account has been activated!'
+	web:
 		# Sample config document (see web_config service)
 		config_document: """
 (function() {
