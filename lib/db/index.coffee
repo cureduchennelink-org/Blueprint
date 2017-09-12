@@ -30,23 +30,21 @@ class Db
 
 		# MongoDB
 		if config.db.mongo.enable
-			log.info 'Initializing MongoDB...'
 			@config_mongo= config.db.mongo
-			{MongoClient}= require 'mongodb'
-			# TODO REMOVE ALL MONGOOSE STUFF AT SOME POINT {MCore}= 	require './_mongo/model_core'
+			log.info 'Initializing MongoDB...', {@config_mongo}
 
 			# Set up all enabled Mongo Models
-			@mongo= pool: {} # TODO REMOVE MONGOOSE , core: new MCore log
+			@mongo= pool: {}
 			for nm, model of config.db.mongo.models when model.enable
 				modPath= path.join config.processDir, model.file
-				@mongo[nm]= (require modPath).init mongoose, @mongo.core
+				@mongo[nm]= (require modPath).init mongoose, @mongo.pool
 
 	server_init_promise: (kit,promise_chain) ->
 		f= 'Db:server_init'
 		return promise_chain if @config_mongo is false
 		# Load up various connection (pool) types based on URIs and options
 		for nm, pool of @config_mongo.pool when pool.enable
-			promise_chain= promise_chain.then Q MongoClient.connect pool.connect_url, pool.options
+			promise_chain= promise_chain.then => MongoClient.connect pool.connect_url, pool.options
 			promise_chain= promise_chain.then (db) =>
 				throw new Error f+ 'MongoDB connection is empty' if not db? # Why does MongoDB need this check?
 				@mongo.pool[ nm]= db
