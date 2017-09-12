@@ -200,6 +200,10 @@
         throw new Error(f + ("No such route-module: " + nm));
       }
       servicePath = path.join(config.processDir, mod.file);
+      _log.debug(f + 'INSPECTING ROUTE MODULE', {
+        servicePath: servicePath,
+        mod: mod
+      });
       module = require(servicePath);
       if (!(mod["class"] in module)) {
         throw new Error(f + ("Class (" + mod["class"] + ") not found in file (" + servicePath + ")"));
@@ -233,6 +237,10 @@
           throw new Error(f + ("No such service-module: " + nm));
         }
         servicePath = path.join(config.processDir, mod.file);
+        _log.debug(f + 'INSPECTING SERVICE MODULE', {
+          servicePath: servicePath,
+          mod: mod
+        });
         module = require(servicePath);
         if (!(mod["class"] in module)) {
           throw new Error(f + ("Class (" + mod["class"] + ") not found in file (" + servicePath + ")"));

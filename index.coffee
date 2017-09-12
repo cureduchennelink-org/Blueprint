@@ -135,7 +135,7 @@ update_deps= (kit, services_enabled, routes_enabled, mysql_mods_enabled)->
 		mod= config.route_modules[ nm]
 		throw new Error f+ "No such route-module: #{nm}" unless mod
 		servicePath= path.join config.processDir, mod.file
-		#_log.debug f+ 'Checking deps in route module', mod
+		_log.debug f+ 'INSPECTING ROUTE MODULE', {servicePath,mod}
 		module= (require servicePath)
 		throw new Error f+ "Class (#{mod.class}) not found in file (#{servicePath})" unless mod.class of module
 		deps= kit.get_service_deps_needed nm, module[mod.class]
@@ -149,8 +149,8 @@ update_deps= (kit, services_enabled, routes_enabled, mysql_mods_enabled)->
 		for nm in services_to_check
 			mod= config.service_modules[ nm]
 			throw new Error f+ "No such service-module: #{nm}" unless mod
-			#_log.debug f+ 'Checking deps in service module', mod
 			servicePath= path.join config.processDir, mod.file
+			_log.debug f+ 'INSPECTING SERVICE MODULE', {servicePath,mod}
 			module= (require servicePath)
 			throw new Error f+ "Class (#{mod.class}) not found in file (#{servicePath})" unless mod.class of module
 			deps= kit.get_service_deps_needed nm, module[mod.class]
