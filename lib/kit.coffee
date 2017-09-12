@@ -21,11 +21,11 @@ class Kit
 
 	new_service: (name, constructor, args)=>
 		d= constructor.deps
-		#console.log 'new_service: '+ name, d
-		throw new Error "Module '#{name}' is missing @deps" unless d
+		console.log 'Kit::new_service: '+ name, d
+		throw new Error "Service-Module '#{name}' is missing @deps" unless d
 		needs= d.services ? []
 		needs.push 'db' if d.mysql or d.mongo
-		throw new Error "Module '#{name}' requires service '#{n}'" for n in needs when n not of @services
+		throw new Error "Service-Module '#{name}' requires service '#{n}'" for n in needs when n not of @services
 		_t= @
 		_a= args ? []
 		@services[name]= new constructor _t, _a...
@@ -35,10 +35,11 @@ class Kit
 
 	new_route_service: (name, constructor, args)->
 		d= constructor.deps
-		throw new Error "Module '#{name}' is missing @deps" unless d
+		console.log 'Kit::new_route_service: '+ name, d
+		throw new Error "Route-Module '#{name}' is missing @deps" unless d
 		needs= d.services ? []
 		needs.push 'wrapper'
-		throw new Error "Module '#{name}' requires service '#{n}'" for n in needs when n not of @services
+		throw new Error "Route-Module '#{name}' requires service '#{n}'" for n in needs when n not of @services
 		_t= @
 		_a= args ? []
 		@routes[name]= new constructor _t, _a...
