@@ -1,9 +1,10 @@
 #
 #	DVblueprint Initialization
 #
+_= require 'lodash'
 
 # TODO HAVE A 'init' METHOD TO LOAD FIRST kit, config, logger AND MAYBE error WHICH TAKES PARAMS SO YOU CAN CIRCUMVENT ENV FOR E.G. TEST HARNESS DOING ONE MODULE UNIT TEST
-exports.start= (include_server, services_enabled, routes_enabled, mysql_enabled, mysql_mods_enabled, mongo_enabled, more_config= {}, more_kit= {})->
+exports.start= (include_server, services_enabled, routes_enabled, mysql_enabled= false, mysql_mods_enabled= [], mongo_enabled= false, more_config= {}, more_kit= {})->
 	server= false # For unit tests, may not include the restify server logic
 	# Require Node Modules
 	M= 			require 'moment'
@@ -39,6 +40,9 @@ exports.start= (include_server, services_enabled, routes_enabled, mysql_enabled,
 		server= new Server kit
 		server.create()
 		kit.add_service 'server', server					# Add server-service to kit
+
+	[services_enabled, mysql_nods_enabled]= update_deps kit, services_enabled, routes_enabled, mysql_mods_enabled
+	# TODO FIX FACT THAT THE ORDER FOR THESE IS IMPORTANT; NEED TO LOAD SERVICES IN THE ORDER THEY ARE NEEDED BY EACHOTHER
 
 	# Services
 	for nm in services_enabled
@@ -113,3 +117,33 @@ exports.start= (include_server, services_enabled, routes_enabled, mysql_enabled,
 		process.exit(1)
 
 	q_result
+
+update_deps= (kit, services_enabled, routes_enabled, mysql_mods_enabled)->
+
+	# Clone inbound arrays and add to them for final result
+	all_services= _.uniq services_enabled
+	all_mods= _.uniq mysql_mods_enabled
+
+	# Routes depend on services and mysql-mods; add their needs first
+	for nm in routes_enabled
+		mod= kit.services.config.route_modules[ nm]
+		throw new Error "No such route-module: #{nm}" unless mod
+		deps= kit.get_service_deps_needed nm, mod.class
+		_log f+ ':route', {nm,deps}
+		all_services.push nm for nm of deps
+	all_services= _.uniq all_services
+
+	services_to_check= all_services
+	while services_to_check.length
+		new_services= [] # Added to if not already in the list
+		for nm in services_to_check
+			mod= kit.services.config.service_modules[ nm]
+			throw new Error "No such service-module: #{nm}" unless mod
+			deps= kit.get_service_deps_needed nm, mod.class
+			for dep in deps
+				new_services.push dep if (all_services.indexOf dep) is -1
+		services_to_check= _.uniq new_services
+		_log f+ ':services', {services_to_check}
+
+	# TODO all_mods (based on both routes and services [and other mods?]
+	[all_services, all_mods]

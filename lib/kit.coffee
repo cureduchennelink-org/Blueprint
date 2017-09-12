@@ -11,7 +11,7 @@ class Kit
 
 	get_service_deps_needed: (name, constructor)-> # Look at deps.services and remove any already in @services
 		d= constructor.deps
-		throw new Error "Module '#{name}' is missing @deps" unless d
+		throw new Error "Module '#{name}' is missing @deps - "+ JSON.stringify constructor unless d
 		needed= []
 		for nm in d.services or []
 			needed.push nm unless nm of @services
@@ -34,6 +34,11 @@ class Kit
 		@routes[name]= obj
 
 	new_route_service: (name, constructor, args)->
+		d= constructor.deps
+		throw new Error "Module '#{name}' is missing @deps" unless d
+		needs= d.services ? []
+		needs.push 'wrapper'
+		throw new Error "Module '#{name}' requires service '#{n}'" for n in needs when n not of @services
 		_t= @
 		_a= args ? []
 		@routes[name]= new constructor _t, _a...

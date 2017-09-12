@@ -14,7 +14,12 @@ class MockService
 		@val= opt
 		kit.services['mockFunc']()
 
+class MockWrapper
+	@deps= {}
+	constructor: (kit, opts)->
+
 class MockRoute
+	@deps= {}
 	constructor: (kit, opts)->
 		@val= opts ? false
 		kit.services['mockFunc']()
@@ -49,6 +54,7 @@ describe 'Kit', ()->
 	it 'should create a new route instance and add to routes', ()->
 		funcTarget= false
 		funcTarget.should.be.false
+		kit.new_service 'wrapper', MockWrapper, ['my_arg']
 		kit.new_route_service 'my_route', MockRoute, ['my_arg']
 		kit.routes.my_route.should.be.an.instanceof MockRoute
 		kit.routes.my_route.val.should.equal 'my_arg'
