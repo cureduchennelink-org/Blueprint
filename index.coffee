@@ -2,6 +2,7 @@
 #	DVblueprint Initialization
 #
 _= require 'lodash'
+path= require 'path'
 
 # TODO HAVE A 'init' METHOD TO LOAD FIRST kit, config, logger AND MAYBE error WHICH TAKES PARAMS SO YOU CAN CIRCUMVENT ENV FOR E.G. TEST HARNESS DOING ONE MODULE UNIT TEST
 exports.start= (include_server, services_enabled, routes_enabled, mysql_enabled= false, mysql_mods_enabled= [], mongo_enabled= false, more_config= {}, more_kit= {})->
@@ -9,7 +10,6 @@ exports.start= (include_server, services_enabled, routes_enabled, mysql_enabled=
 	# Require Node Modules
 	M= 			require 'moment'
 	Promise=	require 'bluebird'
-	path= 		require 'path'
 	_= 			require 'lodash'
 
 	# Set default format for moment
@@ -41,8 +41,8 @@ exports.start= (include_server, services_enabled, routes_enabled, mysql_enabled=
 		server.create()
 		kit.add_service 'server', server					# Add server-service to kit
 
-	[services_enabled, mysql_nods_enabled]= update_deps kit, services_enabled, routes_enabled, mysql_mods_enabled
-	# TODO FIX FACT THAT THE ORDER FOR THESE IS IMPORTANT; NEED TO LOAD SERVICES IN THE ORDER THEY ARE NEEDED BY EACHOTHER
+	[services_enabled, mysql_mods_enabled]= update_deps kit, services_enabled, routes_enabled, mysql_mods_enabled
+	# TODO When 'db' is added, caller will have to enable that?
 
 	# Services
 	for nm in services_enabled
@@ -119,31 +119,97 @@ exports.start= (include_server, services_enabled, routes_enabled, mysql_enabled=
 	q_result
 
 update_deps= (kit, services_enabled, routes_enabled, mysql_mods_enabled)->
-
-	# Clone inbound arrays and add to them for final result
-	all_services= _.uniq services_enabled
-	all_mods= _.uniq mysql_mods_enabled
+	f= '(Start)Index::update_deps:'
+	config= kit.services.config
+	_log= kit.services.logger.log
+	_log.debug f+"USER_REQUESTED", {services_enabled,routes_enabled,mysql_mods_enabled}
+	all_mods= mysql_mods_enabled # TODO NEED TO LOAD THESE DEPS ALSO
+	special= [] # TODO MAYBE KIT FILTERED WHAT WAS ALREADY LOADED ['config','logger','error']
+	service_to_deps= {} # False if needing to get deps, else [] of deps
+	service_to_deps[ nm]= false for nm in services_enabled
+	if routes_enabled.length
+		service_to_deps[ nm]= false for nm in ['wrapper','router']
 
 	# Routes depend on services and mysql-mods; add their needs first
 	for nm in routes_enabled
-		mod= kit.services.config.route_modules[ nm]
-		throw new Error "No such route-module: #{nm}" unless mod
-		deps= kit.get_service_deps_needed nm, mod.class
-		_log f+ ':route', {nm,deps}
-		all_services.push nm for nm of deps
-	all_services= _.uniq all_services
+		mod= config.route_modules[ nm]
+		throw new Error f+ "No such route-module: #{nm}" unless mod
+		servicePath= path.join config.processDir, mod.file
+		#_log.debug f+ 'Checking deps in route module', mod
+		module= (require servicePath)
+		throw new Error f+ "Class (#{mod.class}) not found in file (#{servicePath})" unless mod.class of module
+		deps= kit.get_service_deps_needed nm, module[mod.class]
+		#_log.debug f+ ':route', {nm,deps}
+		service_to_deps[ snm]= false for snm in deps # Add all services that any route depends on
 
-	services_to_check= all_services
+	service_to_deps[ nm]= [] for nm in special # These are base services with no deps that are always 'provided'
+	services_to_check= (nm for nm of service_to_deps when service_to_deps[ nm] is false)
 	while services_to_check.length
 		new_services= [] # Added to if not already in the list
 		for nm in services_to_check
-			mod= kit.services.config.service_modules[ nm]
-			throw new Error "No such service-module: #{nm}" unless mod
-			deps= kit.get_service_deps_needed nm, mod.class
-			for dep in deps
-				new_services.push dep if (all_services.indexOf dep) is -1
-		services_to_check= _.uniq new_services
-		_log f+ ':services', {services_to_check}
+			mod= config.service_modules[ nm]
+			throw new Error f+ "No such service-module: #{nm}" unless mod
+			#_log.debug f+ 'Checking deps in service module', mod
+			servicePath= path.join config.processDir, mod.file
+			module= (require servicePath)
+			throw new Error f+ "Class (#{mod.class}) not found in file (#{servicePath})" unless mod.class of module
+			deps= kit.get_service_deps_needed nm, module[mod.class]
+			service_to_deps[ nm]= deps
+			service_to_deps[ dep]= false for dep in deps when dep not of service_to_deps
+		services_to_check= (nm for nm of service_to_deps when service_to_deps[ nm] is false)
+		#_log.debug f+ ':more_services', {services_to_check}
+	#_log.debug f+ ':services', {service_to_deps}
 
+	s2child= {}
+	all_services= []
+	present= {}
+	for nm,deps of service_to_deps
+		present[ nm]= false
+		s2child[ nm]?= [] # Make sure I exist here, even if no deps
+		for dep in deps # Consider nm as a 'child' of each dependancy
+			s2child[ dep]?= []
+			s2child[ dep].push nm
+			present[ dep]= false
+
+	###
+	# Assume end-user got his services listed in the right order, for now # TODO
+	for service in services_enabled when not present[ service]
+		all_services.push service # Can go anytime, but might need to be before someone else, so put first in list
+		present[ service]= true
+	###
+		
+	# Add each service as late as possible (just before any known child(who depends on it))
+	try_list= (service for service of s2child when not present[ service])
+	#_log.debug f+ ':TRY_LIST_TOP', {s2child,all_services,present,try_list}
+	while start_length= try_list.length
+		# Place this service in front of all children if all are present
+		for service,children of s2child
+			#_log.debug f+"TOP_OF_SERVICE_LOOP", {service,children,present,all_services}
+			continue if present[ service]
+			all_present= true # Assumption
+			for child in children
+				#_log.debug f+"CHILD_LOOP", {child,p:present[ child]}
+				if present[ child] is false
+					all_present= false
+					break
+			#_log.debug f+'ALL_PRESENT?', {service,all_present,children}
+			continue unless all_present # Try again later
+			# Find nearest neighbor
+			if children.length is 0
+				all_services.push service # Can go on the end, eh?
+			else # Before child closest to the front
+				#_log.debug f+"MIN_LIST", {service,index:(all_services.indexOf child for child in children)}
+				min= _.min (all_services.indexOf child for child in children)
+				throw new Error f+"BROKEN LOGIC child=#{child}" if min < 0
+				#_log.debug f+"SPLICE_BEFORE", {service,min,all_services}
+				all_services.splice min, 0, service
+				#_log.debug f+"SPLICE_AFTER", {service,all_services}
+			present[ service]= true
+		try_list= (service for service of s2child when not present[ service])
+		#_log.debug f+"dep-loop-bottom", {start_length,try_list,all_services,present,s2child}
+		throw new Error f+"Some wierdness in dependancies" if try_list.length is start_length
+
+		
 	# TODO all_mods (based on both routes and services [and other mods?]
+	_log.debug f+'FINAL', {all_services,s2child}
 	[all_services, all_mods]

@@ -16,11 +16,9 @@ class Wrapper
 		@odb= 		kit.services.db.mongo
 		@sdb= 		kit.services.db.mysql
 		@router= 	kit.services.router
-		@wraps= {}
-
-	server_init: (kit) ->
-		@routes= 	kit.routes
 		@lamd= 	    kit.services.lamd
+		@routes= 	kit.routes
+		@wraps= {}
 
 	start_connection_limit: ->
 		if @config.throttling.max_connections and request_count > @config.throttling.max_connections

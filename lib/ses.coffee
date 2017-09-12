@@ -6,6 +6,7 @@ Promise= require 'bluebird'
 AWS= require 'aws-sdk'
 
 class SES
+	@deps: services: ['logger','template','config'], config: 'ses[accessKeyId,secretAccessKey,region,emails[],debug_email,default{}]'
 	constructor: (kit) ->
 		@log= kit.services.logger.log
 		@config= kit.services.config.ses
