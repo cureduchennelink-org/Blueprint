@@ -50,7 +50,9 @@ class Server
 
 	add_static_server: ->
 		# Static File Server (Must be last Route Created)
-		@server.get /.*/, restify.serveStatic @config.api.static_file_server
+		path= /.*/
+		@log.debug "(restify) serveStatic", {path,"@config.api.static_file_server":@config.api.static_file_server}
+		@server.get path, restify.serveStatic @config.api.static_file_server
 
 	start: (cb)->
 		# Start the Server
