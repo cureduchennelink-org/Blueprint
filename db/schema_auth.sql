@@ -5,7 +5,7 @@
 		profile: Extended User information
 */
 
-DROP   TABLE ident;
+DROP   TABLE IF EXIST ident;
 CREATE TABLE ident (
 		/* System Values*/
 		id		INT(10)			NOT NULL AUTO_INCREMENT PRIMARY KEY
@@ -30,7 +30,7 @@ INSERT INTO ident (id,eml,cr) VALUES
 	/* Additional System Idents descend from here */
 	;
 
-DROP TABLE ident_tokens;
+DROP TABLE IF EXIST ident_tokens;
 CREATE TABLE ident_tokens (
 		id		INT(10)			NOT NULL AUTO_INCREMENT PRIMARY KEY
 	,	di		TINYINT    		DEFAULT 0 NOT NULL /* 'disposal' - 0:none,1:disabled,2:purge*/
