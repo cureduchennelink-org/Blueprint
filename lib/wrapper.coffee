@@ -8,7 +8,7 @@ request_count_high= 0
 
 class Wrapper
 	@deps=
-		mysql: ['core'], mongo: ['pool'], services: ['router','lamd','error']
+		mysql: ['core'], mongo: ['pool'], services:[ 'router', 'lamd', 'error', 'auth', ] # auth for req.auth via server.use
 		config: 'throttling.max_connections,db.mysql.enable,auth.bearer,perf?.test_user_override'
 	constructor: (kit) ->
 		@config=	kit.services.config
