@@ -16,12 +16,13 @@ class SES
 			region: @config.region
 		@ses= new AWS.SES()
 		@template= kit.services.template
+		@sendEmailAsPromised= Promise.promisify @ses.sendEmail, context: @ses
 
 	send: (type, data)->
 		spec= @config.emails[type]
 		message= @_composeMsgFrom spec, data
 		@log.debug 'SES:send:', 'sending message:', message
-		Promise.fromNode @ses, 'sendEmail', message
+		@sendEmailAsPromised message
 
 	_composeMsgFrom: (spec, data)->
 		f= 'SES._composeMsgFrom:'
