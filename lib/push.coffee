@@ -10,6 +10,7 @@ class Push
 		mysql: ['pset','pset_item','pset_item_change'], services: ['error','util']
 		config: 'push_service[poll_interval,max_buffer_size,poll_limit]'
 	constructor: (kit)->
+		f= 'BL/Push.constructor:'
 		@config= 	kit.services.config.push_service
 		@E=			kit.services.error
 		@sdb=		kit.services.db.mysql
@@ -41,7 +42,7 @@ class Push
 			# Read the latest item_change
 			@sdb.pset_item_change.GetMostRecentChanges @ctx, 1
 		.then (db_rows)->
-			ctx.log.debug f, 'got latest item_change', db_rows
+			@ctx.log.debug f, 'got latest item_change', db_rows
 			if db_rows.length
 				@count= db_rows[0].count
 
@@ -63,7 +64,7 @@ class Push
 
 	GetPushSet: (clear_pset, nm)->
 		f= 'Push:GetPushSet:'
-		ctx.log.debug f, {clear_pset}, nm
+		@ctx.log.debug f, {clear_pset}, nm
 		pset_id= false
 		pset= @pset_by_name[nm] ? false
 		return pset if pset and not clear_pset
@@ -74,14 +75,14 @@ class Push
 			# Grab the pset, or create one if it doesn't exist
 			@sdb.pset.read_or_insert @ctx, nm
 		.then (pset_rec)->
-			@pset_by_name[nm]= new PushSet pset_rec, @util
+			@pset_by_name[nm]= new PushSet @sdb, pset_rec, @util
 			pset_id= pset_rec.id
 
 			# if clear_pset is true remove all data related to pset id
 			return false unless clear_pset
 			@S_CleanPushSet @ctx, pset_id
 		.then (clean_result)->
-			ctx.log.debug f, 'got clean_result:', clean_result
+			@ctx.log.debug f, 'got clean_result:', clean_result
 
 			# return new PushSet rec or existing @pset_by_name[nm]
 			return @pset_by_name[nm]
@@ -111,7 +112,7 @@ class Push
 			@timer= setTimeout @S_Poll, @interval
 
 		.catch (e)->
-			ctx.log.error f, e, e.stack
+			@ctx.log.error f, e, e.stack
 
 	S_CleanPushSet: (ctx, pset_id)->
 		f= 'Push:S_CleanPushSet'
@@ -140,7 +141,7 @@ class Push
 			true
 
 class PushSet
-	constructor: (@pset, @util)-> # pset: id= 10, name= 'Todo'
+	constructor: (@sdb, @pset, @util)-> # pset: id= 10, name= 'Todo'
 		@c_items= {} # Cached Push Set Items. indexed by 'xref'
 
 	ItemChange: (ctx, xref, verb, prev, now, resource, tbl_id, tbl)->
@@ -205,6 +206,7 @@ class PushSet
 	S_GetItem: (ctx, xref)->
 		f= "PushSet:#{@pset.name}:S_GetItem:"
 		ctx.log.debug f, xref
+
 		sxref= (String xref)
 		item= @c_items[sxref] ? false
 		return item if item # Cached item

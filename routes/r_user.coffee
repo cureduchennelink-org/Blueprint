@@ -4,6 +4,7 @@
 Promise= require 'bluebird'
 
 class User
+	@deps= services:[ 'error', ], mysql:[ 'user', ]
 	constructor: (kit)->
 		@sdb= 		kit.services.db.mysql
 		@E= 		kit.services.error

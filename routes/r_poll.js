@@ -10,6 +10,11 @@
   _log = false;
 
   LongPoll = (function() {
+    LongPoll.deps = {
+      services: ['logger', 'config', 'push', 'pollMgr'],
+      config: 'api[longPollTimeout,authReqForPoll]'
+    };
+
     function LongPoll(kit) {
       this.LongPollRequest = bind(this.LongPollRequest, this);
       var ref;

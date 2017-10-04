@@ -7,6 +7,11 @@
   Promise = require('bluebird');
 
   User = (function() {
+    User.deps = {
+      services: ['error'],
+      mysql: ['user']
+    };
+
     function User(kit) {
       this._pl_user = bind(this._pl_user, this);
       this._update_profile = bind(this._update_profile, this);

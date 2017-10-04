@@ -3,20 +3,17 @@
 #
 
 Promise= require 'bluebird'
-E= require '../lib/error'
-
-sdb= false # MySql DB
-_log= false
 
 class Registration
+	@deps= services:[ 'error', 'config', 'ses', 'auth', 'tripMgr', 'template', ], mysql:[ 'auth', 'user', ], config: 'ses.options,api.ident_id'
 	constructor: (kit)->
-		_log= 		kit.services.logger.log
-		sdb= 		kit.services.db.mysql
-		@ses= 		kit.services.ses
-		@auth= 		kit.services.auth
-		@config= 	kit.services.config
-		@tripMgr= 	kit.services.tripMgr
-		@template= 	kit.services.template
+		@E=			kit.services.E
+		@config=	kit.services.config
+		@sdb=		kit.services.db.mysql
+		@ses=		kit.services.ses
+		@auth=		kit.services.auth
+		@tripMgr=	kit.services.tripMgr
+		@template=	kit.services.template
 
 		# Registration endpoints
 		@endpoints=
@@ -45,7 +42,6 @@ class Registration
 			params: fnm: 'r:S', lnm: 'r:S', eml: 'r:S'
 			response: success: 'bool'
 		return use_doc if ctx is 'use'
-		_log= ctx.log
 		p= ctx.p
 		recipient= false
 		success= false
@@ -53,23 +49,23 @@ class Registration
 		f= 'Registration:_signup:'
 
 		# Validate a few Params
-		throw new E.MissingArg 'eml' if not p.eml
-		throw new E.MissingArg 'fnm' if not p.fnm
-		throw new E.MissingArg 'lnm' if not p.lnm
+		throw new @E.MissingArg 'eml' if not p.eml
+		throw new @E.MissingArg 'fnm' if not p.fnm
+		throw new @E.MissingArg 'lnm' if not p.lnm
 
 		Promise.resolve().bind @
 		.then ->
 
 			# Verify email doesn't already exist
-			sdb.auth.GetByCredName ctx, p.eml
+			@sdb.auth.GetByCredName ctx, p.eml
 		.then (db_rows)->
-			_log.debug 'got ident with eml:', db_rows
-			throw new E.AccessDenied 'REGISTER:SIGNUP:EMAIL_EXISTS' unless db_rows.length is 0
+			ctx.log.debug 'got ident with eml:', db_rows
+			throw new @E.AccessDenied 'REGISTER:SIGNUP:EMAIL_EXISTS' unless db_rows.length is 0
 
 			# Create Trip and store email, fnm, lnm in json info. Never Expires (null).
 			@tripMgr.planTrip ctx, @config.api.ident_id, { eml: p.eml, fnm: p.fnm, lnm: p.lnm }, null, 'signup'
 		.then (new_trip)->
-			_log.debug f, 'got signup round trip:', new_trip
+			ctx.log.debug f, 'got signup round trip:', new_trip
 			trip= new_trip
 
 			# Send Signup email
@@ -84,7 +80,6 @@ class Registration
 	_read_signup: (ctx, pre_loaded)=>
 		use_doc= params: {}, response: success: 'bool', signup: 'JSON'
 		return use_doc if ctx is 'use'
-		_log= ctx.log
 		p= ctx.p
 		trip= false
 		success= false
@@ -97,17 +92,17 @@ class Registration
 			# Retrieve trip info from Trip Manager
 			@tripMgr.getTripFromToken ctx, p.token
 		.then (trip_info)->
-			_log.debug f, 'got round trip:', trip_info
+			ctx.log.debug f, 'got round trip:', trip_info
 			trip= trip_info
 			bad_token= trip_info.status is 'unknown' or trip_info.status isnt 'valid'
-			throw new E.AccessDenied 'REGISTER:READ_SIGNUP:BAD_TOKEN' if bad_token
+			throw new @E.AccessDenied 'REGISTER:READ_SIGNUP:BAD_TOKEN' if bad_token
 			trip.json= JSON.parse trip.json
 
 			# Verify email doesn't already exist
-			sdb.auth.GetByCredName ctx, trip.json.eml
+			@sdb.auth.GetByCredName ctx, trip.json.eml
 		.then (db_rows)->
-			_log.debug 'got ident with eml:', db_rows
-			throw new E.AccessDenied 'REGISTER:READ_SIGNUP:EMAIL_EXISTS' unless db_rows.length is 0
+			ctx.log.debug 'got ident with eml:', db_rows
+			throw new @E.AccessDenied 'REGISTER:READ_SIGNUP:EMAIL_EXISTS' unless db_rows.length is 0
 			success= true
 
 			# Return trip json info
@@ -119,7 +114,6 @@ class Registration
 			response: success: 'bool', eml_change: 'bool'
 		return use_doc if ctx is 'use'
 		f= 'Registration:_register_signup:'
-		_log= ctx.log
 		p= ctx.p
 		trip= false
 		change_trip= false
@@ -130,10 +124,10 @@ class Registration
 		success= false
 
 		# Validate a few params
-		throw new E.MissingArg 'eml' if not p.eml
-		throw new E.MissingArg 'pwd' if not p.pwd
-		throw new E.MissingArg 'fnm' if not p.fnm
-		throw new E.MissingArg 'lnm' if not p.lnm
+		throw new @E.MissingArg 'eml' if not p.eml
+		throw new @E.MissingArg 'pwd' if not p.pwd
+		throw new @E.MissingArg 'fnm' if not p.fnm
+		throw new @E.MissingArg 'lnm' if not p.lnm
 
 
 		Promise.resolve().bind @
@@ -142,18 +136,18 @@ class Registration
 			# Retrieve trip info from Trip Manager
 			@tripMgr.getTripFromToken ctx, p.token
 		.then (trip_info)->
-			_log.debug f, 'got round trip:', trip_info
+			ctx.log.debug f, 'got round trip:', trip_info
 			trip= trip_info
 			bad_token= trip_info.status is 'unknown' or trip_info.status isnt 'valid'
-			throw new E.AccessDenied 'REGISTER:REGISTER_SIGNUP:BAD_TOKEN' if bad_token
+			throw new @E.AccessDenied 'REGISTER:REGISTER_SIGNUP:BAD_TOKEN' if bad_token
 			trip.json= JSON.parse trip.json
 			eml_change= eml isnt trip.json.eml
 
 			# Verify email doesn't already exist
-			sdb.auth.GetByCredName ctx, eml
+			@sdb.auth.GetByCredName ctx, eml
 		.then (db_rows)->
-			_log.debug f, 'got ident with eml:', db_rows
-			throw new E.AccessDenied 'REGISTER:REGISTER_SIGNUP:EMAIL_EXISTS' unless db_rows.length is 0
+			ctx.log.debug f, 'got ident with eml:', db_rows
+			throw new @E.AccessDenied 'REGISTER:REGISTER_SIGNUP:EMAIL_EXISTS' unless db_rows.length is 0
 			success= true
 
 			# Encrypt the new password
@@ -163,17 +157,17 @@ class Registration
 
 			# Insert Ident Record
 			new_ident= eml: trip.json.eml, pwd: new_pwd
-			sdb.auth.Create ctx, new_ident
+			@sdb.auth.Create ctx, new_ident
 		.then (db_result)->
-			throw new E.DbError 'REGISTER:REGISTER_SIGNUP:CREATE_IDENT' if db_result.affectedRows isnt 1
+			throw new @E.DbError 'REGISTER:REGISTER_SIGNUP:CREATE_IDENT' if db_result.affectedRows isnt 1
 			new_ident_id= db_result.insertId
 
 			# TODO: FRAMEWORK: HOW TO HOOK IN TO THE EXTENDED PROFILE TABLE?
 			# Insert User/Profile Record
 			new_profile= ident_id: new_ident_id, fnm: p.fnm, lnm: p.lnm
-			sdb.user.Create ctx, new_profile
+			@sdb.user.Create ctx, new_profile
 		.then (db_result)->
-			throw new E.DbError 'REGISTER:REGISTER_SIGNUP:CREATE_PROFILE' if db_result.affectedRows isnt 1
+			throw new @E.DbError 'REGISTER:REGISTER_SIGNUP:CREATE_PROFILE' if db_result.affectedRows isnt 1
 
 			# Return the Trip to the Trip Manager
 			@tripMgr.returnFromTrip ctx, trip.id, new_ident_id
@@ -189,7 +183,7 @@ class Registration
 			return false unless eml_change
 			@tripMgr.planTrip ctx, new_ident_id, { eml: eml }, null, 'update_email'
 		.then (new_trip)->
-			_log.debug f, 'got round trip:', new_trip
+			ctx.log.debug f, 'got round trip:', new_trip
 			change_trip= new_trip if new_trip isnt false
 
 			# Send 'Verify Email' email

@@ -89,7 +89,7 @@ class PrototypeModule
 			send: result
 
 	# POST /Mod/Resource/:r0id
-	S_Create: (ctx, pre_loaded, resource)->
+	S_Create: (ctx, pre_loaded, resource)=>
 		use_doc=
 			params: @mod.datasets[resource]
 			response: success: 'bool'

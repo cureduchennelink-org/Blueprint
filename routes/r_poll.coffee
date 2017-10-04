@@ -17,6 +17,7 @@ _= require 'lodash'
 _log= false
 
 class LongPoll
+	@deps= services:[ 'logger', 'config', 'push', 'pollMgr', ],config: 'api[longPollTimeout,authReqForPoll]'
 	constructor: (kit)->
 		_log= 		 	kit.services.logger.log
 		@config= 	 	kit.services.config
