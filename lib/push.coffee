@@ -75,7 +75,7 @@ class Push
 			# Grab the pset, or create one if it doesn't exist
 			@sdb.pset.read_or_insert @ctx, nm
 		.then (pset_rec)->
-			@pset_by_name[nm]= new PushSet @sdb, pset_rec, @util
+			@pset_by_name[nm]= new PushSet @E, @sdb, pset_rec, @util
 			pset_id= pset_rec.id
 
 			# if clear_pset is true remove all data related to pset id
@@ -141,7 +141,7 @@ class Push
 			true
 
 class PushSet
-	constructor: (@sdb, @pset, @util)-> # pset: id= 10, name= 'Todo'
+	constructor: (@E, @sdb, @pset, @util)-> # pset: id= 10, name= 'Todo'
 		@c_items= {} # Cached Push Set Items. indexed by 'xref'
 
 	ItemChange: (ctx, xref, verb, prev, now, resource, tbl_id, tbl)->
@@ -194,9 +194,9 @@ class PushSet
 		.then (item_rec)->
 			item= item_rec
 
-			@sdb.pset_item_change.GetMostRecentForItem ctx, @pset.id, item_rec.id
+			@sdb.pset_item_change.GetMostRecentForItem ctx, @pset.id, item.id
 		.then (db_rows)->
-			throw new @E.ServerError "PUSHSET:GET_HANDLE:NO_LATEST_CHANGE", "#{@pset.id}/#{item_rec.id}/?" unless db_rows.length
+			throw new @E.ServerError "PUSHSET:GET_HANDLE:NO_LATEST_CHANGE", "#{@pset.id}/#{item.id}/?" unless db_rows.length
 			item_change= db_rows[0]
 
 			"#{@pset.id}/#{item.id}/#{item_change.id}"
