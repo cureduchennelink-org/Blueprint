@@ -38,8 +38,13 @@ exports.start= ()->
 
 	# Restify Hanlders
 	for handler in config.restify.handlers
-		log.info "(restify handler) Server.use #{handler}", config.restify[ handler]
-		server.use restify[handler] config.restify[ handler]
+		if _.isString(handler)
+			log.info "(restify handler) Server.use #{handler}", config.restify[ handler]
+			server.use restify[handler] config.restify[ handler]
+		else
+			log.info "(restify handler) Server.use #{handler} and options", handler
+			server.use restify[handler.nm] handler.options
+		
 	# Handle all OPTIONS requests to a deadend (Allows CORS to work them out)
 	log.info "(restify) Server.opts", config.restify.allow_headers
 	server.opts /.*/, ( req, res ) =>
