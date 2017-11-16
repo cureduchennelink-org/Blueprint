@@ -316,7 +316,7 @@ class AuthRoute
 		.then ()=>
 
 			# Retrieve trip info from Trip Manager
-			@tripMgr.getTripFromToken ctx, p.token
+			@tripMgr.getTripFromToken ctx, p.token, for_update= true
 		.then (trip_info)=>
 			_log.debug f, 'got round trip:', trip_info
 			trip= trip_info

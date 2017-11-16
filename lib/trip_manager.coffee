@@ -11,7 +11,8 @@ class TripManager
 		@sdb= 		kit.services.db.mysql
 		@tokenMgr=	kit.services.tokenMgr
 
-	getTripFromToken: (ctx, token)->
+	# Set for_update=true if later you plan to call 'returnFromTrip' to avoid Deadlock i.e. /AuthChange/:token/verifyforgot
+	getTripFromToken: (ctx, token, for_update= false)->
 		f= 'TripManager:getTripFromToken'
 		trip= false
 
@@ -19,7 +20,7 @@ class TripManager
 		.then =>
 
 			# Get the trip associated with this token
-			@sdb.trip.get_by_token ctx, token
+			@sdb.trip.get_by_token ctx, token, for_update
 		.then (db_rows) ->
 			return status: 'unknown' if db_rows.length isnt 1
 			trip= db_rows[0]

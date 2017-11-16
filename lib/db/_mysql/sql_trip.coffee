@@ -19,7 +19,7 @@ class SqlTrip
 
 		@db.method_factory @, 'SqlTrip'
 
-	get_by_token: (ctx, token)->
+	get_by_token: (ctx, token, for_update= false)->
 		f= "DB:SqlTrip:get_by_token:"
 		@log.debug f, token
 
@@ -28,6 +28,7 @@ class SqlTrip
 
 			sql= 'SELECT ' + (@schema.get_by_token.join ',') + ' FROM ' + @table +
 				' WHERE token= ? AND di= 0'
+			sql+= ' FOR UPDATE' if for_update is true
 			@db.sqlQuery ctx, sql, [token]
 		.then (db_rows)->
 			db_rows
