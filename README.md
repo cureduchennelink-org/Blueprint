@@ -382,4 +382,4 @@ Features:
 
 
 ## License
-Copyright &copy; DV-mobile 2014 - 2018. All Rights Reserved.
+Copyright © DV-mobile 2014 - 2018. All Rights Reserved.
