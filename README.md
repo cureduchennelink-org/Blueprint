@@ -27,15 +27,15 @@ The latest version of Node.js can be downloaded and isntalled from here: [downlo
 ##### Install CoffeeScript
 Most of the DVblueprint server is written in [CoffeeScript](http://coffeescript.org). It is syntactic sugar for JavaScript, and it is much easier to read and develop with. All of the examples below are going to be CoffeeScript. Node runs on JavaScript, so all Coffee files must be compiled before run time.  
 
-	npm install -g coffee-script
-	
+	sudo npm install -g coffeescript@1.9.2
+
 Compile a .coffee file using the '-c' flag:
-	
+
 	coffee -c my_file.coffee
 
 ##### Install MySql
 Some of the features in DVblueprint require a MySql database, including Dynamic Push Data,
-and OAuth 2.0 Authentication. Access to a MySql server needs to be set up.  
+and OAuth 2.0 Authentication. Access to a MySql server needs to be set up.
 
 Here are some options to help get you started:
 
@@ -50,13 +50,13 @@ Clone the repository to your local workspace directory and install node dependen
 	$ cd my/workspace/directory
 	$ git clone https://bitbucket.org/dv-mobile/blueprint.git
 	$ cd blueprint
-	$ npm instal
+	$ npm install
 
 ## Initialize Database
 
 	$ cd my/workspace/directory/blueprint
 	$ mysql -u [username] -h [optioanl-db-host] -p
-	
+
 	mysql> CREATE DATABASE blueprint
 		-> DEFAULT CHARACTER SET utf8
 		-> DEFAULT COLLATE utf8_general_ci;
@@ -64,7 +64,7 @@ Clone the repository to your local workspace directory and install node dependen
 	mysql> use blueprint;
 	mysql> source db/bootstrap.sql;
 	mysql> exit
-	
+
 
 ## Create Application Directory
 The main application is going to live as a peer of the DVblueprint repository.
@@ -74,7 +74,7 @@ uses the DVblueprint server.
 	$ cd my/workspace/directory
 	$ mkdir my_app
 	$ cd my_app
-	$ npm instal bunyan
+	$ sudo npm install -g bunyan
 	$ ln -s ../blueprint ./node_modules/.
 	$ ln -s ../blueprint/html_root .
 	$ mkdir lib
@@ -84,15 +84,15 @@ uses the DVblueprint server.
 ## Configure the Application
 ##### Configuration Files
 When the Blueprint server first launches, it will load default configuration details
-and merge it with the config file that matches the running processes enviroment.  
+and merge it with the config file that matches the running processes enviroment.
 
 Create a local config file using the editor of your choice (Make sure to compile after editing):
-	
+
 	$ cd my/workspace/directory/my_app
 	$ vi config/local_dev.coffee
 
 ##### Configure Database
- 	
+
  	# local_dev.coffee
 	module.exports=
 		db:
@@ -103,33 +103,33 @@ Create a local config file using the editor of your choice (Make sure to compile
 					user: 'root'
 					password: 'root'
 					database: 'blueprint'
-   
+
 
 ## Create Server File
 Create main application file
 
 	$ cd my/workspace/directory/my_app
 	$ vi server.coffee
-	
+
 Add the following to the main application file:
-	
+
 	#
 	# server.coffee: Main launch point for the application
 	#
-	
+
 	server= require 'blueprint'
 	server.start()
-	
+
 
 ## Running
-To run the application:  
-	
+To run the application:
+
 	$ export npm_config_env="local_dev"
 	$ export npm_config_config_dir="config"
 	$ node server.js | bunyan -o short
-	
-Vist the REST API Documentation: [here](http://localhost:9500/api/v1)  
-Vist the Example Todo Web-App: [here](http://localhost:9500/)   
+
+Vist the REST API Documentation: [here](http://localhost:9500/api/v1)
+Vist the Example Todo Web-App: [here](http://localhost:9500/)
 
 ## Creating Custom Routes
 The following is an example of how to add a route module that exposes endpoints for 'Fruit' resources.
@@ -147,14 +147,14 @@ Add the following to the application's config file to install the Route Module:
 		db:
 			...
 		route_modules:
-			Fruit: 
+			Fruit:
 				enable: true
 				name: 'Fruit'
 				class: 'Fruit'
 				file: 'routes/r_fruit'
-				
+
 ### Route Module Constructor
-An instance of the Route Module will be created when the server is first fired up, and all endpoints defined in the module will be registered with Restify to be exposed over the API. The constructor will be passed the kit, which has access to all enabled services including the app config, and application logger (See creating a Custom Service). Best practice is to take what you need from the kit and attach to ***this (@)***.  
+An instance of the Route Module will be created when the server is first fired up, and all endpoints defined in the module will be registered with Restify to be exposed over the API. The constructor will be passed the kit, which has access to all enabled services including the app config, and application logger (See creating a Custom Service). Best practice is to take what you need from the kit and attach to ***this (@)***.
 
 Endpoints are defined by adding to the ***@endpoints*** variable of the module, and defining options for that endpoint.
 
@@ -163,7 +163,7 @@ Endpoints are defined by adding to the ***@endpoints*** variable of the module, 
 			@log= 		kit.services.logger.log
 			@config= 	kit.services.config
 			@sdb= 		kit.services.db.mysql
-	
+
 			# Fruit Endpoints
 			@endpoints=
 				getFruit:
@@ -179,7 +179,7 @@ Endpoints are defined by adding to the ***@endpoints*** variable of the module, 
 					use: true, wrap: 'default_wrap', version: any: @S_EatFruit
 					sql_conn: true, sql_tx: true, auth_required: true
 					pre_load: fruit: @S_PlFruit
-		
+
 		S_GetFruit: (ctx, pre_loaded)-> ...
 		S_BuyFruit: (ctx, pre_loaded)-> ...
 		S_BuyFruit2: (ctx, pre_loaded)-> ...
@@ -205,7 +205,7 @@ Available endpoint options and their possible values:
 Custom Route Logic is the logic that is to be run when DVblueprint and restify validate an incoming request and map it to a particular endpoint defined in a Route Module. The idea is to separate out the unique business logic for a particular route and simplify the logic in the process. Best practice is to define the custom route logic as a function within a Route Module and associate it with a particular endpoint by using the 'version' endpoint option in the Route Modules constructor.
 
 #### Versioning
-Custom Route Logic is mapped to a URL, based on what was defined in the constructor. DVblueprint supports API Versioning by allowing you to specify different logic for different versions of the api. For example, when the server gets a request for 'POST /api/v1/Fruit', it will run the logic found in @S_GetFruit. When the server gets a request for 'POST /api/v2/Fruit', it will run the logic found in @S_GetFruit2.  
+Custom Route Logic is mapped to a URL, based on what was defined in the constructor. DVblueprint supports API Versioning by allowing you to specify different logic for different versions of the api. For example, when the server gets a request for 'POST /api/v1/Fruit', it will run the logic found in @S_GetFruit. When the server gets a request for 'POST /api/v2/Fruit', it will run the logic found in @S_GetFruit2.
 
 DVblueprint will first look for a specific version, otherwise, it will run the logic defined by the 'any:' key on the 'version' option of an endpoint.
 
@@ -213,7 +213,7 @@ DVblueprint will first look for a specific version, otherwise, it will run the l
 Before custom route logic is run, it is wrapped with the logic defined in the 'wrap' option for the endpoint. The idea is that this wrapper can perform tedious, repetitive logic that is typically required across multiple different routes. For example, the 'default_wrap' can grab a database connection, start a transaction, verify authentication, pre_load any data before calling the custom logic, handle any errors during route processing, roll-back a bad transaction, return the database connection to the pool, and even respond back to the incoming HTTP request.
 
 ###### simple_wrap
-The simple wrap will call the custom route logic the exact same way restify would, by passing in the incoming request object, response object, and the next callback. The simple_wrap does not perform any special post processing, so error handling, HTTP responses and calling next() are the responsibility of the route logic. The simple_wrap accepts the auth_required endpoint option to verify access to the endpoint. 
+The simple wrap will call the custom route logic the exact same way restify would, by passing in the incoming request object, response object, and the next callback. The simple_wrap does not perform any special post processing, so error handling, HTTP responses and calling next() are the responsibility of the route logic. The simple_wrap accepts the auth_required endpoint option to verify access to the endpoint.
 
 	RouteUsingSimpleWrap: (req, res, next)->
 		params= req.params
@@ -231,14 +231,14 @@ The default wrap is a little smarter and can perform pre and post processing of 
 		conn=	ctx.conn # Mysql Database connection
 		_log= 	ctx.log  # Bunyan logger w/ req.id attached
 		authId= pre_loaded.auth_id # Authorized ident_id
-		
+
 		throw new E.MissingParam 'name' unless 'name' of params
 		send: "Hello, #{params.name}"
-			
+
 
 ###### Signatures and options
 Here are the wraps that are currently available and the endpoint options that affect them:
-			
+
 | wrap 	|      wrapped logic signature 		| available options
 |:------:	|:-------------------------:	| :--:
 | simple_wrap   	| (req, res, next)-> 		| auth_required
@@ -263,7 +263,7 @@ Using the 'eatFruit' endpoint from the example above, the return value of this f
 		.then (db_rows)=>
 			throw new E.NotFoundError 'PRELOAD:FRUIT' if db_rows.length isnt 1
 			return db_rows[0]
-			
+
 	S_EatFruit: (ctx, pre_loaded)->
 		...
 		fruit= pre_loaded.fruit
@@ -277,13 +277,13 @@ To include a route in the Self-Documentation of the API, simply return a 'use_do
 			params: {}
 			response: success: 'bool', users: '[]'
 		return use_doc if ctx is 'use'
-	
+
 	RouteUsingSimpleWrap: (req, res, next)->
 		use_doc=
 			params: state:'S', country: 'S'
 			response: profile: '{}'
 		return use_doc if req is 'use'
-		
+
 #### Complete Example
 
 	class Fruit
@@ -292,7 +292,7 @@ To include a route in the Self-Documentation of the API, simply return a 'use_do
 			@config= 	kit.services.config
 			@sdb= 		kit.services.db.mysql
 			@E=			kit.services.error
-	
+
 			# Fruit Endpoints
 			@endpoints=
 				getFruit:
@@ -304,58 +304,58 @@ To include a route in the Self-Documentation of the API, simply return a 'use_do
 					use: true, wrap: 'default_wrap', version: any: @S_EatFruit
 					sql_conn: true, sql_tx: true, auth_required: true
 					pre_load: fruit: @S_PlFruit
-		
+
 		S_GetFruit: (ctx, pre_loaded)->
 			use_doc=
 				params: {}
 				response: success: 'bool', fruit: '[]'
 			return use_doc if ctx is 'use'
 			fruit= []
-			
+
 			Q.resolve()
 			.then ()=>
-			
+
 				# Grab all fruit from the database
 				@sdb.fruit.GetCollection ctx
 			.then (db_rows)=>
 				fruit= db_rows
-				
+
 				# Respond to the client
 				success= true
 				send: {success, fruit}
 
-		S_EatFruit: (ctx, pre_loaded)->	
+		S_EatFruit: (ctx, pre_loaded)->
 			use_doc=
 				params: {}
 				response: success: 'bool', fruit: '[]'
 			return use_doc if ctx is 'use'
-			
+
 			Q.resolve()
 			.then ()=>
-				
+
 				# Dispose of the pre-loaded fruit
 				@sdb.fruit.DisposeById ctx, pre_loaded.fruit.id
 			.then (db_result)=>
 				throw new @E.DbError 'Unable to Eat Fruit' unless db_result.affectedRows is 1
-				
+
 				# Respond to the client
 				success= true
 				send: {success}
-			
+
 
 		# Preload the Fruit
 		# Assumes 'Fruit/:frid' in the URL
 		S_PlFruit: (ctx, pre_loaded)->
-			
+
 			Q.resolve()
 			.then ()=>
-	
+
 				# Grab the Fruit from the database
 				@sdb.fruit.get_by_id ctx, ctx.p.frid
 			.then (db_rows)=>
 				throw new E.NotFoundError 'PRELOAD:FRUIT' if db_rows.length isnt 1
 				return db_rows[0]
-	
+
 	exports.Fruit= Fruit
 
 ## TODO
@@ -382,4 +382,4 @@ Features:
 
 
 ## License
-Copyright © DV-mobile 2014 - 2015. All Rights Reserved.
+Copyright Â© DV-mobile 2014 - 2018. All Rights Reserved.
