@@ -27,7 +27,7 @@ The latest version of Node.js can be downloaded and isntalled from here: [downlo
 ##### Install CoffeeScript
 Most of the DVblueprint server is written in [CoffeeScript](http://coffeescript.org). It is syntactic sugar for JavaScript, and it is much easier to read and develop with. All of the examples below are going to be CoffeeScript. Node runs on JavaScript, so all Coffee files must be compiled before run time.  
 
-	npm install -g coffeescript@1.9.2
+	sudo npm install -g coffeescript@1.9.2
 	
 Compile a .coffee file using the '-c' flag:
 	
@@ -74,7 +74,7 @@ uses the DVblueprint server.
 	$ cd my/workspace/directory
 	$ mkdir my_app
 	$ cd my_app
-	$ npm install bunyan
+	$ sudo npm install -g bunyan
 	$ ln -s ../blueprint ./node_modules/.
 	$ ln -s ../blueprint/html_root .
 	$ mkdir lib
@@ -382,4 +382,4 @@ Features:
 
 
 ## License
-Copyright © DV-mobile 2014 - 2015. All Rights Reserved.
+Copyright &copy; DV-mobile 2014 - 2018. All Rights Reserved.
