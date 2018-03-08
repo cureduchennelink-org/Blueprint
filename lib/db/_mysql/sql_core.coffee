@@ -66,7 +66,7 @@ class SqlCore
 		sqlQuery= @sqlQuery
 
 		if schema.GetByKey
-			sql_mod.GetByKey= (ctx, key, ids, lock)->
+			sql_mod.GetByKey= (ctx, key, ids, lock)=>
 				f= "DB:#{name}:GetByKey:"
 				ctx.log.debug f, key if @is_db_log_on
 
@@ -82,7 +82,7 @@ class SqlCore
 					db_rows
 
 		if schema.UpdateByKey
-			sql_mod.UpdateByKey= (ctx, key, ids, new_values)->
+			sql_mod.UpdateByKey= (ctx, key, ids, new_values)=>
 				f= "DB:#{name}:UpdateByKey:"
 				ctx.log.debug f, key if @is_db_log_on
 
@@ -103,7 +103,7 @@ class SqlCore
 					db_result
 
 		if schema.DisposeByIds
-			sql_mod.DisposeByIds= (ctx, ids)->
+			sql_mod.DisposeByIds= (ctx, ids)=>
 				f= "DB:#{name}:DisposeByIds:"
 				ctx.log.debug f, ids if @is_db_log_on
 
@@ -117,7 +117,7 @@ class SqlCore
 					db_result
 
 		if schema.get_collection or schema.GetCollection
-			get_collection= (ctx)->
+			get_collection= (ctx)=>
 				f= "DB:#{name}:get_collection:"
 				ctx.log.debug f if @is_db_log_on
 				schema_cols= schema.get_collection ? schema.GetCollection
@@ -133,7 +133,7 @@ class SqlCore
 			sql_mod.GetCollection= get_collection
 
 		if schema.get_by_id # Deprecated. Use GetByKey with 'id' # TODO: Remove when nothing uses it
-			sql_mod.get_by_id= (ctx, id)->
+			sql_mod.get_by_id= (ctx, id)=>
 				f= "DB:#{name}:get_by_id:"
 				ctx.log.debug f, id if @is_db_log_on
 
@@ -146,7 +146,7 @@ class SqlCore
 					db_rows
 
 		if schema.create or schema.Create
-			create= (ctx, new_values, re_read)->
+			create= (ctx, new_values, re_read)=>
 				f= "DB:#{name}:create:"
 				ctx.log.debug f, new_values if @is_db_log_on
 				schema_cols= schema.create ? schema.Create
@@ -179,7 +179,7 @@ class SqlCore
 			sql_mod.Create= create
 
 		if schema.update_by_id or schema.UpdateById
-			update_by_id= (ctx, id, new_values, re_read)->
+			update_by_id= (ctx, id, new_values, re_read)=>
 				f= "DB:#{name}:update_by_id:"
 				ctx.log.debug f, { id, new_values, re_read } if @is_db_log_on
 				schema_cols= schema.update_by_id ? schema.UpdateById
@@ -213,7 +213,7 @@ class SqlCore
 			sql_mod.UpdateById= update_by_id
 
 		if schema.delete_by_id or schema.DeleteById
-			delete_by_id= (ctx, id)->
+			delete_by_id= (ctx, id)=>
 				sql= 'DELETE FROM '+ table+ ' WHERE id= ?'
 				(sqlQuery ctx, sql, [ id ])
 				.then (db_result)=> db_result
