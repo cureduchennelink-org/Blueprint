@@ -38,7 +38,8 @@ module.exports=
 		pollMgr:		class: 'PollManager', 	file: 'node_modules/blueprint/lib/poll_manager'
 		ses:			class: 'SES', 			file: 'node_modules/blueprint/lib/ses'
 		tripMgr:		class: 'TripManager', 	file: 'node_modules/blueprint/lib/trip_manager'
-		lamd:			class:  'Lamd',			file: 'node_modules/blueprint//lib/lamd'
+		lamd:			class:  'Lamd',			file: 'node_modules/blueprint/lib/lamd'
+		AgentHeader:	class: 'AgentHeader',	file: 'node_modules/blueprint/lib/agent_header'
 	restify:
 		handlers: [ 'CORS','queryParser','bodyParser','requestLogger','authorizationParser' ]
 	route_prefix:
@@ -80,6 +81,8 @@ module.exports=
 				pset:				class: 'SqlPSet', 			file: 'node_modules/blueprint/lib/db/_mysql/sql_pset'
 				pset_item:			class: 'SqlPSetItem', 		file: 'node_modules/blueprint/lib/db/_mysql/sql_pset'
 				pset_item_change:	class: 'SqlPSetItemChange', file: 'node_modules/blueprint/lib/db/_mysql/sql_pset'
+				agent_header:		class: 'SqlAgentHeader',	file: 'node_modules/blueprint/lib/db/_mysql/sql_agent_header'
+
 		mongo:
 			options: 'mongodb://localhost/mydb'
 			models:

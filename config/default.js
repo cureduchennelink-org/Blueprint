@@ -110,7 +110,11 @@
       },
       lamd: {
         "class": 'Lamd',
-        file: 'node_modules/blueprint//lib/lamd'
+        file: 'node_modules/blueprint/lib/lamd'
+      },
+      AgentHeader: {
+        "class": 'AgentHeader',
+        file: 'node_modules/blueprint/lib/agent_header'
       }
     },
     restify: {
@@ -182,6 +186,10 @@
           pset_item_change: {
             "class": 'SqlPSetItemChange',
             file: 'node_modules/blueprint/lib/db/_mysql/sql_pset'
+          },
+          agent_header: {
+            "class": 'SqlAgentHeader',
+            file: 'node_modules/blueprint/lib/db/_mysql/sql_agent_header'
           }
         }
       },

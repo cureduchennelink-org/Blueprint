@@ -12,3 +12,4 @@ module.exports=
 				password: 'DV-mobile2012'
 				database: 'blueprint'
 				level2_debug: true
+
