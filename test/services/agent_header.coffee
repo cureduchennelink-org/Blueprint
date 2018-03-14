@@ -108,9 +108,9 @@ describe 'AgentHeader:service:', ()->
 			#TODO p= Promise.resolve()
 			p= []
 			for i in [1..20]
-				#TODO p= p.next -> module.xlate agent_string_4
 				p.push s= module.xlate agent_string_4+ ' #'+ next_expected_id
-				#expected.push { agent_string: s, id: next_expected_id}
+				expected.push next_expected_id
+				p.push s
 				expected.push next_expected_id
 				++next_expected_id
 			Promise.all p

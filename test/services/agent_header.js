@@ -146,6 +146,8 @@
         for (i = j = 1; j <= 20; i = ++j) {
           p.push(s = module.xlate(agent_string_4 + ' #' + next_expected_id));
           expected.push(next_expected_id);
+          p.push(s);
+          expected.push(next_expected_id);
           ++next_expected_id;
         }
         return Promise.all(p);
