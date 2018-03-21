@@ -5,13 +5,13 @@ _= require 'lodash'
 {CircularBuffer}= require './circular_buffer'
 
 _log= false
-_log2= debug: ()->
+_log2= debug: ->
 
 class PollManager
 	@deps= services: ['logger', 'push'], config: 'push_service.max_buffer_size'
 	constructor: (kit)->
 		_log= 		kit.services.logger.log
-		_log2= 		kit.services.logger.log
+		# DEBUG _log2= 		kit.services.logger.log
 		@config= 	kit.services.config.push_service
 		@push= 		kit.services.push
 		@buffer= 	new CircularBuffer @C_ChangesAddedToBuffer, @C_ChangesRemovedFromBuffer, @config.max_buffer_size
