@@ -40,6 +40,39 @@ module.exports=
 		tripMgr:		class: 'TripManager', 	file: 'node_modules/blueprint/lib/trip_manager'
 		lamd:			class:  'Lamd',			file: 'node_modules/blueprint/lib/lamd'
 		AgentHeader:	class: 'AgentHeader',	file: 'node_modules/blueprint/lib/agent_header'
+		RunQueue:		class: 'RunQueue',		file: 'node_modules/blueprint/lib/runqueue'
+
+	runqueue:
+		# Notes: the *_at takes a 'moment.add' spec [number,string]; string should be one of:
+		# (months or M) (weeks or w) (days or d) (hours or h) (minutes or m) (seconds or s)
+		settings:
+			poll_interval_ms: false, jobs: 100, read_depth: 20
+		topic_defaults:
+			back_off: 'standard', last_fail: false # No special handling
+			priority: 1000, group_ref: 'NONE', limit: rq_max # no reasonable limit
+			alarm_cnt: 8, warn_cnt: 3, warn_delay: [3,'m'], alarm_delay: [10,'m'], fail_at: [5, 'm']
+		external_groups:
+			default:	connections: rq_max, requests: [rq_max, rq_max, 'm'] # No limit on connections or req's-per-min
+			Tropo:		{}
+			SES:		{}
+			IvyHealth:	{}
+		topics:
+			alert_tropo:
+				service: 'IvyHealth.TropoAlert', type: 'per-user'
+				priority: 300, run_at: [0,'s'], group_ref: 'Tropo'
+			alert_ses:
+				service: 'IvyHealth.SesAlert', type: 'per-user'
+				priority: 320, run_at: [1,'s'], group_ref: 'SES'
+			poll_ivy_user:
+				service: 'IvyHealth.Readings', type: 'per-user,reoccur,fanout'
+				priority: 350, run_at: [1,'m'], group_ref: 'IvyHealth'
+		DISABLED_topics:
+			email_daily_user:
+				service: 'Reports.Daily', type: 'per-user,reoccur'
+				priority: 900, run_at: [1,'day'], group_ref: 'SES'
+			email_weekly_user:
+				service: 'Reports.Weekly', type: 'per-user,reoccur'
+				priority: 950, run_at: [7,'day'], group_ref: 'SES'
 	restify:
 		handlers: [ 'CORS','queryParser','bodyParser','requestLogger','authorizationParser' ]
 	route_prefix:
@@ -82,6 +115,7 @@ module.exports=
 				pset_item:			class: 'SqlPSetItem', 		file: 'node_modules/blueprint/lib/db/_mysql/sql_pset'
 				pset_item_change:	class: 'SqlPSetItemChange', file: 'node_modules/blueprint/lib/db/_mysql/sql_pset'
 				agent_header:		class: 'SqlAgentHeader',	file: 'node_modules/blueprint/lib/db/_mysql/sql_agent_header'
+				runqueue:			class: 'SqlRunQueue',		file: 'node_modules/blueprint/lib/db/sql_runqueue'
 
 		mongo:
 			options: 'mongodb://localhost/mydb'
