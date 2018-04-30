@@ -9,8 +9,10 @@
     "aws-sdk": "^2.0.17",
     "bluebird": "^3.5.0",
     "bunyan": "^1.1.0",
+    "is_js": "^0.9.0",
     "lodash": "^2.4.1",
-    "moment": "^2.8.3",
+    "moment": "^2.9.0",
+    "moment-timezone": "^0.5.16",
     "mysql": "^2.5.1",
     "restify": "^2.8.2"
   },
@@ -26,6 +28,7 @@
     "test-s-db": "NODE_ENV=development mocha test/services/db/*ee --bail",
     "test-r": "NODE_ENV=development mocha test/routes/*ee --bail",
     "test-s-auth": "NODE_ENV=development mocha test/services/auth.coffee --bail",
-    "test-s-db-token": "NODE_ENV=development mocha test/services/db/sql_token.coffee --bail"
+    "test-s-db-token": "NODE_ENV=development mocha test/services/db/sql_token.coffee --bail",
+    "test-s-runqueue": "NODE_ENV=development mocha test/services/runqueue.coffee --bail"
   }
 }

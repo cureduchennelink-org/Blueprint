@@ -3,6 +3,7 @@
 #
 vp_email= 'node_modules/blueprint/views/email'
 vp_use= 'node_modules/blueprint/views/use'
+rq_max= 1000* 1000
 
 module.exports=
 	api:
@@ -53,10 +54,13 @@ module.exports=
 			alarm_cnt: 8, warn_cnt: 3, warn_delay: [3,'m'], alarm_delay: [10,'m'], fail_at: [5, 'm']
 		external_groups:
 			default:	connections: rq_max, requests: [rq_max, rq_max, 'm'] # No limit on connections or req's-per-min
-			Tropo:		{}
 			SES:		{}
-			IvyHealth:	{}
+			SampleTest: {}
 		topics:
+			my_test_topic:
+				service: 'GenericService.Repeat', type: 'per-user,reoccur,fanout'
+				priority: 350, run_at: [5,'s'], group_ref: 'SampleTest'
+		SAMPLE_topics:
 			alert_tropo:
 				service: 'IvyHealth.TropoAlert', type: 'per-user'
 				priority: 300, run_at: [0,'s'], group_ref: 'Tropo'
@@ -115,7 +119,7 @@ module.exports=
 				pset_item:			class: 'SqlPSetItem', 		file: 'node_modules/blueprint/lib/db/_mysql/sql_pset'
 				pset_item_change:	class: 'SqlPSetItemChange', file: 'node_modules/blueprint/lib/db/_mysql/sql_pset'
 				agent_header:		class: 'SqlAgentHeader',	file: 'node_modules/blueprint/lib/db/_mysql/sql_agent_header'
-				runqueue:			class: 'SqlRunQueue',		file: 'node_modules/blueprint/lib/db/sql_runqueue'
+				runqueue:			class: 'SqlRunQueue',		file: 'node_modules/blueprint/lib/db/_mysql/sql_runqueue'
 
 		mongo:
 			options: 'mongodb://localhost/mydb'
