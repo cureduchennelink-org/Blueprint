@@ -117,7 +117,8 @@ class RunQueue
 		f= 'RunQueue::AddJob:'
 		if job_id is false
 			for nm in [ 'topic', 'json', ]
-				throw new @E.MissingArg nm unless nm of details
+				console.log @E.MissingArg nm unless nm of details
+				throw @E.MissingArg nm unless nm of details
 			throw new @E.InvalidArg "topic (#{details.topic})" unless details.topic of @topics
 		topic= @topics[ details.topic]
 

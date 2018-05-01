@@ -54,12 +54,15 @@ class Router
 				r.send @usage
 			else
 				try
-					result= @template.render 'Usage','Usage','usage_main', @make_tbl()
+					body= @template.render 'Usage','Usage','usage_main', @make_tbl()
 				catch e
 					@log.debug e, e.stack
 					throw e
-				r.set 'Content-Type', 'text/html'
-				r.send 200, result, {'Content-Type':'text/html; charset=utf-8'}
+				r.writeHead 200,
+					'Content-Length': Buffer.byteLength body
+					'Content-Type': 'text/html; charset=utf-8'
+				r.write body
+				r.end()
 			n()
 
 exports.Router= Router

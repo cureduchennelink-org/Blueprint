@@ -56,10 +56,7 @@ module.exports=
 			default:	connections: rq_max, requests: [rq_max, rq_max, 'm'] # No limit on connections or req's-per-min
 			SES:		{}
 			SampleTest: {}
-		topics:
-			my_test_topic:
-				service: 'GenericService.Repeat', type: 'per-user,reoccur,fanout'
-				priority: 350, run_at: [5,'s'], group_ref: 'SampleTest'
+		topics: {}
 		SAMPLE_topics:
 			alert_tropo:
 				service: 'IvyHealth.TropoAlert', type: 'per-user'
@@ -78,7 +75,7 @@ module.exports=
 				service: 'Reports.Weekly', type: 'per-user,reoccur'
 				priority: 950, run_at: [7,'day'], group_ref: 'SES'
 	restify:
-		handlers: [ 'CORS','queryParser','bodyParser','requestLogger','authorizationParser' ]
+		handlers: [ 'queryParser','bodyParser','requestLogger','authorizationParser' ]
 	route_prefix:
 		assests: '/s'
 		api: '/api/:Version'

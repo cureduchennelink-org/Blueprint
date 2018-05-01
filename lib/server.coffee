@@ -24,12 +24,12 @@ class Server
 	add_restify_handlers: ->
 		for handler in @config.restify.handlers
 			@log.info "(restify handler) Server.use #{handler}", @config.restify[ handler]
-			@server.use restify[handler] @config.restify[ handler]
+			@server.use restify.plugins[handler] @config.restify[ handler]
 
 	handle_options: ->
 		# Handle all OPTIONS requests to a deadend (Allows CORS to work them out)
 		@log.info "(restify) Server.opts", @config.restify.allow_headers
-		@server.opts /.*/, ( req, res ) =>
+		@server.opts '/*', ( req, res ) =>
 			res.setHeader 'access-control-allow-headers', (@config.restify.allow_headers ? []).join ', '
 			res.send 204
 
@@ -50,9 +50,10 @@ class Server
 
 	add_static_server: ->
 		# Static File Server (Must be last Route Created)
-		path= /.*/
+		path= '/*'
 		@log.debug "(restify) serveStatic", {path,"@config.api.static_file_server":@config.api.static_file_server}
-		@server.get path, restify.serveStatic @config.api.static_file_server
+		@server.get path, restify.plugins.serveStatic @config.api.static_file_server
+		# serveStatic = require 'serve-static-restify'
 
 	start: (cb)->
 		# Start the Server

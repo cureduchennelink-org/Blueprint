@@ -6,7 +6,7 @@
     "url": "https://bitbucket.org/dv-mobile/blueprint"
   },
   "dependencies": {
-    "aws-sdk": "^2.0.17",
+    "aws-sdk": "^2.230.1",
     "bluebird": "^3.5.0",
     "bunyan": "^1.1.0",
     "is_js": "^0.9.0",
@@ -14,7 +14,8 @@
     "moment": "^2.9.0",
     "moment-timezone": "^0.5.16",
     "mysql": "^2.5.1",
-    "restify": "^7.1.1"
+    "restify": "^7.1.1",
+    "restify-errors": "^6.0.0"
   },
   "devDependencies": {
     "chai": "1.9.1",

@@ -149,15 +149,7 @@
         SES: {},
         SampleTest: {}
       },
-      topics: {
-        my_test_topic: {
-          service: 'GenericService.Repeat',
-          type: 'per-user,reoccur,fanout',
-          priority: 350,
-          run_at: [5, 's'],
-          group_ref: 'SampleTest'
-        }
-      },
+      topics: {},
       SAMPLE_topics: {
         alert_tropo: {
           service: 'IvyHealth.TropoAlert',
@@ -199,7 +191,7 @@
       }
     },
     restify: {
-      handlers: ['CORS', 'queryParser', 'bodyParser', 'requestLogger', 'authorizationParser']
+      handlers: ['queryParser', 'bodyParser', 'requestLogger', 'authorizationParser']
     },
     route_prefix: {
       assests: '/s',

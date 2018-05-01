@@ -195,6 +195,13 @@
               config: {
                 runqueue: {
                   topics: {
+                    my_test_topic: {
+                      service: 'GenericService.Repeat',
+                      type: 'per-user,reoccur,fanout',
+                      priority: 350,
+                      run_at: [5, 's'],
+                      group_ref: 'SampleTest'
+                    },
                     topic_success: {
                       service: 'GenericService.Success',
                       type: 'per-user',
@@ -269,7 +276,7 @@
             result: result
           });
           return result.body.should.deep.equal({
-            error: 'MissingParam',
+            error: 'MissingArg',
             message: 'topic'
           });
         });
@@ -291,7 +298,7 @@
             result: result
           });
           return result.body.should.deep.equal({
-            error: 'MissingParam',
+            error: 'MissingArg',
             message: 'json'
           });
         });
@@ -313,7 +320,7 @@
             result: result
           });
           return result.body.should.deep.equal({
-            error: 'InvalidParam',
+            error: 'InvalidArg',
             message: "topic (" + payload.topic + ")"
           });
         });

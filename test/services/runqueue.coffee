@@ -2,6 +2,7 @@
 #	RunQueue Service Tests
 #
 #	Notes: For testing on epic server environment, do:
+#	(in node_modules: $ ln -s .. blueprint)
 #	(run msql script test/_MY_NOTES_RUNQUEUE for base schema, if needed.) # Drops+Creates database 'blueprint'
 #	npm_config_mysql_key=dvmobile npm_config_env=epic npm_config_config_dir=config npm run test-s-runqueue
 #
@@ -95,6 +96,9 @@ describe 'RunQueue: ', ()->
 				kit_overrides=
 					services: config: runqueue:
 						topics:
+							my_test_topic:
+								service: 'GenericService.Repeat', type: 'per-user,reoccur,fanout'
+								priority: 350, run_at: [5,'s'], group_ref: 'SampleTest'
 							topic_success:
 								service: 'GenericService.Success', type: 'per-user', priority: 300,
 								run_at: [0,'s'], group_ref: 'GenericService', unique_key: 'topic_success'
@@ -140,7 +144,7 @@ describe 'RunQueue: ', ()->
 				result.should.deep.equal SUPPOSED: "TO BREAK"
 			.catch (result)->
 				_log {result}
-				result.body.should.deep.equal error: 'MissingParam', message: 'topic'
+				result.body.should.deep.equal error: 'MissingArg', message: 'topic'
 
 		it 'Needs a json', ->
 			payload= topic: 'Xalert_tropo', Xjson: unique_json
@@ -151,7 +155,7 @@ describe 'RunQueue: ', ()->
 				result.should.deep.equal SUPPOSED: "TO BREAK"
 			.catch (result)->
 				_log {result}
-				result.body.should.deep.equal error: 'MissingParam', message: 'json'
+				result.body.should.deep.equal error: 'MissingArg', message: 'json'
 
 		it 'Needs a valid topic', ->
 			payload= topic: 'Xalert_tropo', json: unique_json
@@ -162,7 +166,7 @@ describe 'RunQueue: ', ()->
 				result.should.deep.equal SUPPOSED: "TO BREAK"
 			.catch (result)->
 				_log {result}
-				result.body.should.deep.equal error: 'InvalidParam', message: "topic (#{payload.topic})"
+				result.body.should.deep.equal error: 'InvalidArg', message: "topic (#{payload.topic})"
 
 		it 'Add topic_fails', ->
 			payload= topic: 'topic_fail', json: unique_json
