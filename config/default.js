@@ -191,7 +191,13 @@
       }
     },
     restify: {
-      handlers: ['queryParser', 'bodyParser', 'requestLogger', 'authorizationParser']
+      handlers: ['queryParser', 'bodyParser', 'requestLogger', 'authorizationParser'],
+      queryParser: {
+        mapParams: true
+      },
+      bodyParser: {
+        mapParams: true
+      }
     },
     route_prefix: {
       assests: '/s',

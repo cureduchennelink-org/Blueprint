@@ -9,6 +9,7 @@
 #  server.listen @config.api.port, cb
 
 restify= 	require 'restify'
+E= 	require 'restify-errors'
 _= 			require 'lodash'
 
 class Server
@@ -50,6 +51,9 @@ class Server
 
 	add_static_server: ->
 		# Static File Server (Must be last Route Created)
+		api_path= '/api/*'
+		m= 'Api request did not match your route + method (extra slash?)'
+		@server.get api_path, (q,r,n)-> r.send new E.BadRequestError m # Don't let static-server match api calls
 		path= '/*'
 		@log.debug "(restify) serveStatic", {path,"@config.api.static_file_server":@config.api.static_file_server}
 		@server.get path, restify.plugins.serveStatic @config.api.static_file_server

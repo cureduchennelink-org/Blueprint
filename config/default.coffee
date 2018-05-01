@@ -76,6 +76,8 @@ module.exports=
 				priority: 950, run_at: [7,'day'], group_ref: 'SES'
 	restify:
 		handlers: [ 'queryParser','bodyParser','requestLogger','authorizationParser' ]
+		queryParser: mapParams: true
+		bodyParser: mapParams: true
 	route_prefix:
 		assests: '/s'
 		api: '/api/:Version'
