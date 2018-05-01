@@ -14,7 +14,7 @@
     "moment": "^2.9.0",
     "moment-timezone": "^0.5.16",
     "mysql": "^2.5.1",
-    "restify": "^2.8.2"
+    "restify": "^7.1.1"
   },
   "devDependencies": {
     "chai": "1.9.1",
