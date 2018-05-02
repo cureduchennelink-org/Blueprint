@@ -1,5 +1,4 @@
 --require coffee-script/register
---compilers coffee:coffee-script
 -R spec
---recursive
 --timeout 20s
+--exit

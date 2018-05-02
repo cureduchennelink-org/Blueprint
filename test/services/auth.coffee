@@ -127,7 +127,8 @@ describe 'Auth Service', ()->
 				auth.server_use req, res, ()->
 				req.auth.authorize()
 				res.headers.should.have.property 'WWW-Authenticate'
-				res.data.should.be.an.instanceof E.OAuthError
+				res.data.name.should.equal 'OAuthError'
+				#res.data.should.be.an.instanceof E.OAuthError
 				res.data.statusCode.should.equal 401
 				res.data.body.error.should.equal 'invalid_token'
 

@@ -3,6 +3,7 @@
 #
 errors = require 'restify-errors'
 my_errors= {}
+f= 'lib/errors:'
 
 nm= 'ServerControlledException'
 do (nm)->
@@ -14,7 +15,7 @@ do (nm)->
 		message= 'See server_control'
 		e= new ec {message}
 		e.body= {error: 'ServerControl', message: 'See server_control', old_code, server_control}
-		console.log 'myinfo', e.body
+		console.log f+ nm, e.body
 		e
 
 nm= 'InvalidArg'
@@ -23,7 +24,7 @@ do (nm)->
 	my_errors[ nm]= (message)->
 		e= new ec message: message
 		e.body= { error: nm, message}
-		console.log 'myinfo', e.body
+		console.log f+ nm, e.body
 		e
 
 nm= 'MissingArg'
@@ -32,7 +33,7 @@ do (nm)->
 	my_errors[ nm]= (message)->
 		e= new ec {message}
 		e.body= { error: nm, message}
-		console.log 'myinfo', e.body
+		console.log f+ nm, e.body
 		e
 
 nm= 'NotFoundError'
@@ -41,7 +42,7 @@ do (nm)->
 	my_errors[ nm]= (token, message)->
 		e= new ec {message}
 		e.body= { error: nm, message}
-		console.log 'myinfo', e.body
+		console.log f+ nm, e.body
 		e
 
 nm= 'OAuthError'
@@ -50,7 +51,7 @@ do (nm)->
 	my_errors[ nm]= (code, error, message)->
 		e= new ec message: 'Invalid OAuth Request'
 		e.body= if message then {error, message} else {error}
-		console.log 'myinfo', e.body
+		console.log f+ nm, e.body
 		e
 
 nm= 'BasicAuthError'
@@ -59,7 +60,7 @@ do (nm)->
 	my_errors[ nm]= (error, message)->
 		e= new ec message: 'Invalid Basic Auth Request'
 		e.body= body= if message then {error, message} else {error}
-		console.log 'myinfo', e.body
+		console.log f+ nm, e.body
 		e
 
 # token in the form 'MODULE:FUNCTION:CUSTOM_STRING'
@@ -69,7 +70,7 @@ do (nm)->
 	my_errors[ nm]= (token, message)->
 		e= new ec {message}
 		e.body= {error: token, message}
-		console.log 'myinfo', e.body
+		console.log f+ nm, e.body
 		e
 
 nm= 'DbError'
@@ -78,7 +79,7 @@ do (nm)->
 	my_errors[ nm]= (token)->
 		e= new ec message: token, restCode: 'DatabaseError'
 		e.body= {error: token}
-		console.log 'myinfo', e.body
+		console.log f+ nm, e.body
 		e
 
 nm= 'ServerError'
@@ -87,7 +88,7 @@ do (nm)->
 	my_errors[ nm]= (token, message)->
 		e= new ec {message}
 		e.body= {error: token, message}
-		console.log 'myinfo', e.body
+		console.log f+ nm, e.body
 		e
 
 nm= 'MongoDbError'
@@ -96,7 +97,7 @@ do (nm)->
 	my_errors[ nm]= (message)->
 		e= new ec {message}
 		e.body= {error: 'mongo_error', message}
-		console.log 'myinfo', e.body
+		console.log f+ nm, e.body
 		e
 
 nm= 'TooManyConnectionsError'
@@ -105,7 +106,7 @@ do (nm)->
 	my_errors[ nm]= (message)->
 		e= new ec {message}
 		e.body= {error: 'too_many_connections_error', message}
-		console.log 'myinfo', e.body
+		console.log f+ nm, e.body
 		e
 
 console.log my_errors
