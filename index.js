@@ -173,9 +173,10 @@
   };
 
   update_deps = function(kit, services_enabled, routes_enabled, mysql_mods_enabled) {
-    var all_mods, all_present, all_services, child, children, config, dep, deps, f, i, j, k, l, len, len1, len2, len3, len4, len5, len6, len7, len8, m, min, mod, module, n, new_services, nm, o, p, present, q, ref, s2child, service, servicePath, service_to_deps, services_to_check, snm, special, start_length, try_list;
+    var _log, all_mods, all_present, all_services, child, children, config, dep, deps, f, i, j, k, l, len, len1, len2, len3, len4, len5, len6, len7, len8, m, min, mod, module, n, new_services, nm, o, p, present, q, ref, s2child, service, servicePath, service_to_deps, services_to_check, snm, special, start_length, try_list;
     f = '(Start)Index::update_deps:';
     config = kit.services.config;
+    _log = kit.services.logger.log;
     all_mods = mysql_mods_enabled;
     special = [];
     service_to_deps = {};

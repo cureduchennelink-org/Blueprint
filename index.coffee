@@ -121,7 +121,7 @@ exports.start= (include_server, services_enabled, routes_enabled, mysql_enabled=
 update_deps= (kit, services_enabled, routes_enabled, mysql_mods_enabled)->
 	f= '(Start)Index::update_deps:'
 	config= kit.services.config
-	#_log= kit.services.logger.log
+	_log= kit.services.logger.log
 	#_log.debug f+"USER_REQUESTED", {services_enabled,routes_enabled,mysql_mods_enabled}
 	all_mods= mysql_mods_enabled # TODO NEED TO LOAD THESE DEPS ALSO
 	special= [] # TODO MAYBE KIT FILTERED WHAT WAS ALREADY LOADED ['config','logger','error']
