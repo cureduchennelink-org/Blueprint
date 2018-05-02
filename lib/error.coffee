@@ -1,5 +1,6 @@
-# TODO Put back into DVblueprint when restify 7x is working
-
+#
+# Custom rest errors
+#
 errors = require 'restify-errors'
 my_errors= {}
 
