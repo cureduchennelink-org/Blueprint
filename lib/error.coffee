@@ -109,5 +109,5 @@ do (nm)->
 		console.log f+ nm, e.body
 		e
 
-console.log my_errors
+#console.log my_errors
 exports[nm]= val for nm,val of my_errors

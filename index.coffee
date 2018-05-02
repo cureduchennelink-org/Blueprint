@@ -98,7 +98,7 @@ exports.start= (include_server, services_enabled, routes_enabled, mysql_enabled=
 	if server
 		q_result= q_result.then ->
 			# Static File Server (Must be last Route Created)
-			server.add_static_server()
+			server.add_static_server() if config.api?.static_file_server
 			new Promise (resolve, reject)->
 				try
 					server.start ->
@@ -121,8 +121,8 @@ exports.start= (include_server, services_enabled, routes_enabled, mysql_enabled=
 update_deps= (kit, services_enabled, routes_enabled, mysql_mods_enabled)->
 	f= '(Start)Index::update_deps:'
 	config= kit.services.config
-	_log= kit.services.logger.log
-	_log.debug f+"USER_REQUESTED", {services_enabled,routes_enabled,mysql_mods_enabled}
+	#_log= kit.services.logger.log
+	#_log.debug f+"USER_REQUESTED", {services_enabled,routes_enabled,mysql_mods_enabled}
 	all_mods= mysql_mods_enabled # TODO NEED TO LOAD THESE DEPS ALSO
 	special= [] # TODO MAYBE KIT FILTERED WHAT WAS ALREADY LOADED ['config','logger','error']
 	service_to_deps= {} # False if needing to get deps, else [] of deps
@@ -135,7 +135,7 @@ update_deps= (kit, services_enabled, routes_enabled, mysql_mods_enabled)->
 		mod= config.route_modules[ nm]
 		throw new Error f+ "No such route-module: #{nm}" unless mod
 		servicePath= path.join config.processDir, mod.file
-		_log.debug f+ 'INSPECTING ROUTE MODULE', {servicePath,mod}
+		#_log.debug f+ 'INSPECTING ROUTE MODULE', {servicePath,mod}
 		module= (require servicePath)
 		throw new Error f+ "Class (#{mod.class}) not found in file (#{servicePath})" unless mod.class of module
 		deps= kit.get_service_deps_needed nm, module[mod.class]
@@ -150,7 +150,7 @@ update_deps= (kit, services_enabled, routes_enabled, mysql_mods_enabled)->
 			mod= config.service_modules[ nm]
 			throw new Error f+ "No such service-module: #{nm}" unless mod
 			servicePath= path.join config.processDir, mod.file
-			_log.debug f+ 'INSPECTING SERVICE MODULE', {servicePath,mod}
+			#_log.debug f+ 'INSPECTING SERVICE MODULE', {servicePath,mod}
 			module= (require servicePath)
 			throw new Error f+ "Class (#{mod.class}) not found in file (#{servicePath})" unless mod.class of module
 			deps= kit.get_service_deps_needed nm, module[mod.class]

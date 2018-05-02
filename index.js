@@ -142,7 +142,10 @@
     }
     if (server) {
       q_result = q_result.then(function() {
-        server.add_static_server();
+        var ref5;
+        if ((ref5 = config.api) != null ? ref5.static_file_server : void 0) {
+          server.add_static_server();
+        }
         return new Promise(function(resolve, reject) {
           var err;
           try {
@@ -170,15 +173,9 @@
   };
 
   update_deps = function(kit, services_enabled, routes_enabled, mysql_mods_enabled) {
-    var _log, all_mods, all_present, all_services, child, children, config, dep, deps, f, i, j, k, l, len, len1, len2, len3, len4, len5, len6, len7, len8, m, min, mod, module, n, new_services, nm, o, p, present, q, ref, s2child, service, servicePath, service_to_deps, services_to_check, snm, special, start_length, try_list;
+    var all_mods, all_present, all_services, child, children, config, dep, deps, f, i, j, k, l, len, len1, len2, len3, len4, len5, len6, len7, len8, m, min, mod, module, n, new_services, nm, o, p, present, q, ref, s2child, service, servicePath, service_to_deps, services_to_check, snm, special, start_length, try_list;
     f = '(Start)Index::update_deps:';
     config = kit.services.config;
-    _log = kit.services.logger.log;
-    _log.debug(f + "USER_REQUESTED", {
-      services_enabled: services_enabled,
-      routes_enabled: routes_enabled,
-      mysql_mods_enabled: mysql_mods_enabled
-    });
     all_mods = mysql_mods_enabled;
     special = [];
     service_to_deps = {};
@@ -200,10 +197,6 @@
         throw new Error(f + ("No such route-module: " + nm));
       }
       servicePath = path.join(config.processDir, mod.file);
-      _log.debug(f + 'INSPECTING ROUTE MODULE', {
-        servicePath: servicePath,
-        mod: mod
-      });
       module = require(servicePath);
       if (!(mod["class"] in module)) {
         throw new Error(f + ("Class (" + mod["class"] + ") not found in file (" + servicePath + ")"));
@@ -237,10 +230,6 @@
           throw new Error(f + ("No such service-module: " + nm));
         }
         servicePath = path.join(config.processDir, mod.file);
-        _log.debug(f + 'INSPECTING SERVICE MODULE', {
-          servicePath: servicePath,
-          mod: mod
-        });
         module = require(servicePath);
         if (!(mod["class"] in module)) {
           throw new Error(f + ("Class (" + mod["class"] + ") not found in file (" + servicePath + ")"));
