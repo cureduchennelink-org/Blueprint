@@ -13,7 +13,8 @@
     "lodash": "^4.17.10",
     "moment": "^2.22.1",
     "moment-timezone": "^0.5.16",
-    "mysql": "^2.15.0",
+    "mongodb": "^3.1.0-beta4",
+    "mongoose": "^5.1.1",
     "restify": "^7.1.1",
     "restify-errors": "^6.0.0",
     "user-agent-parser": "^0.6.0"

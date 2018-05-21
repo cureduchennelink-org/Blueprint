@@ -1,28 +1,30 @@
 #
 #	Service: RunQueue (DB backed, Monolith, Exactly-once, Exponential backoff, Re-ocurring semantics, crash recovery)
+#	JCS: Updated to use Sergey's port to MongoDB
 #
 Promise= require 'bluebird'
 _= require 'lodash'
 it_is= require 'is_js'
 moment= require 'moment'
 VALID_UNITS= [ 'months', 'M', 'weeks', 'w', 'days', 'd', 'hours', 'h', 'minutes', 'm', 'seconds', 's', ]
+goo_runqueue= require './goo_runqueue' # Mongoose based persistance, needs 'open'
 
 class RunQueue
 	@deps=
 		services:[ 'config', 'error', ] # Also, FYI, there are dynamic references to services per config.topics
-		mysql:[ 'runqueue', ]
 		config:[
 			'runqueue.topic_defaults{back_off,last_fail,priority,external_group,limit,alarm_cnt,warn_cnt,warn_delay,alarm_delay}'
 			'runqueue.external_groups[default/ANY{connections,requests}]'
 			'runqueue.topics.ANY{call,type,priority,run_at,external_group}'
 			'runqueue.settings[poll_interval_ms,jobs,read_depth]'
+			'runqueue.mongodb_uri'
 			]
 
 	constructor: (kit) ->
 		f= 'RunQueue::constructor'
 		@log= 		kit.services.logger.log
 		@E= 		kit.services.error
-		@sdb= 		kit.services.db.mysql
+		@sdb= 		runqueue: new goo_runqueue # kit.services.db.mysql
 		@config=	kit.services.config.runqueue
 
 		@ctx_poll= log: @log, conn: false # Poller will populate conn-ection on demand
@@ -78,7 +80,7 @@ class RunQueue
 		Promise.resolve().bind @
 		.then ->
 
-			@sdb.core.Acquire()
+			@sdb.runqueue.open @config.mongodb_uri # @sdb.core.Acquire()
 		.then (c)->
 			@ctx_finish.conn= c
 
@@ -142,7 +144,11 @@ class RunQueue
 						]
 				@sdb.runqueue.ReplaceJob ctx, job_id, replace_values, reread= true
 		.catch (e)->
-			if e.errno is 1062 and e.sqlMessage.includes "ix_runqueue__unique_key"
+			if (
+				e.errno is 1062 and e.sqlMessage.includes "ix_runqueue__unique_key"
+			) or (
+				e.code is 11000 and e.errmsg.includes 'duplicate key error collection'
+			)
 			then e.name = @ERR_DUPLICATE_JOB
 			throw e
 
@@ -231,7 +237,7 @@ class RunQueue
 			return false unless ctx.conn is false
 			rVal.push step: 'acquire'
 
-			@sdb.core.Acquire()
+			@sdb.runqueue.open @config.mongodb_uri # @sdb.core.Acquire()
 		.then (c)->
 			ctx.conn= c unless c is false
 
