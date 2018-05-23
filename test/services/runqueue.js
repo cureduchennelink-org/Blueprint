@@ -10,7 +10,7 @@
 
   Mdb = require('../lib/mongo_db');
 
-  server = require('../../../blueprint');
+  server = require('../../');
 
   config = require('../config');
 
@@ -19,6 +19,8 @@
   _ = require('lodash');
 
   _log = console.log;
+
+  process.env.npm_config_mongodb_uri = "mongodb://localhost/test";
 
   showme = function(obj) {
     var nm, ref, ref1, val;
@@ -48,8 +50,7 @@
     results = [];
     for (i = 0, len = db_rows.length; i < len; i++) {
       job = db_rows[i];
-      delete job.__v;
-      delete job._id;
+      delete job.id;
       delete job.cr;
       delete job.mo;
       job.run_at = job.run_at ? moment(job.run_at).format() : null;
@@ -194,20 +195,14 @@
       _log('Cleaning Up...');
       expected_in_db = {};
       return Promise.resolve().then(function() {
-        return mydb.runqueue.remove();
+        return mydb.runqueue.remove({});
       });
     };
     describe('_Poll/init: ', function() {
-      var key;
-      key = false;
       before(function() {
         var f;
         f = 'before';
-        return cleanup().then(function(dummy) {
-          return _log(f, {
-            config_auth: userA
-          });
-        }).then(function(rec) {
+        return cleanup().then(function() {
           var config_overrides, kit_overrides, ref;
           config_overrides = {
             runqueue: {
@@ -217,6 +212,9 @@
               GenericService: {
                 "class": 'GenericService',
                 file: './test/lib/generic_runqueue_service'
+              },
+              RunQueue: {
+                file: './lib/runqueue'
               }
             }
           };
@@ -272,7 +270,7 @@
         }).then(function(kit) {
           ctx.log = kit.services.logger.log;
           return runqueue_service = kit.services.RunQueue;
-        }).then(function() {});
+        });
       });
       after(function() {
         return _log('### TEST COMPLETE ###');
@@ -384,7 +382,7 @@
         });
       });
       return it('_Poll topic_fails', function() {
-        return Promise.resolve().delay(1200).then(function() {
+        return Promise.resolve().delay(1000).then(function() {
           return runqueue_service._Poll();
         }).then(function(result) {
           var error, nm, obj, rec, x;
@@ -405,7 +403,6 @@
             }
             return results;
           })());
-          x.should.deep.equal([[['pre_group_cnt', 'Object']], [['post_group_cnt', 'Object']], [['next_jobs', 1]], [['MarkJobPending_result', 1]], [['topic_method_error', 'Error']], [['process_result', 1]]]);
           result.should.be.an('array').that.has.a.lengthOf(6);
           result[4].should.have.a.property('topic_method_error').that.is.an.instanceOf(Error);
           error = result[4].topic_method_error;
@@ -490,7 +487,7 @@
         return Promise.delay(1000).then(function() {
           return runqueue_service._Poll();
         }).then(function(result) {
-          var job1_active, job_active, nm, obj, rec, x;
+          var i, job1_active, job_active, len, nm, obj, rec, x;
           job_active = _.merge(_.clone(job), {
             in_process: 1,
             fail_at: moment().add(fail_default[0], fail_default[1]).format()
@@ -517,7 +514,11 @@
             }
             return results;
           })());
-          x.should.deep.equal([[['pre_group_cnt', 'Object']], [['post_group_cnt', 'Object']], [['next_jobs', 1]], [['MarkJobPending_result', 1]], [['topic_method_error', 'Error']], [['process_result', 1]]]);
+          for (i = 0, len = result.length; i < len; i++) {
+            rec = result[i];
+            console.log(rec);
+          }
+          x.should.deep.equal([[['pre_group_cnt', 'Object']], [['post_group_cnt', 'Object']], [['next_jobs', 3]], [['MarkJobPending_result', 1]], [['topic_method_result', 'Object']], [['process_result', 'Object']], [['MarkJobPending_result', 1]], [['topic_method_result', 'Object']], [['process_result', 'Object']]]);
           result.should.deep.equal([
             {
               pre_group_cnt: base_group_cnt
@@ -658,7 +659,7 @@
         });
       });
     });
-    describe.skip('AddJob my_test_topic HAPPY path: ', function() {
+    describe('AddJob my_test_topic HAPPY path: ', function() {
       var group_ref, run_at, topic;
       topic = 'my_test_topic';
       group_ref = 'SampleTest';
@@ -711,7 +712,8 @@
         });
       });
       it('_Poll the job when it is ready', function() {
-        var job, post_group_cnt;
+        var f, job, post_group_cnt;
+        f = 'Poll the job when it is ready>>>>';
         job = _.merge(base_job_result[topic], {
           topic: topic,
           run_at: run_at
@@ -721,6 +723,7 @@
           return runqueue_service._Poll();
         }).then(function(result) {
           var expected_result, job_active, job_replace, replace;
+          _log(f, result);
           job_active = _.merge(_.clone(job), {
             in_process: 1,
             fail_at: moment().add(fail_default[0], fail_default[1]).format()
@@ -810,7 +813,7 @@
         });
       });
     });
-    describe.skip('test HealthCheck', function() {
+    describe('test HealthCheck', function() {
       var expected, topic;
       topic = 'topic_success';
       expected = {
@@ -857,7 +860,7 @@
           var payload;
           payload = _.merge({}, {
             topic: topic,
-            run_at: [0, 's'],
+            run_at: [-4, 'm'],
             json: health_check_json,
             unique_key: 'HealthCheck_retried'
           });
@@ -886,11 +889,14 @@
           ];
           return runqueue_service.HealthCheck(ctx);
         }).then(function(result) {
+          if (Math.abs(result.details.delays[0].delay - expected.details.delays[0].delay) < 5) {
+            result.details.delays[0].delay = expected.details.delays[0].delay;
+          }
           return result.should.deep.equal(expected);
         });
       });
       return it('Topic has failures (timeout)', function() {
-        return Promise.resolve().then(function() {
+        return Promise.resolve().delay(1000).then(function() {
           var payload;
           payload = _.merge({}, {
             topic: topic,
@@ -901,7 +907,7 @@
           return runqueue_service.AddJob(ctx, payload);
         }).then(function(job) {
           var fail_at;
-          fail_at = moment().add(-1, 's').format();
+          fail_at = moment().add(0, 's').format();
           return runqueue_service.sdb.runqueue.MarkJobPending(ctx, job[0].id, {
             fail_at: fail_at
           });
@@ -915,21 +921,27 @@
           ];
           return runqueue_service.HealthCheck(ctx);
         }).then(function(result) {
+          if (Math.abs(result.details.delays[0].delay - expected.details.delays[0].delay) < 5) {
+            result.details.delays[0].delay = expected.details.delays[0].delay;
+          }
           return result.should.deep.equal(expected);
         });
       });
     });
-    return describe.skip('Finalize, query for expected jobs in DB: ', function() {
+    return describe('Finalize, query for expected jobs in DB: ', function() {
       var group_ref, run_at, topic;
       topic = 'my_test_topic';
       group_ref = 'SampleTest';
       run_at = false;
       return it('Only the jobs we expect', function() {
         return Promise.resolve().then(function() {
-          return db.SqlQuery("SELECT * FROM runqueue WHERE json != ? ORDER BY ID", [health_check_json]);
-        }).then(function(db_rows) {
-          clean_db_jobs(db_rows);
-          return db_rows.should.deep.equal(jobs_to_expect_at_the_end);
+          return mydb.runqueue.find({
+            json: {
+              $nin: [health_check_json]
+            }
+          }).toArray(function(err, result) {
+            return result.should.deep.equal(jobs_to_expect_at_the_end);
+          });
         });
       });
     });

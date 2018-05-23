@@ -308,7 +308,7 @@ class RunQueue
 		@log.debug f+'AFTER', {topic_result}
 
 		@finish_promise= @finish_promise
-		.then ->
+		.then -> 
 			Promise.resolve().bind @
 			.then ->
 				if topic_result.success is true # Else we consider it a failure
@@ -323,9 +323,8 @@ class RunQueue
 				else
 					run_at= @_pick_at job.retries+ 1, 'run_at', job.topic, topic_result
 					@sdb.runqueue.Fail ctx, job.id, {run_at, last_reason: topic_result.reason}, reread= true
-
 			.catch (err)->
-				@log.error f, {job,topic_result,err}
-				err # TODO CONSIDER WHAT IMPACT RETURNING AN ERROR HERE HAS ON THE REST OF THE PROMISE CHAIN
+					@log.error f, {job,topic_result,err}
+					err # TODO CONSIDER WHAT IMPACT RETURNING AN ERROR HERE HAS ON THE REST OF THE PROMISE CHAIN
 
 exports.RunQueue= RunQueue

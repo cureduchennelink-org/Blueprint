@@ -15,6 +15,18 @@ showme= (f, obj)->
 			mongoose_stuff: _.pick obj, 'isNew', 'errors', '_doc'
 		else {}
 
+logRequest= (f, obj)->
+	# The Query that is going to turn into a Mongoose Model
+	console.log "##### QUERY >>>" + f, obj 
+
+logResponse= (f, objs)->
+	objs= [objs] unless Array.isArray(objs)
+	console.log("##### RESP >>> " + f, length: objs.length)
+	for obj in objs
+		if obj?.toJSON?
+			console.log " -#- ", obj.toJSON()
+		else showme(" -#- ", obj)
+
 class RunQueueMongoDbPersistence
 	@deps= {}
 
@@ -50,6 +62,7 @@ class RunQueueMongoDbPersistence
 			{ $group: _id: '$group_ref', count: $sum: 1 }
 		]
 
+		# TODO: COME BACK & REVISE 
 		new Promise (resolve, reject)=>
 			@_model.aggregate pipeline, (err, results)=> # TODO CONSIDER .THEN VERSION W/O THE NEW PROMISE
 				if err then return reject err else if not results? then return resolve []
@@ -57,20 +70,25 @@ class RunQueueMongoDbPersistence
 						group_ref: r._id, active_cnt: r.count
 
 	GetNextJobs: (ctx, maxRows, maxRetries= 8)->
+		f="RunQueueMongoDbPersistence::GetNextJobs: "
+		date= new Date()
+		oneSMore= new Date(date - 1000) # we need to get the date minus one second
 		conditions=
 			in_process: 0
-			run_at: $lte: new Date()
+			run_at: $lte: oneSMore   
 			retries: $lte: maxRetries
 			di: 0
+		
+		# Record the query that we're using
+		logRequest(f, { conditions, maxRows })
 
 		@_model
 		.find conditions
 		.sort priority: 1, run_at: 1
 		.limit maxRows
 		.then (model_result)->
-			console.log model_result # XXX WHAT IS THIS THING? (APPEARED TO BE AN ARRAY OF THE ONE JOB)
-			row._doc for row in model_result
-			# XXX model_result # XXX
+			logResponse(f, model_result)
+			model.toJSON() for model in model_result
 
 	AddJob: (ctx, newValues, reread= false)->
 		f= 'RunQueueMongoDbPersistence::AddJob:'
@@ -79,7 +97,7 @@ class RunQueueMongoDbPersistence
 			mo: new Date()
 			in_process: 0
 			retries: 0
-		newValues.in_process= 5 # XXX
+		newValues.in_process= 0
 		options= {} # new: true # XXX, rawResult: true
 		console.log f+ 'SAVE', {newValues, options}
 		# XXX @_model.create newValues #, new: true, rawResult: true
@@ -88,9 +106,9 @@ class RunQueueMongoDbPersistence
 		.then (model_result)-> # TODO 
 			showme f, model_result
 			if reread then [model_result.toJSON()] else affectedRows: 1, insertId: model_result.toJSON().id
-			[model_result.toJSON()] # XXX
 
 	ReplaceJob: (ctx, id, newValues, reread= false)->
+		f= 'RunQueueMongoDbPersistence::ReplaceJob:'
 		# TODO CHECK THAT USING newValues ON LEFT SIDE IS CORRECT
 		newValues= _.pick newValues, 'unique_key', 'priority', 'run_at', 'json'
 		defaults= in_process: 0, retries: 0
@@ -100,10 +118,15 @@ class RunQueueMongoDbPersistence
 		unset= {}
 		unset[ nm]= '' for nm in ['fail_at', 'last_reason', 'unique_key', 'json'] when nm not of newValues
 		doc= $set: newValues, $unset: unset
-		options= new: true
+		options= new: true, rawResult: true
 
 		@_model.findByIdAndUpdate id, doc, options
-		.then (model_result)-> if reread then [model_result._doc] else model_result.result
+		.then (mongo_result)->
+			showme f, mongo_result
+			if mongo_result and mongo_result.lastErrorObject?.n is 1 # We did update the record
+				if reread then [mongo_result.value.toJSON()] else affectedRows: 1
+			else
+				if reread then [] else affectedRows: 0
 
 	MarkJobPending: (ctx, id, otherValues, reread= false)->
 		f= 'RunQueueMongoDbPersistence::MarkJobPending:'
@@ -124,20 +147,26 @@ class RunQueueMongoDbPersistence
 		.then (mongo_result)->
 			showme f, mongo_result
 			if mongo_result and mongo_result.lastErrorObject?.n is 1 # We did update the record
-				if reread then [mongo_result.value._doc] else affectedRows: 1
+				if reread then [mongo_result.value.toJSON()] else affectedRows: 1
 			else
 				if reread then [] else affectedRows: 0
 
 	Fail: (ctx, id, newValues, reread= false)->
+		f= 'RunQueueMongoDbPersistence::Fail:'
 		newValues= _.pick newValues, 'last_reason', 'run_at'
 		newValues.mo= new Date()
 		newValues.in_process= 0
 
 		doc= $set: newValues, $inc: {retries: 1}, $unset: fail_at: ''
-		options= new: true
+		options= new: true, rawResult: true
 
 		@_model.findByIdAndUpdate id, doc, options
-		.then (model_result)-> if reread then [model_result._doc] else model_result.result
+		.then (mongo_result)->
+			showme f, mongo_result
+			if mongo_result and mongo_result.lastErrorObject?.n is 1 # We did update the record
+				if reread then [mongo_result.value.toJSON()] else affectedRows: 1
+			else
+				if reread then [] else affectedRows: 0
 
 	RemoveByIds: (ctx, ids)->
 		ids= [ids] unless _.isArray ids
@@ -146,6 +175,9 @@ class RunQueueMongoDbPersistence
 		doc= $set: mo: new Date(), di: 1
 
 		@_model.updateMany conditions, doc
+		.then (result)->
+			affectedRows: result.nModified 
+
 
 	RemoveByUniqueKeys: (ctx, uniqueKeys)->
 		uniqueKeys= [uniqueKeys] unless _.isArray uniqueKeys
@@ -154,6 +186,8 @@ class RunQueueMongoDbPersistence
 		doc= $set: mo: new Date(), di: 1
 
 		@_model.updateMany conditions, doc
+		.then (result)->
+			affectedRows: result.nModified
 
 	GetDelayedByTopic: (ctx)->
 		pipeline= [
