@@ -25,8 +25,8 @@
 
   module.exports = function() {
     var configDir, env, envPath, execDir, ref, ref1;
-    env = (ref = process.env.npm_config_env) != null ? ref : 'src/config';
-    configDir = (ref1 = process.env.npm_config_config_dir) != null ? ref1 : 'container';
+    env = (ref = process.env.npm_config_env) != null ? ref : 'container';
+    configDir = (ref1 = process.env.npm_config_config_dir) != null ? ref1 : 'src/config';
     execDir = process.cwd();
     _log('Environment specified:', env);
     _log('Config Dir specified:', configDir);

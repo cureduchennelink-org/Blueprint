@@ -18,8 +18,8 @@ fileExists= (filepath)->
 	true
 
 module.exports= ()->
-	env= 		process.env.npm_config_env ? 'src/config'
-	configDir= 	process.env.npm_config_config_dir ? 'container' # Default to Kyrio's docker-container based env injection
+	env= 		process.env.npm_config_env ? 'container'
+	configDir= 	process.env.npm_config_config_dir ? 'src/config'  # Default to Kyrio's docker-container based env injection
 	execDir= 	process.cwd()
 
 	_log 'Environment specified:', env
