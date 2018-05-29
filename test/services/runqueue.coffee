@@ -9,15 +9,15 @@
 #
 Promise= require 'bluebird'
 moment= require 'moment-timezone'
-chai= 	require 'chai'
-#Db= 	require '../lib/db'
-Mdb= 	require '../lib/mongo_db'
+chai= require 'chai'
+#Db= require '../lib/db'
+Mdb= require '../lib/mongo_db'
 server= require '../../'
 config= require '../config'
 it_is= 	is_it= require 'is_js'
 _= require 'lodash'
 _log= console.log
-process.env.npm_config_mongodb_uri= "mongodb://localhost/test"
+mongo_url= process.env.npm_config_mongodb_uri ? "mongodb://localhost/test"
 
 showme= (obj)->
 	console.log 'SHOWME:'+ typeof obj,
@@ -57,7 +57,7 @@ describe 'RunQueue: ', ()->
 	before ->
 		Promise.resolve()
 		.then ->
-			Mdb.Instance process.env.npm_config_mongodb_uri ? 'NEED-ENV-npm_config_mongodb_uri'
+			Mdb.Instance mongo_url
 		.then (result)->
 			mydb= result
 
@@ -92,12 +92,13 @@ describe 'RunQueue: ', ()->
 	cleanup= ()->
 		_log 'Cleaning Up...'
 		expected_in_db= {}
-		# TODO Remove the inserted entry from the database
+		
 		Promise.resolve()
 		.then ->
-			# XXX db.SqlQuery 'DELETE FROM runqueue WHERE json LIKE ? OR json = ?', ['%'+ unique+ '%', health_check_json]
+			# [MySQL] db.SqlQuery 'DELETE FROM runqueue WHERE json LIKE ? OR json = ?', ['%'+ unique+ '%', health_check_json]
+			# As it stands, this function removes every record inside of a collection.
+			# That is different than the MySQL query.
 			mydb.runqueue.remove({})
-			#mydb.delete 'runqueue', $or: [ { json: $regex: "#{unique}" }, { json: $eq: health_check_json } ]
 
 	
 
@@ -107,14 +108,12 @@ describe 'RunQueue: ', ()->
 		before ()->
 			f= 'before'
 			# Sometimes a failure leaves things not-cleaned-up
+			# CONSIDER PUTTING SEVERAL JOBS IN VARIOUS STATES, INTO THE QUEUE (MAYBE IN A SEPARATE DESCRIBE, EH?)
 			cleanup()
-			# .then ()->
-			# 	# Need leads for foregien key constraints
-			# 	#_log f, config_auth: userA
-			# 	# TODO CONSIDER PUTTING SEVERAL JOBS IN VARIOUS STATES, INTO THE QUEUE (MAYBE IN A SEPARATE DESCRIBE, EH?)
+
 			.then ()->
 				config_overrides=
-					runqueue: mongodb_uri: process.env.npm_config_mongodb_uri ? "YOU-NEED-TO-SET-ENV-npm_config_mongodb_uri"
+					runqueue: mongodb_uri: mongo_url
 					service_modules:
 						GenericService:		class: 'GenericService',		file: './test/lib/generic_runqueue_service'
 						RunQueue:				file: './lib/runqueue'	
@@ -137,8 +136,6 @@ describe 'RunQueue: ', ()->
 						external_groups:
 							GenericService:
 								connections: 2
-				#test= server.Server(kit_overrides)
-				#_log 'testing server', test
 				server.start false,[ 'RunQueue', 'GenericService', ],[ ], false,[ ], false, config_overrides, kit_overrides
 			.then (kit)->
 				ctx.log= kit.services.logger.log
@@ -215,14 +212,6 @@ describe 'RunQueue: ', ()->
 			.then ->
 				runqueue_service._Poll()
 			.then (result)->
-				console.log x= (( [nm, obj.length ? obj.constructor?.name ? typeof obj] for nm,obj of rec) for rec in result)
-				# x.should.deep.equal [
-				# 	[['pre_group_cnt', 'Object' ]],
-				# 	[['post_group_cnt', 'Object' ]],
-				# 	[['next_jobs', 1 ]],
-				# 	[['MarkJobPending_result', 1 ]],
-				# 	[['topic_method_error', 'Error' ]],
-				# 	[['process_result', 1 ]] ]
 				result.should.be.an('array').that.has.a.lengthOf 6
 				result[4].should.have.a.property('topic_method_error').that.is.an.instanceOf(Error)
 				error = result[4].topic_method_error
@@ -241,8 +230,11 @@ describe 'RunQueue: ', ()->
 			.then (result)->
 				run_at= moment().add(0,'s').format()
 				job= _.merge base_job_result[ topic], payload, {run_at, group_ref}
+				dbcr= result[0].cr
 				clean_db_jobs result
 				result.should.deep.equal [job]
+				(dbcr?.constructor?.name).should.equal "Date"
+				moment(dbcr).format().should.equal moment().format() 
 
 		it 'Just topic and json duplicate', ->
 			# There can only be one topic_success because the config sets the unique_key
@@ -276,19 +268,7 @@ describe 'RunQueue: ', ()->
 				job_active= _.merge (_.clone job), in_process: 1, fail_at: moment().add( fail_default[ 0], fail_default[ 1]).format()
 				job1_active= _.merge (_.clone job1), in_process: 1, fail_at: moment().add( fail_default[ 0], fail_default[ 1]).format()
 				clean_poll_result result, true
-				console.log x= (( [nm, obj.length ? obj.constructor?.name ? typeof obj] for nm,obj of rec) for rec in result)
-				console.log rec for rec in result
-				x.should.deep.equal [
-					[['pre_group_cnt', 'Object' ]],
-					[['post_group_cnt', 'Object' ]],
-					[['next_jobs', 3 ]],
-					[['MarkJobPending_result', 1 ]],
-					[['topic_method_result', 'Object' ]],
-					[['process_result', 'Object' ]],
-					[['MarkJobPending_result', 1 ]],
-					[['topic_method_result', 'Object' ]],
-					[['process_result', 'Object' ]] 
-					]
+
 				result.should.deep.equal [
 					{ pre_group_cnt: base_group_cnt }
 					{ post_group_cnt: base_group_cnt }
@@ -304,9 +284,7 @@ describe 'RunQueue: ', ()->
 					{ MarkJobPending_result: [ job1_active ] }
 					{ topic_method_result: success: true }
 					{ process_result: affectedRows: 1 } # Removed result
-
-					
-					
+		
 				]
 				jobs_to_expect_at_the_end.push _.merge (_.clone job_active), di: 1
 				jobs_to_expect_at_the_end.push _.merge (_.clone job1_active), di: 1
@@ -521,7 +499,7 @@ describe 'RunQueue: ', ()->
 
 			Promise.resolve()
 			.then ->
-				payload = _.merge {}, topic: topic , run_at: [-4, 'm'], json: health_check_json, unique_key: 'HealthCheck_retried'
+				payload = _.merge {}, topic: topic , run_at: [0, 's'], json: health_check_json, unique_key: 'HealthCheck_retried'
 				runqueue_service.AddJob ctx, payload
 			.then (job) ->
 				values = last_reason: 'forced fail', run_at: moment().format()
@@ -533,10 +511,7 @@ describe 'RunQueue: ', ()->
 				expected.details.retries = [{topic, max_retries: expected_retries}]
 				runqueue_service.HealthCheck ctx
 			.then (result)->
-				# Add in buffer for delays
-				# I don't think this is an end all be all solution, but it is ok for now
-				result.details.delays[0].delay = expected.details.delays[0].delay if Math.abs(result.details.delays[0].delay-expected.details.delays[0].delay) < 5
-				result.should.deep.equal expected
+				result.details.retries.should.deep.equal expected.details.retries
 
 		it 'Topic has failures (timeout)', ->
 			Promise.resolve()
@@ -553,10 +528,7 @@ describe 'RunQueue: ', ()->
 				expected.details.failures = [{topic, failures: 1}]
 				runqueue_service.HealthCheck ctx
 			.then (result)->
-				# Add in buffer for delays
-				# I don't think this is an end all be all solution, but it is ok for now
-				result.details.delays[0].delay = expected.details.delays[0].delay if Math.abs(result.details.delays[0].delay-expected.details.delays[0].delay) < 5
-				result.should.deep.equal expected
+				result.details.failures.should.deep.equal expected.details.failures
 
 	describe 'Finalize, query for expected jobs in DB: ', ->
 		topic= 'my_test_topic'
@@ -568,4 +540,5 @@ describe 'RunQueue: ', ()->
 			.then ->
 				mydb.runqueue.find({ json: { $nin: [health_check_json] } })
 				.toArray((err, result)->
-				 result.should.deep.equal jobs_to_expect_at_the_end)
+					if err throw err
+				 	result.should.deep.equal jobs_to_expect_at_the_end)

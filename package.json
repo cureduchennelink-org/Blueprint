@@ -28,16 +28,13 @@
     "mocha": "^4.1.0"
   },
   "scripts": {
-    "test":
-      "NODE_ENV=development mocha test/services/db/*ee test/services/*ee test/routes/*ee --bail",
+    "test": "NODE_ENV=development mocha test/services/db/*ee test/services/*ee test/routes/*ee --bail",
     "test-s": "NODE_ENV=development mocha test/services/*ee --bail",
     "test-s-db": "NODE_ENV=development mocha test/services/db/*ee --bail",
     "test-r": "NODE_ENV=development mocha test/routes/*ee --bail",
-    "test-s-auth":
-      "NODE_ENV=development mocha test/services/auth.coffee --bail",
-    "test-s-db-token":
-      "NODE_ENV=development mocha test/services/db/sql_token.coffee --bail",
-    "test-s-runqueue":
-      "cross-env NODE_ENV=development mocha test/services/runqueue.coffee --bail"
+    "test-s-auth": "NODE_ENV=development mocha test/services/auth.coffee --bail",
+    "test-s-db-token": "NODE_ENV=development mocha test/services/db/sql_token.coffee --bail",
+    "test-s-runqueue": "NODE_ENV=development mocha test/services/runqueue.coffee --bail",
+    "west-s-runqueue": "cross-env NODE_ENV=development mocha test/services/runqueue.coffee --bail"
   }
 }

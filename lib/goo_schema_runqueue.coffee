@@ -5,7 +5,7 @@ RunQueueMongoDbSchema= ->
 
 	schema= new mongoose.Schema
 		#_id: type: String
-		di:           type: Number, required: true, enum: [0, 1, 2], default: 0, # 0 none, 1 disabled, 2 purge
+		di:           type: Number, required: true, enum: [0, 1, 2], default: 0 # 0 none, 1 disabled, 2 purge
 		cr:           type: Date,   required: true, default: Date.now
 		mo:           type: Date,   required: true, default: Date.now
 		unique_key:   type: String, required: false, default: null, unique: true

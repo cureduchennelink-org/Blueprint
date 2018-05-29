@@ -6,26 +6,24 @@ mongoose= require 'mongoose'
 mongoose.Promise= Promise
 
 RunQueueMongoDbSchema= require './goo_schema_runqueue'
-showme= (f, obj)->
-	console.log "SHOWME: #{f} #{typeof obj} #{obj?.constructor?.name ? 'no-name'}",
-		if obj? and typeof obj is 'object'
-			keys: Object.keys obj
-			funcs: (nm for nm,val of obj when typeof val is 'function').join()
-			mongo_stuff: _.pick obj, 'lastErrorObject', 'value', 'ok'
-			mongoose_stuff: _.pick obj, 'isNew', 'errors', '_doc'
-		else {}
 
-logRequest= (f, obj)->
-	# The Query that is going to turn into a Mongoose Model
-	console.log "##### QUERY >>>" + f, obj 
+# These are flags for turning our log functions on and off as we need them.
+# If we want our log functions on, change testing to true.
+testing= false
+logRequest= ()-> null
+logResponse= ()-> null
 
-logResponse= (f, objs)->
-	objs= [objs] unless Array.isArray(objs)
-	console.log("##### RESP >>> " + f, length: objs.length)
-	for obj in objs
-		if obj?.toJSON?
-			console.log " -#- ", obj.toJSON()
-		else showme(" -#- ", obj)
+if testing 
+	logRequest= (f, obj)->
+		# The Query that is going to turn into a Mongoose Model
+		console.log "##### QUERY >>>" + f, obj 
+
+	logResponse= (f, objs)->
+		objs= [objs] unless Array.isArray(objs)
+		console.log("##### RESP >>> " + f, length: objs.length)
+		for obj in objs
+			if obj?.toJSON?
+				console.log " -#- ", obj.toJSON()
 
 class RunQueueMongoDbPersistence
 	@deps= {}
@@ -72,13 +70,13 @@ class RunQueueMongoDbPersistence
 	GetNextJobs: (ctx, maxRows, maxRetries= 8)->
 		f="RunQueueMongoDbPersistence::GetNextJobs: "
 		date= new Date()
-		oneSMore= new Date(date - 1000) # we need to get the date minus one second
+		oneSLess= new Date(date - 1000) # we need to get the date minus one second
 		conditions=
 			in_process: 0
-			run_at: $lte: oneSMore   
+			run_at: $lte: oneSLess   
 			retries: $lte: maxRetries
 			di: 0
-		
+
 		# Record the query that we're using
 		logRequest(f, { conditions, maxRows })
 
@@ -98,18 +96,19 @@ class RunQueueMongoDbPersistence
 			in_process: 0
 			retries: 0
 		newValues.in_process= 0
-		options= {} # new: true # XXX, rawResult: true
-		console.log f+ 'SAVE', {newValues, options}
-		# XXX @_model.create newValues #, new: true, rawResult: true
+
+		logRequest(f, { newValues } )
+
+		options= {}
+
 		new @_model newValues
-		.save options
-		.then (model_result)-> # TODO 
-			showme f, model_result
+		.save (options)
+		.then (model_result)-> 
+			logResponse(f, model_result) 
 			if reread then [model_result.toJSON()] else affectedRows: 1, insertId: model_result.toJSON().id
 
 	ReplaceJob: (ctx, id, newValues, reread= false)->
 		f= 'RunQueueMongoDbPersistence::ReplaceJob:'
-		# TODO CHECK THAT USING newValues ON LEFT SIDE IS CORRECT
 		newValues= _.pick newValues, 'unique_key', 'priority', 'run_at', 'json'
 		defaults= in_process: 0, retries: 0
 		newValues= _.merge {}, defaults, newValues
@@ -122,7 +121,7 @@ class RunQueueMongoDbPersistence
 
 		@_model.findByIdAndUpdate id, doc, options
 		.then (mongo_result)->
-			showme f, mongo_result
+			logResponse(f, mongo_result)
 			if mongo_result and mongo_result.lastErrorObject?.n is 1 # We did update the record
 				if reread then [mongo_result.value.toJSON()] else affectedRows: 1
 			else
@@ -142,10 +141,11 @@ class RunQueueMongoDbPersistence
 		# - if changed, result: lastErrorObject: { updatedExisting: true, n: 1 }, value: <model w/ old/new {new:bool} record>
 		# - if not chnaged: result is null
 
-		console.log '##### QUERY >>>', {conditions, doc, options}
+		logRequest(f, { conditions, newValues } )
+
 		@_model.findOneAndUpdate conditions, doc, options
 		.then (mongo_result)->
-			showme f, mongo_result
+			logResponse(f, mongo_result)
 			if mongo_result and mongo_result.lastErrorObject?.n is 1 # We did update the record
 				if reread then [mongo_result.value.toJSON()] else affectedRows: 1
 			else
@@ -162,7 +162,7 @@ class RunQueueMongoDbPersistence
 
 		@_model.findByIdAndUpdate id, doc, options
 		.then (mongo_result)->
-			showme f, mongo_result
+			logResponse(f, mongo_result)
 			if mongo_result and mongo_result.lastErrorObject?.n is 1 # We did update the record
 				if reread then [mongo_result.value.toJSON()] else affectedRows: 1
 			else
@@ -174,6 +174,8 @@ class RunQueueMongoDbPersistence
 		conditions= _id: $in: ids
 		doc= $set: mo: new Date(), di: 1
 
+		# When running updateMany, we can expect nModified to return the number of results modified.
+		# This is in contrast to findByIdAndUpdate that just returns n.
 		@_model.updateMany conditions, doc
 		.then (result)->
 			affectedRows: result.nModified 
@@ -185,6 +187,8 @@ class RunQueueMongoDbPersistence
 		conditions= unique_key: $in: uniqueKeys
 		doc= $set: mo: new Date(), di: 1
 
+		# When running updateMany, we can expect nModified to return the number of results modified.
+		# This is in contrast to findByIdAndUpdate that just returns n.
 		@_model.updateMany conditions, doc
 		.then (result)->
 			affectedRows: result.nModified
