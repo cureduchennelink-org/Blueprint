@@ -9,9 +9,9 @@ RunQueueMongoDbSchema= require './goo_schema_runqueue'
 
 # These are flags for turning our log functions on and off as we need them.
 # If we want our log functions on, change testing to true.
-testing= false
-logRequest= ()-> null
-logResponse= ()-> null
+testing= process.env.DB_DEBUG_LEVEL2 is 'true'
+logRequest= ()->
+logResponse= ()->
 
 if testing 
 	logRequest= (f, obj)->
@@ -50,22 +50,20 @@ class RunQueueMongoDbPersistence
 				@_model= null
 				if err then reject err else resolve()
 
-	clear: ()-> @_model.remove {}
-
 	GetJobById: (ctx, id)-> @_model.findById id
 
 	GetPendingCnts: (ctx)->
+		f="RunQueueMongoDbPersistence::GetPendingCnts: "
 		pipeline= [
 			{ $match: in_process: 1, di: 0 }
 			{ $group: _id: '$group_ref', count: $sum: 1 }
 		]
 
-		# TODO: COME BACK & REVISE 
-		new Promise (resolve, reject)=>
-			@_model.aggregate pipeline, (err, results)=> # TODO CONSIDER .THEN VERSION W/O THE NEW PROMISE
-				if err then return reject err else if not results? then return resolve []
-				resolve _.map results,  (r) =>
-						group_ref: r._id, active_cnt: r.count
+		logRequest f, {pipeline}
+		@_model.aggregate pipeline
+		.then (results)->
+		  	logResponse f, results
+		  	group_ref: r._id, active_cnt: r.count for r in results
 
 	GetNextJobs: (ctx, maxRows, maxRetries= 8)->
 		f="RunQueueMongoDbPersistence::GetNextJobs: "
@@ -96,11 +94,9 @@ class RunQueueMongoDbPersistence
 			in_process: 0
 			retries: 0
 		newValues.in_process= 0
-
-		logRequest(f, { newValues } )
-
 		options= {}
 
+		logRequest(f, { newValues, options } )
 		new @_model newValues
 		.save (options)
 		.then (model_result)-> 
@@ -119,6 +115,7 @@ class RunQueueMongoDbPersistence
 		doc= $set: newValues, $unset: unset
 		options= new: true, rawResult: true
 
+		logRequest(f, { id, doc, options } )
 		@_model.findByIdAndUpdate id, doc, options
 		.then (mongo_result)->
 			logResponse(f, mongo_result)
@@ -141,8 +138,7 @@ class RunQueueMongoDbPersistence
 		# - if changed, result: lastErrorObject: { updatedExisting: true, n: 1 }, value: <model w/ old/new {new:bool} record>
 		# - if not chnaged: result is null
 
-		logRequest(f, { conditions, newValues } )
-
+		logRequest(f, { conditions, doc, options } )
 		@_model.findOneAndUpdate conditions, doc, options
 		.then (mongo_result)->
 			logResponse(f, mongo_result)
@@ -160,6 +156,7 @@ class RunQueueMongoDbPersistence
 		doc= $set: newValues, $inc: {retries: 1}, $unset: fail_at: ''
 		options= new: true, rawResult: true
 
+		logRequest(f, { id, doc, options } )
 		@_model.findByIdAndUpdate id, doc, options
 		.then (mongo_result)->
 			logResponse(f, mongo_result)
@@ -169,68 +166,74 @@ class RunQueueMongoDbPersistence
 				if reread then [] else affectedRows: 0
 
 	RemoveByIds: (ctx, ids)->
+		f= 'RunQueueMongoDbPersistence::RemoveByIds:'
 		ids= [ids] unless _.isArray ids
 
 		conditions= _id: $in: ids
 		doc= $set: mo: new Date(), di: 1
 
+		logRequest(f, { conditions, doc } )
 		# When running updateMany, we can expect nModified to return the number of results modified.
 		# This is in contrast to findByIdAndUpdate that just returns n.
 		@_model.updateMany conditions, doc
 		.then (result)->
+			logResponse(f, result)
 			affectedRows: result.nModified 
 
 
 	RemoveByUniqueKeys: (ctx, uniqueKeys)->
+		f= 'RunQueueMongoDbPersistence::RemoveByUniqueKeys:'
 		uniqueKeys= [uniqueKeys] unless _.isArray uniqueKeys
 
 		conditions= unique_key: $in: uniqueKeys
 		doc= $set: mo: new Date(), di: 1
 
+		logRequest(f, { conditions, doc } )
 		# When running updateMany, we can expect nModified to return the number of results modified.
 		# This is in contrast to findByIdAndUpdate that just returns n.
 		@_model.updateMany conditions, doc
 		.then (result)->
+			logResponse(f, result)
 			affectedRows: result.nModified
 
 	GetDelayedByTopic: (ctx)->
+		f= 'RunQueueMongoDbPersistence::GetDelayedByTopic:'
 		pipeline= [
 			{ $match: di: 0, in_process: 0, run_at: $lte: new Date() }
 			{ $group: _id: "$topic", run_at: $min: '$run_at' }
 			{ $addFields: delay: $subtract: [ new Date(), "$run_at" ] }
 		]
 
-		new Promise (resolve, reject)=>
-			@_model.aggregate pipeline, (err, results)=>
-				if err then return reject err else if not results? then return resolve []
-				resolve _.map results, (r)=>
-					topic: r._id,
-					delay: Math.floor r.delay / 1000
+		logRequest f, {pipeline}
+		@_model.aggregate pipeline
+		.then (results)->
+		  	logResponse f, results
+		  	topic: r._id, delay: Math.floor r.delay / 1000 for r in results
 
 	GetRetriesByTopic: (ctx)->
+		f= 'RunQueueMongoDbPersistence::GetRetriesByTopic:'
 		pipeline= [
 			{ $match: di: 0, retries: $gt: 0 }
 			{ $group: _id: "$topic", max_retries: $max: '$retries' }
 		]
 
-		new Promise (resolve, reject)=>
-			@_model.aggregate pipeline, (err, results)=>
-				if err then return reject err else if not results? then return resolve []
-				resolve _.map results, (r)=>
-					topic: r._id,
-					max_retries: r.max_retries
+		logRequest f, {pipeline}
+		@_model.aggregate pipeline
+		.then (results)->
+		  	logResponse f, results
+		  	topic: r._id, max_retries: r.max_retries for r in results
 
 	GetFailuresByTopic: (ctx)->
+		f= 'RunQueueMongoDbPersistence::GetFailuresByTopic:'
 		pipeline= [
 			{ $match: di: 0, in_process: 1, fail_at: $lte: new Date() }
 			{ $group: _id: "$topic", failures: $sum: 1 }
 		]
 
-		new Promise (resolve, reject)=>
-			@_model.aggregate pipeline, (err, results)=>
-				if err then return reject err else if not results? then return resolve []
-				resolve _.map results, (r)=>
-					topic: r._id,
-					failures: r.failures
+		logRequest f, {pipeline}
+		@_model.aggregate pipeline
+		.then (results)->
+		  	logResponse f, results
+		  	topic: r._id, failures: r.failures for r in results
 
 module.exports= RunQueueMongoDbPersistence
