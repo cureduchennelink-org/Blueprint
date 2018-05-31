@@ -86,7 +86,7 @@ class RunQueue
 
 	_pick_at: (retries, which, topic, other_object)-> # E.g. 0, 'run_at', topic_as_str_or_@topics[nm], users_object_with_optional_override
 		f= 'RunQueue::_pick_at:'
-		@log.debug f, {retries,which,topic,other_object}
+		#@log.debug f, {retries,which,topic,other_object}
 		resolved_topic = if it_is.string topic then @topics[ topic] else topic
 		if it_is.object other_object and other_object[ which]
 			# Overridden by either array as [N,S] or expect a date
