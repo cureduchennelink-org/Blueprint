@@ -5,7 +5,7 @@
 #	Notes: For testing on epic server environment, do:
 #	(in node_modules: $ ln -s .. blueprint)
 #	[JCS RUN SQL NOT NEEDED FOR MONGODB, BUT MAY NEED TO DROP THE COLLECTION AT TIMES]
-#	NODE_ENV=development npm_config_mongodb_uri=mongodb://localhost/test npm run test-s-runqueue
+#	NODE_ENV=development npm_config_mongodb_uri=mongodb://localhost npm_config_mongodb_name=test npm run test-s-runqueue
 #
 Promise= require 'bluebird'
 moment= require 'moment-timezone'
@@ -17,7 +17,9 @@ config= require '../config'
 it_is= 	is_it= require 'is_js'
 _= require 'lodash'
 _log= console.log
-mongo_url= process.env.npm_config_mongodb_uri ? "mongodb://localhost/test"
+mongodb_uri= (process.env.npm_config_mongodb_uri ? "mongodb://localhost")
+mongodb_name= (process.env.npm_config_mongodb_name ? "test")
+mongodb_url= mongodb_uri+ '/'+ mongodb_name
 
 showme= (obj)->
 	console.log 'SHOWME:'+ typeof obj,
@@ -57,7 +59,7 @@ describe 'RunQueue: ', ()->
 	before ->
 		Promise.resolve()
 		.then ->
-			Mdb.Instance mongo_url
+			Mdb.Instance mongodb_url
 		.then (result)->
 			mydb= result
 
@@ -113,10 +115,10 @@ describe 'RunQueue: ', ()->
 
 			.then ()->
 				config_overrides=
-					runqueue: mongodb_uri: mongo_url
+					runqueue: {mongodb_uri, mongodb_name}
 					service_modules:
 						GenericService:		class: 'GenericService',		file: './test/lib/generic_runqueue_service'
-						RunQueue:				file: './lib/runqueue'	
+						RunQueue:				file: './lib/runqueue'
 				kit_overrides=
 					services: config: runqueue:
 						topics:
@@ -234,7 +236,7 @@ describe 'RunQueue: ', ()->
 				clean_db_jobs result
 				result.should.deep.equal [job]
 				(dbcr?.constructor?.name).should.equal "Date"
-				moment(dbcr).format().should.equal moment().format() 
+				moment(dbcr).format().should.equal moment().format()
 
 		it 'Just topic and json duplicate', ->
 			# There can only be one topic_success because the config sets the unique_key

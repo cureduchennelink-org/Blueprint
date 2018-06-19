@@ -17,7 +17,7 @@ class RunQueue
 			'runqueue.external_groups[default/ANY{connections,requests}]'
 			'runqueue.topics.ANY{call,type,priority,run_at,external_group}'
 			'runqueue.settings[poll_interval_ms,jobs,read_depth]'
-			'runqueue.mongodb_uri'
+			'runqueue[mongodb_uri,mongodb_name]'
 			]
 
 	constructor: (kit) ->
@@ -80,7 +80,7 @@ class RunQueue
 		Promise.resolve().bind @
 		.then ->
 
-			@sdb.runqueue.open @config.mongodb_uri # @sdb.core.Acquire()
+			@sdb.runqueue.open @config.mongodb_uri, @config.mongodb_name # @sdb.core.Acquire()
 		.then (c)->
 			@ctx_finish.conn= c
 
@@ -237,7 +237,7 @@ class RunQueue
 			return false unless ctx.conn is false
 			rVal.push step: 'acquire'
 
-			@sdb.runqueue.open @config.mongodb_uri # @sdb.core.Acquire()
+			@sdb.runqueue.open @config.mongodb_uri, @config.mongodb_name # @sdb.core.Acquire()
 		.then (c)->
 			ctx.conn= c unless c is false
 

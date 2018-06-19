@@ -13,10 +13,10 @@ testing= process.env.DB_DEBUG_LEVEL2 is 'true'
 logRequest= ()->
 logResponse= ()->
 
-if testing 
+if testing
 	logRequest= (f, obj)->
 		# The Query that is going to turn into a Mongoose Model
-		console.log "##### QUERY >>>" + f, obj 
+		console.log "##### QUERY >>>" + f, obj
 
 	logResponse= (f, objs)->
 		objs= [objs] unless Array.isArray(objs)
@@ -31,12 +31,13 @@ class RunQueueMongoDbPersistence
 	constructor: ->
 		@_schema= new RunQueueMongoDbSchema()
 
-	open: (uri)->
+	open: (uri, db_name)->
 		new Promise (resolve, reject)=>
 			mongoose.connect uri, (err)=> # Consider using .then, if supported
 				if err then reject err
 				@_connection= mongoose.connection
-				@_model= mongoose.model 'RunQueue', @_schema
+				mydb= mongoose.connection.useDb db_name
+				@_model= mydb.model 'RunQueue', @_schema
 				resolve()
 
 
