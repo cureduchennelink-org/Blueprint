@@ -16,11 +16,12 @@ class Server
 	constructor: (kit)->
 		@config= kit.services.config
 		@log= 	kit.services.logger.log
+		@restify_logger= 	kit.services.restify_logger
 		@server= false
 		@log.info 'Server Initialized...'
 
 	create: ->
-		@server= restify.createServer _.merge {}, {@log}, @config.createServer 	# Create Server
+		@server= restify.createServer _.merge {}, {log: @restify_logger?.log ? @log}, @config.createServer 	# Create Server
 
 	add_restify_handlers: ->
 		for handler in @config.restify.handlers

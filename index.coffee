@@ -27,6 +27,7 @@ exports.start= (include_server, services_enabled, routes_enabled, mysql_enabled=
 	kit.add_service 'config', 		config					# Config Object
 	kit.new_service 'logger', 		Logger					# Bunyan Logger
 	kit.add_service 'error', 		ErrorMore				# Error Objects
+	kit.services.restify_logger= kit.services.logger # So logging can be overriden for all except restify
 	kit= _.merge kit, more_kit # To allow e.g. test harness to inject a few config settings
 	log= 	kit.services.logger.log
 

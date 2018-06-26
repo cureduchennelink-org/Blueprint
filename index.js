@@ -37,6 +37,7 @@
     kit.add_service('config', config);
     kit.new_service('logger', Logger);
     kit.add_service('error', ErrorMore);
+    kit.services.restify_logger = kit.services.logger;
     kit = _.merge(kit, more_kit);
     log = kit.services.logger.log;
     if (mysql_enabled) {
