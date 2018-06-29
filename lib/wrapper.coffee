@@ -116,7 +116,7 @@ class Wrapper
 			if err.body and err.body.error is 'invalid_client'
 				res.setHeader 'WWW-Authenticate', "Bearer realm=#{@config.auth.bearer}"
 			if ctx.conn isnt null
-				ctx.conn.query 'ROLLBACK', (err)->
+				ctx.conn.query 'ROLLBACK', (err)=>
 					if err
 						req.log.warn f, 'destroy db conn (failed rollback)'
 						@sdb.core.destroy ctx.conn
