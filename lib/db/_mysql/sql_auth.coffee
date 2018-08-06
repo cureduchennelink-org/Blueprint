@@ -28,8 +28,11 @@ class SqlAuth
 		.then ->
 
 			# Grab the Ident Credentials
-			sql= 'SELECT '+ (@schema.auth.join ',') +
-				 ' FROM '+ @table+ ' WHERE '+ @cred_col+ '= ? and di= 0'
+			sql= """
+				SELECT #{@schema.auth.join ','}
+				FROM #{@table}
+				WHERE #{@cred_col}= ? and di= 0
+				"""
 			@core.sqlQuery ctx, sql, [cred_name]
 		.then (db_rows)->
 			db_rows
@@ -42,8 +45,11 @@ class SqlAuth
 		.then ->
 
 			# Grab the Ident Credentials
-			sql= 'SELECT '+ (@schema.cred.join ',') +
-				 ' FROM '+ @table+ ' WHERE '+ @cred_col+ '= ? and di= 0'
+			sql= """
+				SELECT #{@schema.cred.join ','}
+				FROM #{@table}
+				WHERE #{@cred_col}= ? and di= 0
+				"""
 			@core.sqlQuery ctx, sql, [cred_name]
 		.then (db_rows)->
 			db_rows

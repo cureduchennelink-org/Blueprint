@@ -28,7 +28,10 @@ class SqlToken
 		.then ->
 			# Delete current refresh token if it exists
 			return false unless current_ident_token
-			sql= 'DELETE FROM '+ @table+ ' WHERE token = ?'
+			sql= """
+				DELETE FROM #{@table} 
+				WHERE token = ?
+				 """
 			@core.sqlQuery ctx, sql, [current_ident_token]
 		.then (db_result)->
 			# Insert New Token

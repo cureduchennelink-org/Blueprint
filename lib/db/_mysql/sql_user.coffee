@@ -23,9 +23,12 @@ class SqlUser
 	get_by_ident_id: (ctx, ident_id)->
 		f= "SqlUser:get_by_ident_id:"
 
-		sql= 'SELECT '+ (@schema.get_by_ident_id.join ',')+
-			' FROM '+ @ident_tbl + ' i LEFT OUTER JOIN '+ @table+ ' e'+
-			' ON i.id= e.ident_id WHERE i.id= ? AND i.di= 0 AND (e.di= 0 OR e.id IS NULL)'
+		sql= """
+			SELECT #{@schema.get_by_ident_id.join ','}
+			FROM #{@ident_tbl} i LEFT OUTER JOIN #{@table} e
+				 ON i.id= e.ident_id 
+			WHERE i.id= ? AND i.di= 0 AND (e.di= 0 OR e.id IS NULL)
+			 """
 		(@db.sqlQuery ctx, sql, [ident_id])
 		.then (db_rows) ->
 			db_rows

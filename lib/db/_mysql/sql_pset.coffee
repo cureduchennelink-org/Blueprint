@@ -22,7 +22,9 @@ class SqlPSet
 		Promise.resolve().bind @
 		.then ->
 
-			sql= 'SELECT * FROM ' + @table + ' WHERE name= ? AND di= 0'
+			sql= """
+				SELECT * FROM #{@table} WHERE name= ? AND di= 0
+				 """
 			@db.sqlQuery ctx, sql, [name]
 		.then (db_rows)->
 			db_rows
@@ -84,8 +86,10 @@ class SqlPSetItem
 		Promise.resolve().bind @
 		.then ->
 
-			sql= 'SELECT id FROM ' + @table +
-				' WHERE id= ? AND di= 0 FOR UPDATE'
+			sql= """
+				SELECT id FROM #{@table}
+				WHERE id= ? AND di= 0 FOR UPDATE
+				 """
 			@db.sqlQuery ctx, sql, [id]
 		.then (db_rows)->
 			db_rows
@@ -98,8 +102,11 @@ class SqlPSetItem
 		Promise.resolve().bind @
 		.then ->
 
-			sql= 'SELECT ' + (@schema.id_xref.join ',') + ' FROM ' + @table +
-				' WHERE pset_id= ? AND xref= ? AND di= 0'
+			sql= """
+				SELECT #{@schema.id_xref.join ','} 
+				FROM #{@table}
+				WHERE pset_id= ? AND xref= ? AND di= 0
+				 """
 			@db.sqlQuery ctx, sql, [pset_id, xref]
 		.then (db_rows)->
 			db_rows
@@ -112,8 +119,11 @@ class SqlPSetItem
 		Promise.resolve().bind @
 		.then ->
 
-			sql= 'SELECT ' + (@schema.get_psid.join ',') + ' FROM ' + @table +
-				' WHERE pset_id= ? AND di= 0'
+			sql= """
+				SELECT #{@schema.get_psid.join ','}
+				FROM #{@table}
+				WHERE pset_id= ? AND di= 0
+				 """
 			@db.sqlQuery ctx, sql, [pset_id]
 		.then (db_rows)->
 			db_rows
@@ -126,8 +136,10 @@ class SqlPSetItem
 		Promise.resolve().bind @
 		.then ->
 
-			sql= 'DELETE FROM ' + @table +
-				' WHERE pset_id= ?'
+			sql= """
+				DELETE FROM #{@table}
+				WHERE pset_id= ?
+				 """
 			@db.sqlQuery ctx, sql, [ pset_id ]
 		.then (db_rows)->
 			db_rows
@@ -154,8 +166,10 @@ class SqlPSetItemChange
 		Promise.resolve().bind @
 		.then ->
 
-			sql= 'DELETE FROM ' + @table +
-				' WHERE pset_item_id IN (?)'
+			sql= """
+				DELETE FROM #{@table}
+				WHERE pset_item_id IN (?)
+				 """
 			@db.sqlQuery ctx, sql, [ item_ids ]
 		.then (db_result)->
 			db_result
@@ -168,9 +182,12 @@ class SqlPSetItemChange
 		Promise.resolve().bind @
 		.then ->
 
-			sql= 'SELECT '+ (@schema.recent.join ',')+ ' FROM '+ @table+
-				' WHERE di= 0 AND pset_id= ? AND pset_item_id= ?'+
-				' ORDER BY id DESC LIMIT 1'
+			sql= """
+				SELECT #{@schema.recent.join ','}
+				FROM #{@table}
+				WHERE di= 0 AND pset_id= ? AND pset_item_id= ?
+				ORDER BY id DESC LIMIT 1
+				 """
 			@db.sqlQuery ctx, sql, [ pset_id, pset_item_id]
 		.then (db_rows)->
 			db_rows
@@ -183,10 +200,13 @@ class SqlPSetItemChange
 		Promise.resolve().bind @
 		.then ->
 
-			sql= 'SELECT '+ (@schema.next.join ',')+ ' FROM '+
-				' (SELECT * FROM '+ @table+ ' WHERE di= 0'+
-				' ORDER BY id DESC LIMIT ?) sub'+
-				' ORDER BY id ASC'
+			sql= """
+				SELECT #{@schema.next.join ','}
+				FROM (SELECT * FROM #{@table}
+					  WHERE di= 0
+					  ORDER BY id DESC LIMIT ?) sub
+				ORDER BY id ASC
+				 """
 			@db.sqlQuery ctx, sql, [ limit]
 		.then (db_rows)->
 			db_rows
@@ -211,8 +231,12 @@ class SqlPSetItemChange
 		Promise.resolve().bind @
 		.then ->
 
-			sql= 'SELECT '+ (@schema.next.join ',')+ ' FROM '+ @table+
-				' WHERE di= 0'+ sql_from+ ' ORDER BY count '+ sql_limit
+			sql= """
+				SELECT #{@schema.next.join ','}
+				FROM #{@table}
+				WHERE di= 0 #{sql_from} 
+				ORDER BY count #{sql_limit}
+				 """
 			@db.sqlQuery ctx, sql, args
 		.then (db_rows)->
 			db_rows
