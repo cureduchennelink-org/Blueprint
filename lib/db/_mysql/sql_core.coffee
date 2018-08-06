@@ -74,8 +74,11 @@ class SqlCore
 				.then ->
 
 					throw new @E.DbError "DB:CORE:SCHEMA_UNDEFINED:GetByKey_#{key}" unless schema.GetByKey[key]
-					sql= 'SELECT '+ (schema.GetByKey[key].join ',')+ ' FROM '+ table +
-						' WHERE di= 0 AND '+ key+ ' IN (?)'
+					sql= """
+						SELECT #{schema.GetByKey[key].join ','}
+						FROM #{table}
+						WHERE di= 0 AND #{key} IN (?)
+						 """
 					sql += ' FOR UPDATE' if lock
 					sqlQuery ctx, sql, [ ids]
 				.then (db_rows)->
@@ -96,8 +99,10 @@ class SqlCore
 					cols= []; arg=[]
 					(cols.push nm + '= ?'; arg.push val) for nm, val of new_values
 					arg.push ids
-					sql= 'UPDATE '+ table+ ' SET '+ (cols.join ',')+
-						' WHERE '+ key+ ' IN (?) AND di= 0'
+					sql= """
+						UPDATE #{table} SET #{cols.join ','}
+						WHERE #{key} IN (?) AND di= 0
+						 """
 					sqlQuery ctx, sql, arg
 				.then (db_result)->
 					db_result
@@ -111,7 +116,9 @@ class SqlCore
 				Promise.resolve().bind @
 				.then ->
 
-					sql= 'UPDATE '+ table+ ' SET di= 1 WHERE id IN (?)'
+					sql= """
+					UPDATE #{table} SET di= 1 WHERE id IN (?)
+						 """
 					sqlQuery ctx, sql, [ ids]
 				.then (db_result)->
 					db_result
@@ -124,8 +131,11 @@ class SqlCore
 				Promise.resolve().bind @
 				.then ->
 
-					sql= 'SELECT '+ (schema_cols.join ',')+ ' FROM '+ table+
-						' WHERE di= 0'
+					sql= """
+						SELECT #{schema_cols.join ','}
+						FROM #{table}
+						WHERE di= 0
+						 """
 					sqlQuery ctx, sql
 				.then (db_rows)->
 					db_rows
@@ -140,7 +150,11 @@ class SqlCore
 				Promise.resolve().bind @
 				.then ->
 
-					sql= 'SELECT ' + (schema.get_by_id.join ',') + ' FROM ' + table + ' WHERE id= ? AND di= 0'
+					sql= """
+						SELECT #{schema.get_by_id.join ','}
+						FROM #{table}
+						WHERE id= ? AND di= 0
+						 """
 					sqlQuery ctx, sql, [id]
 				.then (db_rows)->
 					db_rows
@@ -160,7 +174,9 @@ class SqlCore
 
 					cols= ['cr']; qs= ['?']; arg= [null]
 					(cols.push nm; qs.push '?'; arg.push val) for nm, val of new_values
-					sql= 'INSERT INTO ' + table + ' (' + (cols.join ',') + ') VALUES (' + (qs.join ',') + ')'
+					sql= """
+						INSERT INTO #{table} (#{cols.join ','}) VALUES (#{qs.join ','})
+						 """
 					sqlQuery ctx, sql, arg
 				.then (db_result)->
 					result= db_result
@@ -168,7 +184,11 @@ class SqlCore
 
 					return false unless re_read is true
 					throw new @E.ServerError f+'REREAD_NOT_DEFINED_IN_SCHEMA' unless schema.reread
-					sql= 'SELECT ' + (schema.reread.join ',') + ' FROM ' + table + ' WHERE id= ?'
+					sql= """
+						SELECT #{schema.reread.join ','} 
+						FROM #{table} 
+						WHERE id= ?
+						 """
 					sqlQuery ctx, sql, [db_result.insertId]
 				.then (db_rows)->
 					if db_rows isnt false
@@ -194,15 +214,21 @@ class SqlCore
 					cols= []; arg=[]
 					(cols.push nm + '= ?'; arg.push val) for nm, val of new_values
 					arg.push id
-					sql= 'UPDATE ' + table + ' SET ' + (cols.join ',') +
-						' WHERE id= ? AND di= 0'
+					sql= """
+						UPDATE #{table} SET #{cols.join ','}
+						WHERE id= ? AND di= 0
+						 """
 					sqlQuery ctx, sql, arg
 				.then (db_result)->
 					result= db_result
 
 					return false unless re_read is true
 					throw new @E.ServerError f+'REREAD_NOT_DEFINED_IN_SCHEMA' unless schema.reread
-					sql= 'SELECT ' + (schema.reread.join ',') + ' FROM ' + table + ' WHERE id= ?'
+					sql= """
+						SELECT #{schema.reread.join ','}
+						FROM #{table}
+						WHERE id= ?
+						 """
 					sqlQuery ctx, sql, [id]
 				.then (db_rows)->
 					if db_rows isnt false
@@ -214,7 +240,10 @@ class SqlCore
 
 		if schema.delete_by_id or schema.DeleteById
 			delete_by_id= (ctx, id)=>
-				sql= 'DELETE FROM '+ table+ ' WHERE id= ?'
+				sql= """
+					DELETE FROM #{table}
+					WHERE id= ?
+					 """
 				(sqlQuery ctx, sql, [ id ])
 				.then (db_result)=> db_result
 

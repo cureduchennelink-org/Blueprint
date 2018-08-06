@@ -23,8 +23,11 @@ class SqlTrip
 		Promise.resolve().bind @
 		.then ->
 
-			sql= 'SELECT ' + (@schema.get_by_token.join ',') + ' FROM ' + @table +
-				' WHERE token= ? AND di= 0'
+			sql= """
+				SELECT #{@schema.get_by_token.join ','} 
+				FROM #{@table}
+				WHERE token= ? AND di= 0
+				 """
 			@db.sqlQuery ctx, sql, [token]
 		.then (db_rows)->
 			db_rows
