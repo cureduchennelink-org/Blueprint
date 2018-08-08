@@ -58,7 +58,7 @@ class Auth
 					error= new @E.OAuthError 401, 'invalid_token', req.auth.message
 					res.setHeader 'WWW-Authenticate', "Bearer realm=\"#{@config.bearer}\""
 					res.send error
-					return next()
+					return false
 				else true
 		next()
 
