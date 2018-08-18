@@ -85,7 +85,7 @@ class RunQueue
 
 	Drain: ->  # Stop taking in new job requests, the server is coming down
 		f= 'RunQueue::Drain:'
-		@log.info f, {@poll_timer_id}
+		@log.info f, {was_draining: @poll_timer_id is false}
 		if @poll_timer_id isnt false
 			clearInterval @poll_timer_id
 			@poll_timer_id= false
