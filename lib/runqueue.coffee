@@ -76,13 +76,19 @@ class RunQueue
 
 		interval_ms= @config.settings.poll_interval_ms
 		@poll_timer_id= setInterval @_Poll, interval_ms unless interval_ms is false # False for unit-testing
-		# TODO FIND A WAY TO DETECT SERVER IS GOING DOWN, AND CANCEL THIS TIMER
 		Promise.resolve().bind @
 		.then ->
 
 			@sdb.runqueue.open @config.mongodb_uri, @config.mongodb_name # @sdb.core.Acquire()
 		.then (c)->
 			@ctx_finish.conn= c
+
+	Drain: ->  # Stop taking in new job requests, the server is coming down
+		f= 'RunQueue::Drain:'
+		@log.info f, {@poll_timer_id}
+		if @poll_timer_id isnt false
+			clearInterval @poll_timer_id
+			@poll_timer_id= false
 
 	_pick_at: (retries, which, topic, other_object)-> # E.g. 0, 'run_at', topic_as_str_or_@topics[nm], users_object_with_optional_override
 		f= 'RunQueue::_pick_at:'
@@ -167,7 +173,7 @@ class RunQueue
 		@finish_promise= @finish_promise.then ->
 			Promise.resolve().bind @
 			.then ->
-				@sdb.runqueue.RemoveByExtern @ctx_finish, uniqueIds
+				@sdb.runqueue.RemoveByUniqueKeys @ctx_finish, uniqueIds
 			.catch (e)->
 				@log.error f, e
 		return
