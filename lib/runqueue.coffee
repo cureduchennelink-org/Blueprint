@@ -179,20 +179,22 @@ class RunQueue
 		return
 
 	_set_status: (status_obj, status, detail_name, row) ->
-		#Red is max, always set it
-		#Only set yellow if we are green
-		if status is 'r' or status_obj.status is 'g'
+		r= 'RED'; g= 'GREEN'; y= 'YELLOW' # This is in two places
+		# Red is max, always set it
+		# Only set yellow if we are green
+		if status is r or status_obj.status is g
 			status_obj.status = status
 
-		if status_obj.details[detail_name] is undefined
-			status_obj.details[detail_name] = []
+		status_obj.details[detail_name]?= []
 		status_obj.details[detail_name].push row
 
 	# Returns a status structure
 	# {status: [r|y|g], details: {[delays|retries|failures] : [{topic, <detail>}, ...]}
 	HealthCheck: (ctx)->
 		f= 'RunQueue::HealthCheck:'
-		status = status: 'g', details: {}
+		r= 'RED'; g= 'GREEN'; y= 'YELLOW' # This is in two places
+		status = status: g, details: {}
+		@_set_status status, y, 'draining', true if @poll_timer_id is false # Drain() called (Note: instance specific, not DB)
 		Promise.resolve().bind @
 		.then ->
 			@sdb.runqueue.GetDelayedByTopic ctx
@@ -200,24 +202,24 @@ class RunQueue
 			for row in result
 				topic = @topics[row.topic]
 				if row.delay >= topic.alarm_delay_sec
-					@_set_status status, 'r', 'delays', row
+					@_set_status status, r, 'delays', row
 				else if row.delay >= topic.warn_delay_sec
-					@_set_status status, 'y', 'delays', row
+					@_set_status status, y, 'delays', row
 
 			@sdb.runqueue.GetRetriesByTopic ctx
 		.then (result)->
 			for row in result
 				topic = @topics[row.topic]
 				if row.max_retries >= topic.alarm_cnt
-					@_set_status status, 'r', 'retries', row
+					@_set_status status, r, 'retries', row
 				else if row.max_retries >= topic.warn_cnt
-					@_set_status status, 'y', 'retries', row
+					@_set_status status, y, 'retries', row
 
 			@sdb.runqueue.GetFailuresByTopic ctx
 		.then (result)->
 			if (!it_is.empty result)
 				# Go right to code red
-				status.status = 'r'
+				status.status = r
 				status.details.failures = result
 
 			status
