@@ -124,7 +124,7 @@ class Wrapper
 					else
 						req.log.debug f, 'release db conn (successful rollback)'
 						@sdb.core.release ctx.conn
-			res.send err
+			res.send err.body
 			@end_connection_limit()
 			next()
 
@@ -229,7 +229,7 @@ class Wrapper
 					else
 						req.log.debug f, 'release db conn (successful rollback)'
 						@sdb.core.release ctx.conn
-			res.send err
+			res.send err.body
 			ctx.lamd.statusCode= res.statusCode
 			end = (new Date().getTime())
 			ctx.lamd.duration = end - ctx.lamd.start
