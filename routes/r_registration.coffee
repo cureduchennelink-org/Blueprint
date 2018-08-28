@@ -3,6 +3,7 @@
 #
 
 Promise= require 'bluebird'
+moment = require('moment');
 
 class Registration
 	@deps= services:[ 'error', 'config', 'ses', 'auth', 'tripMgr', 'template', ], mysql:[ 'auth', 'user', ], config: 'ses.options,api.ident_id'
@@ -63,7 +64,9 @@ class Registration
 			throw new @E.AccessDenied 'REGISTER:SIGNUP:EMAIL_EXISTS' unless db_rows.length is 0
 
 			# Create Trip and store email, fnm, lnm in json info. Never Expires (null).
-			@tripMgr.planTrip ctx, @config.api.ident_id, { eml: p.eml, fnm: p.fnm, lnm: p.lnm }, null, 'signup'
+			expires = 3 #expires in three days
+			expireDate = moment().add(expires, 'days').format();
+			@tripMgr.planTrip ctx, @config.api.ident_id, { eml: p.eml, fnm: p.fnm, lnm: p.lnm }, expireDate, 'signup'
 		.then (new_trip)->
 			ctx.log.debug f, 'got signup round trip:', new_trip
 			trip= new_trip
