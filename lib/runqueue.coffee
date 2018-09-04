@@ -91,7 +91,7 @@ class RunQueue
 		f= 'RunQueue::_pick_at:'
 		#@log.debug f, {retries,which,topic,other_object}
 		resolved_topic = if it_is.string topic then @topics[ topic] else topic
-		if it_is.object other_object and other_object[ which]
+		if it_is.object(other_object) and other_object[ which]
 			# Overridden by either array as [N,S] or expect a date
 			at= other_object[ which]
 		else
