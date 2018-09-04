@@ -12,7 +12,7 @@ class SqlAuth
 		@schema=
 			auth: ['id', 'tenant', 'role', @pwd_col]
 			cred: ['*']
-			Create: [@cred_col,@pwd_col]
+			Create: [@cred_col,@pwd_col, 'role']
 			UpdateById: [@cred_col,@pwd_col]
 			GetByKey:
 				id: ['id', @cred_col, 'tenant', 'role']
