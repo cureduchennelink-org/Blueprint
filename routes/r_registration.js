@@ -48,18 +48,6 @@
           },
           sql_conn: true,
           auth_required: false
-        },
-        register_signup: {
-          verb: 'post',
-          route: '/Signup/:token/register',
-          use: true,
-          wrap: 'default_wrap',
-          version: {
-            any: this._register_signup
-          },
-          sql_conn: true,
-          sql_tx: true,
-          auth_required: false
         }
       };
     }
