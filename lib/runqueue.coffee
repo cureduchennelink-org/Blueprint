@@ -12,6 +12,7 @@ goo_runqueue= require './goo_runqueue' # Mongoose based persistance, needs 'open
 class RunQueue
 	@deps=
 		services:[ 'config', 'error', ] # Also, FYI, there are dynamic references to services per config.topics
+		mysql: ['runqueue']
 		config:[
 			'runqueue.topic_defaults{back_off,last_fail,priority,external_group,limit,alarm_cnt,warn_cnt,warn_delay,alarm_delay}'
 			'runqueue.external_groups[default/ANY{connections,requests}]'
