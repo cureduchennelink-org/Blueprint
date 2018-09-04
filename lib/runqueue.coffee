@@ -24,8 +24,8 @@ class RunQueue
 	constructor: (kit) ->
 		f= 'RunQueue::constructor'
 		@log= 		kit.services.logger.log
-		@E= 		kit.services.error
-		@sdb= 		runqueue: kit.services.db.mysql # TODO: Let's make this a conditional based on what we need. Mongo / MySQL
+		@E= 			kit.services.error
+		@sdb= 		kit.services.db.mysql # TODO: Let's make this a conditional based on what we need. Mongo / MySQL
 		@config=	kit.services.config.runqueue
 
 		@ctx_poll= log: @log, conn: false # Poller will populate conn-ection on demand
