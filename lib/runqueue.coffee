@@ -102,7 +102,7 @@ class RunQueue
 		if it_is.array at
 			@_calc_at (@_back_off_strategies[back_off_strategy] retries), at, "#{resolved_topic.nm}:#{which}"
 		else
-			moment( at).add (@_back_off_strategies[back_off_strategy] retries), 's'
+			moment( at).format()
 
 	_validate_format: (spec, name) ->
 		if (it_is.array spec) and (it_is.number spec[0]) and (it_is.string spec[1]) and spec[ 1] in VALID_UNITS
