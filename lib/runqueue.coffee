@@ -24,7 +24,7 @@ class RunQueue
 		f= 'RunQueue::constructor'
 		@log= 		kit.services.logger.log
 		@E= 		kit.services.error
-		@sdb= 		runqueue: new goo_runqueue # kit.services.db.mysql
+		@sdb= 		runqueue: kit.services.db.mysql # TODO: Let's make this a conditional based on what we need. Mongo / MySQL
 		@config=	kit.services.config.runqueue
 
 		@ctx_poll= log: @log, conn: false # Poller will populate conn-ection on demand
@@ -80,7 +80,9 @@ class RunQueue
 		Promise.resolve().bind @
 		.then ->
 
-			@sdb.runqueue.open @config.mongodb_uri, @config.mongodb_name # @sdb.core.Acquire()
+			@sdb.core.Acquire()
+			# 09/04/18 CRB: Below is the config for using Mongo
+			# @sdb.runqueue.open @config.mongodb_uri, @config.mongodb_name
 		.then (c)->
 			@ctx_finish.conn= c
 
@@ -215,7 +217,7 @@ class RunQueue
 				status.details.failures = result
 
 			status
-			
+
 	# Get at most settings.read_depth jobs,
 	#   and spawn them up to the connection limit on the group, not to exceed our own settings.jobs
 	_Poll: =>
@@ -236,8 +238,8 @@ class RunQueue
 		.then ->
 			return false unless ctx.conn is false
 			rVal.push step: 'acquire'
-
-			@sdb.runqueue.open @config.mongodb_uri, @config.mongodb_name # @sdb.core.Acquire()
+			@sdb.core.Acquire()
+			# @sdb.runqueue.open @config.mongodb_uri, @config.mongodb_name
 		.then (c)->
 			ctx.conn= c unless c is false
 
@@ -308,7 +310,7 @@ class RunQueue
 		@log.debug f+'AFTER', {topic_result}
 
 		@finish_promise= @finish_promise
-		.then -> 
+		.then ->
 			Promise.resolve().bind @
 			.then ->
 				if topic_result.success is true # Else we consider it a failure
