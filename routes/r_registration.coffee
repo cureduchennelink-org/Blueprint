@@ -26,10 +26,11 @@ class Registration
 				verb: 'get', route: '/Signup/:token'
 				use: true, wrap: 'default_wrap', version: any: @_read_signup
 				sql_conn: true, auth_required: false
-			register_signup:
-				verb: 'post', route: '/Signup/:token/register'
-				use: true, wrap: 'default_wrap', version: any: @_register_signup
-				sql_conn: true, sql_tx: true, auth_required: false
+			#Implemented on TIB project
+			#register_signup:
+			#	verb: 'post', route: '/Signup/:token/register'
+			#	use: true, wrap: 'default_wrap', version: any: @_register_signup
+			#	sql_conn: true, sql_tx: true, auth_required: false
 
 	# Create Table for email template
 	make_tbl: (recipient, token, options)->
