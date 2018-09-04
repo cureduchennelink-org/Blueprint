@@ -73,7 +73,7 @@ class Registration
 			trip= new_trip
 
 			# Send Signup email
-			recipient= email: p.eml, fnm: p.fnm, lnm: p.lnm
+			recipient= eml: p.eml, fnm: p.fnm, lnm: p.lnm
 			@ses.send 'verify_signup', @make_tbl recipient, trip.token, @config.ses.options
 		.then ()->
 			success= true

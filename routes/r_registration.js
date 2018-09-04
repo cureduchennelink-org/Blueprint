@@ -112,7 +112,7 @@
         ctx.log.debug(f, 'got signup round trip:', new_trip);
         trip = new_trip;
         recipient = {
-          email: p.eml,
+          eml: p.eml,
           fnm: p.fnm,
           lnm: p.lnm
         };
