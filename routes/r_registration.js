@@ -70,7 +70,8 @@
         params: {
           fnm: 'r:S',
           lnm: 'r:S',
-          eml: 'r:S'
+          eml: 'r:S',
+          role: 'r:S [vendor | executive]'
         },
         response: {
           success: 'bool'
@@ -92,6 +93,9 @@
       if (!p.lnm) {
         throw new this.E.MissingArg('lnm');
       }
+      if (!p.role) {
+        throw new this.E.MissingArg('role');
+      }
       return Promise.resolve().bind(this).then(function() {
         return this.sdb.auth.GetByCredName(ctx, p.eml);
       }).then(function(db_rows) {
@@ -105,7 +109,8 @@
         return this.tripMgr.planTrip(ctx, this.config.api.ident_id, {
           eml: p.eml,
           fnm: p.fnm,
-          lnm: p.lnm
+          lnm: p.lnm,
+          role: p.role
         }, expireDate, 'signup');
       }).then(function(new_trip) {
         var trip;
