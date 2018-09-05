@@ -41,7 +41,7 @@ class Registration
 	# Private Logic
 	_signup: (ctx, pre_loaded)=>
 		use_doc=
-			params: fnm: 'r:S', lnm: 'r:S', eml: 'r:S'
+			params: fnm: 'r:S', lnm: 'r:S', eml: 'r:S', role: 'r:S [vendor | executive]'
 			response: success: 'bool'
 		return use_doc if ctx is 'use'
 		p= ctx.p
@@ -54,6 +54,7 @@ class Registration
 		throw new @E.MissingArg 'eml' if not p.eml
 		throw new @E.MissingArg 'fnm' if not p.fnm
 		throw new @E.MissingArg 'lnm' if not p.lnm
+		throw new @E.MissingArg 'role' if not p.role
 
 		Promise.resolve().bind @
 		.then ->
@@ -67,7 +68,7 @@ class Registration
 			# Create Trip and store email, fnm, lnm in json info. Never Expires (null).
 			expires = 3 #expires in three days
 			expireDate = moment().add(expires, 'days').format();
-			@tripMgr.planTrip ctx, @config.api.ident_id, { eml: p.eml, fnm: p.fnm, lnm: p.lnm }, expireDate, 'signup'
+			@tripMgr.planTrip ctx, @config.api.ident_id, { eml: p.eml, fnm: p.fnm, lnm: p.lnm, role: p.role }, expireDate, 'signup'
 		.then (new_trip)->
 			ctx.log.debug f, 'got signup round trip:', new_trip
 			trip= new_trip
