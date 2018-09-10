@@ -7,7 +7,6 @@ _= require 'lodash'
 it_is= require 'is_js'
 moment= require 'moment'
 VALID_UNITS= [ 'months', 'M', 'weeks', 'w', 'days', 'd', 'hours', 'h', 'minutes', 'm', 'seconds', 's', ]
-goo_runqueue= require './goo_runqueue' # Mongoose based persistance, needs 'open'
 
 class RunQueue
 	@deps=
@@ -19,12 +18,12 @@ class RunQueue
 			'runqueue.topics.ANY{call,type,priority,run_at,external_group}'
 			'runqueue.settings[poll_interval_ms,jobs,read_depth]'
 			'runqueue[mongodb_uri,mongodb_name]'
-			]
+		]
 
 	constructor: (kit) ->
 		f= 'RunQueue::constructor'
 		@log= 		kit.services.logger.log
-		@E= 			kit.services.error
+		@E= 		kit.services.error
 		@sdb= 		kit.services.db.mysql # TODO: Let's make this a conditional based on what we need. Mongo / MySQL
 		@config=	kit.services.config.runqueue
 
@@ -51,13 +50,13 @@ class RunQueue
 
 	# These methods return a number of seconds to add to the job time
 	_back_off_strategies:
-		# The standard back off strategy
+	# The standard back off strategy
 		standard: (retries)-> if retries is 0 then 0 else retries^ 4+ 5+ @standard retries- 1
 
-		#Test Strategies
-		# One year.  Used to prevent testjobs from re-running
+	#Test Strategies
+	# One year.  Used to prevent testjobs from re-running
 		year: (retries)-> if retries is 0 then 0 else 365 * 24 * 60 * 60
-		# Immediately retry.
+	# Immediately retry.
 		immediate: (retries) -> 0
 
 	server_start: (kit)=> # After the services are all created, we need to validate/load our dynamic references per topic
@@ -82,8 +81,8 @@ class RunQueue
 		.then ->
 
 			@sdb.core.Acquire()
-			# 09/04/18 CRB: Below is the config for using Mongo
-			# @sdb.runqueue.open @config.mongodb_uri, @config.mongodb_name
+		# 09/04/18 CRB: Below is the config for using Mongo
+		# @sdb.runqueue.open @config.mongodb_uri, @config.mongodb_name
 		.then (c)->
 			@ctx_finish.conn= c
 
@@ -141,10 +140,10 @@ class RunQueue
 				@sdb.runqueue.AddJob ctx, new_values, reread= true
 			else
 				replace_values= _.pick new_values, [ # List from sql layer for ReplaceJob
-						'unique_key',
-						'priority', 'run_at',
-						'json',
-						]
+					'unique_key',
+					'priority', 'run_at',
+					'json',
+				]
 				@sdb.runqueue.ReplaceJob ctx, job_id, replace_values, reread= true
 		.catch (e)->
 			if (
@@ -240,7 +239,7 @@ class RunQueue
 			return false unless ctx.conn is false
 			rVal.push step: 'acquire'
 			@sdb.core.Acquire()
-			# @sdb.runqueue.open @config.mongodb_uri, @config.mongodb_name
+		# @sdb.runqueue.open @config.mongodb_uri, @config.mongodb_name
 		.then (c)->
 			ctx.conn= c unless c is false
 
@@ -327,7 +326,7 @@ class RunQueue
 					run_at= @_pick_at job.retries+ 1, 'run_at', job.topic, topic_result
 					@sdb.runqueue.Fail ctx, job.id, {run_at, last_reason: topic_result.reason}, reread= true
 			.catch (err)->
-					@log.error f, {job,topic_result,err}
-					err # TODO CONSIDER WHAT IMPACT RETURNING AN ERROR HERE HAS ON THE REST OF THE PROMISE CHAIN
+				@log.error f, {job,topic_result,err}
+				err # TODO CONSIDER WHAT IMPACT RETURNING AN ERROR HERE HAS ON THE REST OF THE PROMISE CHAIN
 
 exports.RunQueue= RunQueue
