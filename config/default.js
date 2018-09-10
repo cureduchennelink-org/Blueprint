@@ -121,6 +121,10 @@
       RunQueue: {
         "class": 'RunQueue',
         file: 'node_modules/blueprint/lib/runqueue'
+      },
+      elb_redirect: {
+        "class": 'ELBRedirect',
+        file: 'node_modules/blueprint/lib/elb_redirect'
       }
     },
     runqueue: {
