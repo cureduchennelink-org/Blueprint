@@ -42,7 +42,7 @@ class SES
 		ReturnPath: spec.ReturnPath ? @config.default.ReturnPath
 		Message: # required
 			Subject: # required
-				Data: spec.Subject ? 'Default Email Subject'
+				Data: data.Subject ? spec.Subject ? 'Default Email Subject'
 				#Charset: 'STRING_VALUE'
 			Body: # required
 				Html:
