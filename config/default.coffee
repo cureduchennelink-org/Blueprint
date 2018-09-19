@@ -45,7 +45,7 @@ module.exports=
 		elb_redirect:   class: 'ELBRedirect',   file: 'node_modules/blueprint/lib/elb_redirect' # Force HTTPS if enabled
 
 	runqueue:
-		# Notes: the *_at takes a 'moment.add' spec [number,string]; string should be one of:
+		# Notes: the *_at takes a 'moment().add' spec [number,string]; string should be one of:
 		# (months or M) (weeks or w) (days or d) (hours or h) (minutes or m) (seconds or s)
 		settings:
 			poll_interval_ms: false, jobs: 100, read_depth: 20

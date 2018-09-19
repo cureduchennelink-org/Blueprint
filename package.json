@@ -7,15 +7,15 @@
     "url": "https://bitbucket.org/dv-mobile/blueprint"
   },
   "dependencies": {
-    "aws-sdk": "^2.313.0",
+    "aws-sdk": "^2.317.0",
     "bluebird": "^3.5.2",
     "bunyan": "^1.8.12",
     "is_js": "^0.9.0",
-    "lodash": "^4.17.10",
+    "lodash": "^4.17.11",
     "moment": "^2.22.2",
     "moment-timezone": "^0.5.21",
-    "mongodb": "^3.1.4",
-    "mongoose": "^5.2.14",
+    "mongodb": "^3.1.6",
+    "mongoose": "^5.2.15",
     "restify": "^7.2.1",
     "restify-errors": "^6.1.1",
     "user-agent-parser": "^0.6.0"
