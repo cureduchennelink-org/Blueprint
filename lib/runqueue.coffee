@@ -304,7 +304,7 @@ class RunQueue
 
 		@log.debug f+'BEFORE', {topic_result}
 		if 'error' of topic_result # Caught error from running their logic
-			topic_result= success: false, reason: topic_result.error.toString()
+			topic_result= success: false, reason: topic_result.error?.stack ? topic_result.error.toString()
 		else if 'success' not of topic_result
 			topic_result= success: false, reason: "Bad Response: "+ JSON.stringify topic_result
 		@log.debug f+'AFTER', {topic_result}
