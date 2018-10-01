@@ -1,6 +1,7 @@
 #
 #	Default Config File
 #
+rq_max= 1000* 1000
 
 module.exports=
 	api:
