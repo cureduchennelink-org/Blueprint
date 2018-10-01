@@ -160,7 +160,7 @@ class SqlRunQueue
 			return db_result unless reread is true # Caller will check for sucess
 			return [] unless db_result.affectedRows is 1
 			id= db_result.insertId
-
+			console.log f, id
 			@db.sqlQuery ctx, "SELECT * FROM #{@table} WHERE ID= ?", [id]
 
 	ReplaceJob: (ctx, id, new_values, reread= false)->
