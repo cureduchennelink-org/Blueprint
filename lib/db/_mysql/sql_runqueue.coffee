@@ -154,6 +154,7 @@ class SqlRunQueue
 		"""
 		Promise.resolve().bind @
 		.then ->
+			@log f, sql, [args]
 			@db.sqlQuery ctx, sql, args
 		.then (db_result)->
 			return db_result unless reread is true # Caller will check for sucess
