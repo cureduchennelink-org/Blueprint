@@ -2,22 +2,22 @@
 
 ## About
 
-DVblueprint is an out of the box Node.js REST server.  
-	
-**Features**:  
+DVblueprint is an out of the box Node.js REST server.
 
-* Easily Extensible REST Interface  
-* Built-in support for MySql and MongoDb  
-* OAuth 2.0 Authentication Protocol  
+**Features**:
+
+* Easily Extensible REST Interface
+* Built-in support for MySql and MongoDb
+* OAuth 2.0 Authentication Protocol
 * User Signup / Registration
 * Forgot Password Flow
-* Rapid Route Prototyping  
-* Dynamic Data using Long-Polling  
-* Route Error Handling  
-* Email Templating  
+* Rapid Route Prototyping
+* Dynamic Data using Long-Polling
+* Route Error Handling
+* Email Templating
 * AWS SES and S3 Integration
-* Static File Server (Web Server)  
-* Easy Logging using Bunyan 
+* Static File Server (Web Server)
+* Easy Logging using Bunyan
 * Self-Documenting API
 
 ## Install Environment Dependencies
@@ -25,7 +25,7 @@ DVblueprint is an out of the box Node.js REST server.
 The latest version of Node.js can be downloaded and isntalled from here: [download node](http://nodejs.org/download). To learn more, you can read the documentation here: [node.js docs](http://nodejs.org/documentation/)
 
 ##### Install CoffeeScript
-Most of the DVblueprint server is written in [CoffeeScript](http://coffeescript.org). It is syntactic sugar for JavaScript, and it is much easier to read and develop with. All of the examples below are going to be CoffeeScript. Node runs on JavaScript, so all Coffee files must be compiled before run time.  
+Most of the DVblueprint server is written in [CoffeeScript](http://coffeescript.org). It is syntactic sugar for JavaScript, and it is much easier to read and develop with. All of the examples below are going to be CoffeeScript. Node runs on JavaScript, so all Coffee files must be compiled before run time.
 
 	sudo npm install -g coffeescript@1.9.2
 
@@ -382,4 +382,4 @@ Features:
 
 
 ## License
-Copyright Â© DV-mobile 2014 - 2018. All Rights Reserved.
+Copyright © DVmobile 2014 - 2018. All Rights Reserved. [dvmobile.io](http://www.dvmobile.io)
