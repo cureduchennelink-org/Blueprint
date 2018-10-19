@@ -14,7 +14,7 @@ do (nm)->
 		server_control= {title,text,commands,goto}
 		message= 'See server_control'
 		e= new ec {message}
-		e.body= {error: 'ServerControl', message: 'See server_control', old_code, server_control}
+		e.body= {code: 'ServerControl', message: 'See server_control', old_code, server_control}
 		console.log f+ nm, e.body
 		e
 
@@ -23,7 +23,7 @@ do (nm)->
 	ec= errors.makeConstructor nm, statusCode: 400
 	my_errors[ nm]= (message)->
 		e= new ec message: message
-		e.body= { error: nm, message}
+		e.body= { code: nm, message}
 		console.log f+ nm, e.body
 		e
 
@@ -32,7 +32,7 @@ do (nm)->
 	ec= errors.makeConstructor nm, statusCode: 400
 	my_errors[ nm]= (message)->
 		e= new ec {message}
-		e.body= { error: nm, message}
+		e.body= { code: nm, message}
 		console.log f+ nm, e.body
 		e
 
@@ -41,7 +41,7 @@ do (nm)->
 	ec= errors.makeConstructor nm, statusCode: 404
 	my_errors[ nm]= (token, message)->
 		e= new ec {message}
-		e.body= { error: nm, message}
+		e.body= { code: nm, message}
 		console.log f+ nm, e.body
 		e
 
@@ -69,7 +69,7 @@ do (nm)->
 	ec= errors.makeConstructor nm, statusCode: 403
 	my_errors[ nm]= (token, message)->
 		e= new ec {message}
-		e.body= {error: token, message}
+		e.body= {code: token, message}
 		console.log f+ nm, e.body
 		e
 
@@ -78,7 +78,7 @@ do (nm)->
 	ec= errors.makeConstructor nm, statusCode: 500
 	my_errors[ nm]= (token)->
 		e= new ec message: token, restCode: 'DatabaseError'
-		e.body= {error: token}
+		e.body= {code: token}
 		console.log f+ nm, e.body
 		e
 
@@ -87,7 +87,7 @@ do (nm)->
 	ec= errors.makeConstructor nm, statusCode: 500
 	my_errors[ nm]= (token, message)->
 		e= new ec {message}
-		e.body= {error: token, message}
+		e.body= {code: token, message}
 		console.log f+ nm, e.body
 		e
 
@@ -96,7 +96,7 @@ do (nm)->
 	ec= errors.makeConstructor nm, statusCode: 500
 	my_errors[ nm]= (message)->
 		e= new ec {message}
-		e.body= {error: 'mongo_error', message}
+		e.body= {code: 'mongo_error', message}
 		console.log f+ nm, e.body
 		e
 
@@ -105,7 +105,7 @@ do (nm)->
 	ec= errors.makeConstructor nm, statusCode: 426
 	my_errors[ nm]= (message)->
 		e= new ec {message}
-		e.body= {error: 'too_many_connections_error', message}
+		e.body= {code: 'too_many_connections_error', message}
 		console.log f+ nm, e.body
 		e
 

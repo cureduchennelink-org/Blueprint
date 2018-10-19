@@ -124,7 +124,7 @@ class Wrapper
 					else
 						req.log.debug f, 'release db conn (successful rollback)'
 						@sdb.core.release ctx.conn
-			res.send err.body
+			res.send if err.body then err else new @E.ServerError err.name, err.message
 			@end_connection_limit()
 			next()
 
@@ -229,13 +229,25 @@ class Wrapper
 					else
 						req.log.debug f, 'release db conn (successful rollback)'
 						@sdb.core.release ctx.conn
-			res.send err.body
+			res.send if err.body then err else new @E.ServerError err.name, err.message
 			ctx.lamd.statusCode= res.statusCode
 			end = (new Date().getTime())
 			ctx.lamd.duration = end - ctx.lamd.start
-			ctx.lamd.err= err
+			ctx.lamd.err= @_exposeErrorProperties err
 			@lamd.write ctx.lamd
 			@end_connection_limit()
 			next()
+
+	# https://www.bennadel.com/blog/3278-using-json-stringify-replacer-function-to-recursively-serialize-and-sanitize-log-data.htm
+	_exposeErrorProperties: (error)->
+		copy= Object.assign {}, error
+		# In the native Error class (and any class that extends Error), the
+		# following properties are not "enumerable". As such, they won't be copied by
+		# the Object.assign() call above. In order to make sure that they are included
+		# in the serialization process, we have to copy them manually.
+		copy.name= error.name if error.name
+		copy.message= error.message if error.message
+		#copy.stack= error.stack if error.stack
+		copy
 
 exports.Wrapper= Wrapper
