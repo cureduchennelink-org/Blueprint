@@ -86,6 +86,13 @@ class RunQueue
 		.then (c)->
 			@ctx_finish.conn= c
 
+	Drain: ->  # Stop taking in new job requests, the server is coming down
+		f= 'RunQueue::Drain:'
+		@log.info f, {was_draining: @poll_timer_id is false}
+		if @poll_timer_id isnt false
+			clearInterval @poll_timer_id
+			@poll_timer_id= false
+
 	_pick_at: (retries, which, topic, other_object)-> # E.g. 0, 'run_at', topic_as_str_or_@topics[nm], users_object_with_optional_override
 		f= 'RunQueue::_pick_at:'
 		#@log.debug f, {retries,which,topic,other_object}
