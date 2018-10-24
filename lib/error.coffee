@@ -50,7 +50,7 @@ do (nm)->
 	ec= errors.makeConstructor nm, statusCode: 401
 	my_errors[ nm]= (code, error, message)->
 		e= new ec message: 'Invalid OAuth Request'
-		e.body= if message then {error, message} else {error}
+		e.body= if message then {code: error, message} else {code: error}
 		console.log f+ nm, e.body
 		e
 
@@ -59,7 +59,7 @@ do (nm)->
 	ec= errors.makeConstructor nm, statusCode: 401
 	my_errors[ nm]= (error, message)->
 		e= new ec message: 'Invalid Basic Auth Request'
-		e.body= body= if message then {error, message} else {error}
+		e.body= body= if message then {code: error, message} else {code: error}
 		console.log f+ nm, e.body
 		e
 
