@@ -210,7 +210,7 @@ class Wrapper
 			ctx.lamd.statusCode= res.statusCode
 			end = (new Date().getTime())
 			ctx.lamd.duration = end - ctx.lamd.start
-			@lamd.write ctx.lamd
+			@lamd.write ctx.lamd unless endpoint.lamd is false
 			@end_connection_limit()
 			next()
 
