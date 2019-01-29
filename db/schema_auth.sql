@@ -5,7 +5,7 @@
 		profile: Extended User information
 */
 
-DROP   TABLE ident;
+DROP   TABLE IF EXISTS ident;
 CREATE TABLE ident (
 		/* System Values*/
 		id		INT(10)			NOT NULL AUTO_INCREMENT PRIMARY KEY
@@ -16,6 +16,10 @@ CREATE TABLE ident (
 	/* Credentials*/
 	,	eml		VARCHAR( 128) UNIQUE DEFAULT NULL /* 'email' */
 	,	pwd		VARCHAR( 128) DEFAULT NULL /* 'password' */
+
+	/* Additional info encoded into access token */
+	,	tenant	VARCHAR( 128) DEFAULT NULL /* tenant reference (optional) */
+	,	role	VARCHAR( 128) DEFAULT NULL /* role string (optional) */
 ) ENGINE= INNODB ;
 
 /* Then insert some recs for testing: */
@@ -26,7 +30,7 @@ INSERT INTO ident (id,eml,cr) VALUES
 	/* Additional System Idents descend from here */
 	;
 
-DROP TABLE ident_tokens;
+DROP TABLE IF EXISTS ident_tokens;
 CREATE TABLE ident_tokens (
 		id		INT(10)			NOT NULL AUTO_INCREMENT PRIMARY KEY
 	,	di		TINYINT    		DEFAULT 0 NOT NULL /* 'disposal' - 0:none,1:disabled,2:purge*/

@@ -2,7 +2,7 @@
 	Push Database Schema
 */
 
-DROP   TABLE psets;
+DROP   TABLE IF EXISTS psets;
 CREATE TABLE psets (
 		id		INT(10)			NOT NULL AUTO_INCREMENT PRIMARY KEY
 	,	di		TINYINT    		DEFAULT 0 NOT NULL /* 'disposal' - 0:none,1:disabled,2:purge*/
@@ -12,7 +12,7 @@ CREATE TABLE psets (
 	,	name	VARCHAR( 128) DEFAULT NULL /* Name of the Class of Push Set */
 ) ENGINE = INNODB ;
 
-DROP   TABLE pset_items;
+DROP   TABLE IF EXISTS pset_items;
 CREATE TABLE pset_items (
 		id		INT(10)			NOT NULL AUTO_INCREMENT PRIMARY KEY
 	,	di		TINYINT    		DEFAULT 0 NOT NULL /* 'disposal' - 0:none,1:disabled,2:purge*/
@@ -24,7 +24,7 @@ CREATE TABLE pset_items (
 	,	count		INT			  DEFAULT 0 /* change count */
 ) ENGINE = INNODB ;
 
-DROP   TABLE pset_item_changes;
+DROP   TABLE IF EXISTS pset_item_changes;
 CREATE TABLE pset_item_changes (
 		id				INT(10)			NOT NULL AUTO_INCREMENT PRIMARY KEY
 	,	di				TINYINT    		DEFAULT 0 NOT NULL /* 'disposal' - 0:none,1:disabled,2:purge*/
