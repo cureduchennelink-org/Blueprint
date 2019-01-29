@@ -28,7 +28,7 @@
     "mocha": "^4.1.0"
   },
   "scripts": {
-    "test": "NODE_ENV=development mocha test/services/db/*ee test/services/*ee test/routes/*ee --bail",
+    "test": "cross-env NODE_ENV=development mocha test/services/db/*ee test/services/*ee test/routes/*ee --bail",
     "test-s": "NODE_ENV=development mocha test/services/*ee --bail",
     "test-s-db": "NODE_ENV=development mocha test/services/db/*ee --bail",
     "test-r": "NODE_ENV=development mocha test/routes/*ee --bail",
