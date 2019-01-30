@@ -2,9 +2,9 @@
 (function() {
   var ref, rq_max, vp_email, vp_use;
 
-  vp_email = 'node_modules/blueprint/views/email';
+  vp_email = "node_modules/blueprint/views/email";
 
-  vp_use = 'node_modules/blueprint/views/use';
+  vp_use = "node_modules/blueprint/views/use";
 
   rq_max = 1000 * 1000;
 
@@ -15,116 +15,116 @@
       longPollTimeout: 60000 * 10,
       authReqForPoll: false,
       static_file_server: {
-        directory: './html_root',
-        "default": 'index.html'
+        directory: "./html_root",
+        default: "index.html"
       }
     },
     throttling: {
       max_connections: 1000
     },
     lamd: {
-      connect_url: 'mongodb://localhost/lamd?w=0&journal=false'
+      connect_url: "mongodb://localhost/lamd?w=0&journal=false"
     },
     route_modules: {
       Auth: {
-        "class": 'AuthRoute',
-        file: 'node_modules/blueprint/routes/r_auth'
+        class: "AuthRoute",
+        file: "node_modules/blueprint/routes/r_auth"
       },
       Poll: {
-        "class": 'LongPoll',
-        file: 'node_modules/blueprint/routes/r_poll'
+        class: "LongPoll",
+        file: "node_modules/blueprint/routes/r_poll"
       },
       Registration: {
-        "class": 'Registration',
-        file: 'node_modules/blueprint/routes/r_registration'
+        class: "Registration",
+        file: "node_modules/blueprint/routes/r_registration"
       },
       User: {
-        "class": 'User',
-        file: 'node_modules/blueprint/routes/r_user'
+        class: "User",
+        file: "node_modules/blueprint/routes/r_user"
       }
     },
     service_modules: {
       web_config: {
-        "class": 'WebConfig',
-        file: 'node_modules/blueprint/lib/web_config'
+        class: "WebConfig",
+        file: "node_modules/blueprint/lib/web_config"
       },
       template: {
-        "class": 'EpicTemplate',
-        file: 'node_modules/blueprint/lib/EpicTemplate',
+        class: "EpicTemplate",
+        file: "node_modules/blueprint/lib/EpicTemplate",
         instConfig: {
           view_path: vp_email
         }
       },
       template_use: {
-        "class": 'EpicTemplate',
-        file: 'node_modules/blueprint/lib/EpicTemplate',
+        class: "EpicTemplate",
+        file: "node_modules/blueprint/lib/EpicTemplate",
         instConfig: {
           view_path: vp_use
         }
       },
       tokenMgr: {
-        "class": 'TokenMgr',
-        file: 'node_modules/blueprint/lib/token_manager'
+        class: "TokenMgr",
+        file: "node_modules/blueprint/lib/token_manager"
       },
       event: {
-        "class": 'Event',
-        file: 'node_modules/blueprint/lib/event'
+        class: "Event",
+        file: "node_modules/blueprint/lib/event"
       },
       db: {
-        "class": 'Db',
-        file: 'node_modules/blueprint/lib/db'
+        class: "Db",
+        file: "lib/db"
       },
       util: {
-        "class": 'Util',
-        file: 'node_modules/blueprint/lib/util'
+        class: "Util",
+        file: "node_modules/blueprint/lib/util"
       },
       auth: {
-        "class": 'Auth',
-        file: 'node_modules/blueprint/lib/auth'
+        class: "Auth",
+        file: "node_modules/blueprint/lib/auth"
       },
       router: {
-        "class": 'Router',
-        file: 'node_modules/blueprint/lib/router'
+        class: "Router",
+        file: "node_modules/blueprint/lib/router"
       },
       wrapper: {
-        "class": 'Wrapper',
-        file: 'node_modules/blueprint/lib/wrapper'
+        class: "Wrapper",
+        file: "node_modules/blueprint/lib/wrapper"
       },
       prototype: {
-        "class": 'Prototype',
-        file: 'node_modules/blueprint/lib/prototype'
+        class: "Prototype",
+        file: "node_modules/blueprint/lib/prototype"
       },
       push: {
-        "class": 'Push',
-        file: 'node_modules/blueprint/lib/push'
+        class: "Push",
+        file: "node_modules/blueprint/lib/push"
       },
       pollMgr: {
-        "class": 'PollManager',
-        file: 'node_modules/blueprint/lib/poll_manager'
+        class: "PollManager",
+        file: "node_modules/blueprint/lib/poll_manager"
       },
       ses: {
-        "class": 'SES',
-        file: 'node_modules/blueprint/lib/ses'
+        class: "SES",
+        file: "node_modules/blueprint/lib/ses"
       },
       tripMgr: {
-        "class": 'TripManager',
-        file: 'node_modules/blueprint/lib/trip_manager'
+        class: "TripManager",
+        file: "node_modules/blueprint/lib/trip_manager"
       },
       lamd: {
-        "class": 'Lamd',
-        file: 'node_modules/blueprint/lib/lamd'
+        class: "Lamd",
+        file: "node_modules/blueprint/lib/lamd"
       },
       AgentHeader: {
-        "class": 'AgentHeader',
-        file: 'node_modules/blueprint/lib/agent_header'
+        class: "AgentHeader",
+        file: "node_modules/blueprint/lib/agent_header"
       },
       RunQueue: {
-        "class": 'RunQueue',
-        file: 'node_modules/blueprint/lib/runqueue'
+        class: "RunQueue",
+        file: "node_modules/blueprint/lib/runqueue"
       },
       elb_redirect: {
-        "class": 'ELBRedirect',
-        file: 'node_modules/blueprint/lib/elb_redirect'
+        class: "ELBRedirect",
+        file: "node_modules/blueprint/lib/elb_redirect"
       }
     },
     runqueue: {
@@ -134,21 +134,21 @@
         read_depth: 20
       },
       topic_defaults: {
-        back_off: 'standard',
+        back_off: "standard",
         last_fail: false,
         priority: 1000,
-        group_ref: 'NONE',
+        group_ref: "NONE",
         limit: rq_max,
         alarm_cnt: 8,
         warn_cnt: 3,
-        warn_delay: [3, 'm'],
-        alarm_delay: [10, 'm'],
-        fail_at: [5, 'm']
+        warn_delay: [3, "m"],
+        alarm_delay: [10, "m"],
+        fail_at: [5, "m"]
       },
       external_groups: {
-        "default": {
+        default: {
           connections: rq_max,
-          requests: [rq_max, rq_max, 'm']
+          requests: [rq_max, rq_max, "m"]
         },
         SES: {},
         SampleTest: {}
@@ -156,46 +156,51 @@
       topics: {},
       SAMPLE_topics: {
         alert_tropo: {
-          service: 'IvyHealth.TropoAlert',
-          type: 'per-user',
+          service: "IvyHealth.TropoAlert",
+          type: "per-user",
           priority: 300,
-          run_at: [0, 's'],
-          group_ref: 'Tropo'
+          run_at: [0, "s"],
+          group_ref: "Tropo"
         },
         alert_ses: {
-          service: 'IvyHealth.SesAlert',
-          type: 'per-user',
+          service: "IvyHealth.SesAlert",
+          type: "per-user",
           priority: 320,
-          run_at: [1, 's'],
-          group_ref: 'SES'
+          run_at: [1, "s"],
+          group_ref: "SES"
         },
         poll_ivy_user: {
-          service: 'IvyHealth.Readings',
-          type: 'per-user,reoccur,fanout',
+          service: "IvyHealth.Readings",
+          type: "per-user,reoccur,fanout",
           priority: 350,
-          run_at: [1, 'm'],
-          group_ref: 'IvyHealth'
+          run_at: [1, "m"],
+          group_ref: "IvyHealth"
         }
       },
       DISABLED_topics: {
         email_daily_user: {
-          service: 'Reports.Daily',
-          type: 'per-user,reoccur',
+          service: "Reports.Daily",
+          type: "per-user,reoccur",
           priority: 900,
-          run_at: [1, 'day'],
-          group_ref: 'SES'
+          run_at: [1, "day"],
+          group_ref: "SES"
         },
         email_weekly_user: {
-          service: 'Reports.Weekly',
-          type: 'per-user,reoccur',
+          service: "Reports.Weekly",
+          type: "per-user,reoccur",
           priority: 950,
-          run_at: [7, 'day'],
-          group_ref: 'SES'
+          run_at: [7, "day"],
+          group_ref: "SES"
         }
       }
     },
     restify: {
-      handlers: ['queryParser', 'bodyParser', 'requestLogger', 'authorizationParser'],
+      handlers: [
+        "queryParser",
+        "bodyParser",
+        "requestLogger",
+        "authorizationParser"
+      ],
       queryParser: {
         mapParams: true
       },
@@ -204,23 +209,23 @@
       }
     },
     route_prefix: {
-      assests: '/s',
-      api: '/api/:Version',
-      upload: '/upload'
+      assests: "/s",
+      api: "/api/:Version",
+      upload: "/upload"
     },
     log: {
-      name: 'server',
-      level: 'debug'
+      name: "server",
+      level: "debug"
     },
     auth: {
-      key: 'jQ9PhcT3Xz',
+      key: "jQ9PhcT3Xz",
       pbkdf2: {
         iterations: 150000,
         salt_size: 16,
         key_length: 32
       },
-      bearer: 'blueprint',
-      refreshTokenExpiration: '2050-01-01 23:59:59',
+      bearer: "blueprint",
+      refreshTokenExpiration: "2050-01-01 23:59:59",
       accessTokenExpiration: 10 * 60,
       basic: {
         api_keys: {}
@@ -229,11 +234,11 @@
     db: {
       mysql: {
         pool: {
-          host: 'localhost',
-          port: 8889,
-          user: 'root',
-          password: 'root',
-          database: 'blueprint',
+          host: "localhost",
+          port: 3306,
+          user: "root",
+          password: "password",
+          database: "blueprint",
           multipleStatements: true,
           supportBigNumbers: true,
           bigNumberStrings: true,
@@ -243,48 +248,48 @@
         },
         modules: {
           auth: {
-            "class": 'SqlAuth',
-            file: 'node_modules/blueprint/lib/db/_mysql/sql_auth'
+            class: "SqlAuth",
+            file: "node_modules/blueprint/lib/db/_mysql/sql_auth"
           },
           user: {
-            "class": 'SqlUser',
-            file: 'node_modules/blueprint/lib/db/_mysql/sql_user'
+            class: "SqlUser",
+            file: "node_modules/blueprint/lib/db/_mysql/sql_user"
           },
           token: {
-            "class": 'SqlToken',
-            file: 'node_modules/blueprint/lib/db/_mysql/sql_token'
+            class: "SqlToken",
+            file: "node_modules/blueprint/lib/db/_mysql/sql_token"
           },
           trip: {
-            "class": 'SqlTrip',
-            file: 'node_modules/blueprint/lib/db/_mysql/sql_trip'
+            class: "SqlTrip",
+            file: "node_modules/blueprint/lib/db/_mysql/sql_trip"
           },
           pset: {
-            "class": 'SqlPSet',
-            file: 'node_modules/blueprint/lib/db/_mysql/sql_pset'
+            class: "SqlPSet",
+            file: "node_modules/blueprint/lib/db/_mysql/sql_pset"
           },
           pset_item: {
-            "class": 'SqlPSetItem',
-            file: 'node_modules/blueprint/lib/db/_mysql/sql_pset'
+            class: "SqlPSetItem",
+            file: "node_modules/blueprint/lib/db/_mysql/sql_pset"
           },
           pset_item_change: {
-            "class": 'SqlPSetItemChange',
-            file: 'node_modules/blueprint/lib/db/_mysql/sql_pset'
+            class: "SqlPSetItemChange",
+            file: "node_modules/blueprint/lib/db/_mysql/sql_pset"
           },
           agent_header: {
-            "class": 'SqlAgentHeader',
-            file: 'node_modules/blueprint/lib/db/_mysql/sql_agent_header'
+            class: "SqlAgentHeader",
+            file: "lib/db/_mysql/sql_agent_header"
           },
           runqueue: {
-            "class": 'SqlRunQueue',
-            file: 'node_modules/blueprint/lib/db/_mysql/sql_runqueue'
+            class: "SqlRunQueue",
+            file: "node_modules/blueprint/lib/db/_mysql/sql_runqueue"
           }
         }
       },
       mongo: {
-        options: 'mongodb://localhost/mydb',
+        options: "mongodb://localhost/mydb",
         models: {
           Workout: {
-            file: 'node_modules/blueprint/lib/db/_mongo/models/workout'
+            file: "node_modules/blueprint/lib/db/_mongo/models/workout"
           }
         }
       }
@@ -298,24 +303,25 @@
       clear_psets_on_restart: true,
       modules: [
         {
-          name: 'Todo',
+          name: "Todo",
           enable: true,
           auth_req: false,
-          delta: ['Item'],
+          delta: ["Item"],
           datasets: {
             Item: {
-              title: 's128',
-              completed: 'n'
+              title: "s128",
+              completed: "n"
             }
           },
           data: {
             Item: [
               {
-                title: 'myTitle',
-                completed: ''
-              }, {
-                title: 'myTitle2',
-                completed: ''
+                title: "myTitle",
+                completed: ""
+              },
+              {
+                title: "myTitle2",
+                completed: ""
               }
             ]
           }
@@ -323,61 +329,68 @@
       ]
     },
     ses: {
-      accessKeyId: 'ACCESS_KEY_ID',
-      secretAccessKey: 'SECRET_KEY',
-      region: 'us-west-2',
+      accessKeyId: "ACCESS_KEY_ID",
+      secretAccessKey: "SECRET_KEY",
+      region: "us-west-2",
       options: {
-        urlPrefix: 'http://localhost:9500/'
+        urlPrefix: "http://localhost:9500/"
       },
-      debug_email: 'Blueprint Debug ToAddress <jamie.hollowell@dv-mobile.com>',
-      "default": {
+      debug_email: "Blueprint Debug ToAddress <jamie.hollowell@dv-mobile.com>",
+      default: {
         BccAddresses: [],
         CcAddresses: [],
-        Source: 'Blueprint Default Source <jamie.hollowell@dv-mobile.com>',
+        Source: "Blueprint Default Source <jamie.hollowell@dv-mobile.com>",
         ReplyToAddresses: [],
-        ReturnPath: 'jamie.hollowell@dv-mobile.com'
+        ReturnPath: "jamie.hollowell@dv-mobile.com"
       },
       emails: {
         forgot_password: {
-          model: 'User',
-          tmpl: 'Top',
-          page: 'forgot_password',
-          Subject: 'Did you forget your password?',
-          Text: 'You have forgotten your password huh? Well, That sucks.'
+          model: "User",
+          tmpl: "Top",
+          page: "forgot_password",
+          Subject: "Did you forget your password?",
+          Text: "You have forgotten your password huh? Well, That sucks."
         },
         verify_email_change: {
-          model: 'User',
-          tmpl: 'Top',
-          page: 'verify_email_change',
-          Subject: 'Please Verify Your Email Address',
-          Text: 'Please click on the following link'
+          model: "User",
+          tmpl: "Top",
+          page: "verify_email_change",
+          Subject: "Please Verify Your Email Address",
+          Text: "Please click on the following link"
         },
         email_change_confirmed: {
-          model: 'User',
-          tmpl: 'Top',
-          page: 'confirm_email_change',
-          Subject: 'Your email address has been successfully verified.',
-          Text: 'Thank you for verifying your new email address.'
+          model: "User",
+          tmpl: "Top",
+          page: "confirm_email_change",
+          Subject: "Your email address has been successfully verified.",
+          Text: "Thank you for verifying your new email address."
         },
         verify_signup: {
-          model: 'Signup',
-          tmpl: 'Top',
-          page: 'verify_signup',
-          Subject: 'Please Verify Signup.',
-          Text: 'Thank yor for signing up with us! Please click the link below'
+          model: "Signup",
+          tmpl: "Top",
+          page: "verify_signup",
+          Subject: "Please Verify Signup.",
+          Text: "Thank yor for signing up with us! Please click the link below"
         },
         signup_complete: {
-          model: 'Signup',
-          tmpl: 'Top',
-          page: 'signup_complete',
-          Subject: 'Signup Complete!',
-          Text: 'Thank yor for signing up with us! Your email address has been verified and your account has been activated!'
+          model: "Signup",
+          tmpl: "Top",
+          page: "signup_complete",
+          Subject: "Signup Complete!",
+          Text:
+            "Thank yor for signing up with us! Your email address has been verified and your account has been activated!"
         }
       }
     },
     web: {
-      config_document: "(function() {\n	var	opts= {\n		rest: {\n			  host: '" + (typeof api_host !== "undefined" && api_host !== null ? api_host : 'localhost') + "'\n			, port: '" + ((ref = process.env.npm_config_elb_port) != null ? ref : 80) + "'\n			, prefix: 'api'\n			, version: 'v1'\n		}\n		, poll: {\n			auth_req: false\n		}\n		, settings: {\n			inactivity_timer_secs: (10 * 60) // 10 minutes\n		}\n	};\n\n	E.Extra.options= opts\n})();"
+      config_document:
+        "(function() {\n	var	opts= {\n		rest: {\n			  host: '" +
+        (typeof api_host !== "undefined" && api_host !== null
+          ? api_host
+          : "localhost") +
+        "'\n			, port: '" +
+        ((ref = process.env.npm_config_elb_port) != null ? ref : 80) +
+        "'\n			, prefix: 'api'\n			, version: 'v1'\n		}\n		, poll: {\n			auth_req: false\n		}\n		, settings: {\n			inactivity_timer_secs: (10 * 60) // 10 minutes\n		}\n	};\n\n	E.Extra.options= opts\n})();"
     }
   };
-
-}).call(this);
+}.call(this));

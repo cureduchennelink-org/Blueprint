@@ -16,7 +16,7 @@ _ = require 'lodash'
 moment= require 'moment'
 moment.defaultFormat= 'YYYY-MM-DD HH:mm:ss'
 
-cust= 'blueprint'
+cust= 'blueprint_test'
 port = process.env.npm_config_server_port
 
 custom =
