@@ -21,13 +21,22 @@
     "user-agent-parser": "^0.6.0"
   },
   "devDependencies": {
+    "@types/bluebird": "^3.5.25",
+    "@types/lodash": "^4.14.120",
     "chai": "^4.1.2",
     "chai-as-promised": "^7.1.1",
     "coffee-script": "^1.9.2",
+    "concurrently": "^4.1.0",
     "cross-env": "^5.2.0",
-    "mocha": "^4.1.0"
+    "mocha": "^4.1.0",
+    "nodemon": "^1.18.9",
+    "typescript": "^3.2.4"
   },
   "scripts": {
+    "build-ts": "tsc",
+    "watch-ts": "tsc -w",
+    "watch": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"cyan.bold,green.bold\" \"yarn watch-ts\" \"yarn watch-node\"",
+    "watch-node": "nodemon dist",
     "test": "cross-env NODE_ENV=development mocha test/services/db/*ee test/services/*ee test/routes/*ee --bail",
     "test-s": "NODE_ENV=development mocha test/services/*ee --bail",
     "test-s-db": "NODE_ENV=development mocha test/services/db/*ee --bail",
