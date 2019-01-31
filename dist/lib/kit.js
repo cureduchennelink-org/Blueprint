@@ -5,6 +5,9 @@ class Kit {
         this.services = {};
         this.routes = {};
     }
+    add_service(name, obj) {
+        this.services[name] = obj;
+    }
 }
 exports.default = Kit;
 //# sourceMappingURL=kit.js.map

@@ -7,10 +7,50 @@
   resolved "https://registry.yarnpkg.com/@types/bluebird/-/bluebird-3.5.25.tgz#59188b871208092e37767e4b3d80c3b3eaae43bd"
   integrity sha512-yfhIBix+AIFTmYGtkC0Bi+XGjSkOINykqKvO/Wqdz/DuXlAKK7HmhLAXdPIGsV4xzKcL3ev/zYc4yLNo+OvGaw==
 
+"@types/bunyan@*", "@types/bunyan@^1.8.5":
+  version "1.8.5"
+  resolved "https://registry.yarnpkg.com/@types/bunyan/-/bunyan-1.8.5.tgz#d992adbce8ed20cde634764bd8f269f29f703647"
+  integrity sha512-7n8ANtxh2c5A/NfCuv8cVtWcgSLdq76MQbtmbInpzXuPw4TSAReUJ+MGHK4m67I4zI3ynCJoABfaeHYJaYSeRg==
+  dependencies:
+    "@types/node" "*"
+
 "@types/lodash@^4.14.120":
   version "4.14.120"
   resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.120.tgz#cf265d06f6c7a710db087ed07523ab8c1a24047b"
   integrity sha512-jQ21kQ120mo+IrDs1nFNVm/AsdFxIx2+vZ347DbogHJPd/JzKNMOqU6HCYin1W6v8l5R9XSO2/e9cxmn7HAnVw==
+
+"@types/node@*":
+  version "10.12.20"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-10.12.20.tgz#f79f959acd3422d0889bd1ead1664bd2d17cd367"
+  integrity sha512-9spv6SklidqxevvZyOUGjZVz4QRXGu2dNaLyXIFzFYZW0AGDykzPRIUFJXTlQXyfzAucddwTcGtJNim8zqSOPA==
+
+"@types/restify-errors@^4.3.3":
+  version "4.3.3"
+  resolved "https://registry.yarnpkg.com/@types/restify-errors/-/restify-errors-4.3.3.tgz#2ae7d7e3f7cbf2117267d56daa8cf37ac113ba77"
+  integrity sha512-kIjSIPHH12R4ivtqnZ0FKpMBt/5EoU2EuGpAF9AcYNGm3cXYDC2foxYlhsN89A1xU5AfnnxhKrHJVXA9Zi/NxQ==
+  dependencies:
+    "@types/verror" "*"
+
+"@types/restify@^7.2.7":
+  version "7.2.7"
+  resolved "https://registry.yarnpkg.com/@types/restify/-/restify-7.2.7.tgz#d543d2b27993c06e4c856dc9dcba32944669b9fa"
+  integrity sha512-6uANL/O61lJnn+WIF/XO7GBkmBxlm7+VRGfPwHbs/dxdL6n39mGQUF5cMUM0hVWx90nD4fLphENv3A0whLiPDg==
+  dependencies:
+    "@types/bunyan" "*"
+    "@types/node" "*"
+    "@types/spdy" "*"
+
+"@types/spdy@*":
+  version "3.4.4"
+  resolved "https://registry.yarnpkg.com/@types/spdy/-/spdy-3.4.4.tgz#3282fd4ad8c4603aa49f7017dd520a08a345b2bc"
+  integrity sha512-N9LBlbVRRYq6HgYpPkqQc3a9HJ/iEtVZToW6xlTtJiMhmRJ7jJdV7TaZQJw/Ve/1ePUsQiCTDc4JMuzzag94GA==
+  dependencies:
+    "@types/node" "*"
+
+"@types/verror@*":
+  version "1.10.3"
+  resolved "https://registry.yarnpkg.com/@types/verror/-/verror-1.10.3.tgz#8be16b0e750018fd4e2e4a766b8f2351d8b5df6a"
+  integrity sha512-7Jz0MPsW2pWg5dJfEp9nJYI0RDCYfgjg2wIo5HfQ8vOJvUq0/BxT7Mv2wNQvkKBmV9uT++6KF3reMnLmh/0HrA==
 
 abbrev@1:
   version "1.1.1"
