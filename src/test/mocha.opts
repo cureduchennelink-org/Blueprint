@@ -1,0 +1,4 @@
+--require coffee-script/register
+-R spec
+--timeout 20s
+--exit
