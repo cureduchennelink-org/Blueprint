@@ -13,17 +13,16 @@ import merge from "lodash/merge";
 
 interface Kit {}
 
-interface IFunc 
-{
-  (): void
+interface IFunc {
+  (): void;
 }
 
 export default class Server {
-  restify_logger: IFunc 
-  log: IFunc
-  config: object
-  server: 
-  constructor(kit) {
+  restify_logger: IFunc;
+  log: IFunc;
+  config: object;
+  server: Server;
+  public constructor(kit) {
     this.config = kit.services.config;
     this.log = kit.services.logger.log;
     this.restify_logger = kit.services.restify_logger;
@@ -31,12 +30,44 @@ export default class Server {
     this.log.info("Server Initialized");
   }
 
-  create() {
-    const options = merge({}, 
+  public create() {
+    const options = merge(
+      {},
       {
-      log: this.restify_logger ? this.restify_logger : this.log
-    },
-    this.config.createServer)
+        log: this.restify_logger ? this.restify_logger : this.log
+      },
+      this.config.createServer
+    );
     this.server = restify.createServer(options);
   }
+
+  public start(cb) {
+    return this.server.listen(this.config.api.port, cb);
+  }
+
+  public addRestifyHandlers() {
+    for (let handler in this.config.restify.handlers) {
+      // @log.info "(restify handler) Server.use #{handler}", @config.restify[ handler]
+    this.server.use(restify.plugins[handler], this.config.restify[ handler])
+
+    }
+ 
+  }
+
+  public addStaticServer() {
+    // Static File Server (Must be last Route Created)
+		const apiPath= '/api/*'
+		const m= 'Api request did not match your route + method (extra slash?)'
+		this.server.get(apiPath, (q,r,n) => {
+      // r.send(new E.BadRequestError(m) // Don't let static-server match api calls
+    }) 
+		const path= '/*'
+		// @log.debug "(restify) serveStatic", {path,"@config.api.static_file_server":@config.api.static_file_server}
+		this.server.get(path, restify.plugins.serveStatic(this.config.api.static_file_server);
+		// # serveStatic = require 'serve-static-restify'
+  }
+
+  // public get() {
+  //   return this.server;
+  // }
 }
