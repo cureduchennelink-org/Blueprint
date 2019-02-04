@@ -32,7 +32,7 @@ export default class Server {
 
   public create() {
     const options = merge(
-      {},
+      {},   
       {
         log: this.restify_logger ? this.restify_logger : this.log
       },
@@ -48,10 +48,18 @@ export default class Server {
   public addRestifyHandlers() {
     for (let handler in this.config.restify.handlers) {
       // @log.info "(restify handler) Server.use #{handler}", @config.restify[ handler]
-    this.server.use(restify.plugins[handler], this.config.restify[ handler])
-
+      this.server.use(restify.plugins[handler], this.config.restify[ handler])
     }
- 
+  }
+
+  public parseJSON() {
+    this.server.use((req, res, next) => {
+      if ("JSON" of req.params) {
+        merge(req.params, JSON.parse(req.params.JSON))
+
+      }
+      next();
+    })
   }
 
   public addStaticServer() {

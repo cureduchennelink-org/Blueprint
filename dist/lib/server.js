@@ -37,18 +37,30 @@ class Server {
             this.server.use(restify_1.default.plugins[handler], this.config.restify[handler]);
         }
     }
-    addStaticServer() {
-        // Static File Server (Must be last Route Created)
-        const apiPath = '/api/*';
-        const m = 'Api request did not match your route + method (extra slash?)';
-        this.server.get(apiPath, (q, r, n) => {
-            // r.send(new E.BadRequestError(m) // Don't let static-server match api calls
+    parseJSON() {
+        this.server.use((req, res, next) => {
+            if ("JSON")
+                of;
+            req.params;
         });
-        const path = '/*';
-        // @log.debug "(restify) serveStatic", {path,"@config.api.static_file_server":@config.api.static_file_server}
-        this.server.get(path, restify_1.default.plugins.serveStatic(this.config.api.static_file_server));
-        // # serveStatic = require 'serve-static-restify'
+        {
+            merge_1.default(req.params, JSON.parse(req.params.JSON));
+        }
+        next();
     }
 }
 exports.default = Server;
+addStaticServer();
+{
+    // Static File Server (Must be last Route Created)
+    const apiPath = '/api/*';
+    const m = 'Api request did not match your route + method (extra slash?)';
+    this.server.get(apiPath, (q, r, n) => {
+        // r.send(new E.BadRequestError(m) // Don't let static-server match api calls
+    });
+    const path = '/*';
+    // @log.debug "(restify) serveStatic", {path,"@config.api.static_file_server":@config.api.static_file_server}
+    this.server.get(path, restify_1.default.plugins.serveStatic(this.config.api.static_file_server));
+    // # serveStatic = require 'serve-static-restify'
+}
 //# sourceMappingURL=server.js.map

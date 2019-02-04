@@ -78,7 +78,7 @@ const start = (servicesEnabled, routesEnabled, mysqlEnabled, mysqlModsEnabled, m
     if (server) {
         q_result = q_result.then(() => {
             // Static File Server (Must be last Route Created)
-            if (config.api ? .static_file_server : ) {
+            if (config.hasOwnProperty("api") && config.api.static_file_server) {
                 server.add_static_server();
             }
             return new bluebird_1.default((resolve, reject) => {
@@ -98,7 +98,7 @@ const start = (servicesEnabled, routesEnabled, mysqlEnabled, mysqlModsEnabled, m
         // log.debug 'SERVER NORMAL START'
         return kit; // JCS: Return the kit so caller can get to servies (e.g. kit.services.server.server)
     });
-    q_result = q_result.catch((err) => {
+    q_result = q_result.catch(err => {
         // log.error err
         // log.error 'SERVER FAILED TO INITIALIZE. EXITING NOW!'
         process.exit(1);

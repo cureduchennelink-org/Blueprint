@@ -77,10 +77,10 @@ const start = (
   }
 
   // Run Server Init Functions from Kit Service Modules
-  let q_result= Promise.resolve().bind(this)
+  let q_result = Promise.resolve().bind(this);
   for (let name in kit.services) {
     const service = kit.services[name];
-  // TODO: try to figure out what is going on here cause I have no idea
+    // TODO: try to figure out what is going on here cause I have no idea
     // do(service)->
     // if typeof service.server_init is 'function'
     //   q_result= q_result.then -> service.server_init kit # Single return promise w/o embedded .then
@@ -88,47 +88,46 @@ const start = (
     //   do(service)-> q_result= service.server_init_promise kit, q_result # will chain it's .then's
   }
 
-	// # Run Server Init Functions from Kit Route Modules
-	// for nm, route of kit.routes when typeof route.server_init is 'function'
-	// 	do(route)-> q_result= q_result.then -> route.server_init(kit)
+  // # Run Server Init Functions from Kit Route Modules
+  // for nm, route of kit.routes when typeof route.server_init is 'function'
+  // 	do(route)-> q_result= q_result.then -> route.server_init(kit)
 
-	// # Run Server Start Functions from Kit Service Modules
-	// for nm, service of kit.services when typeof service.server_start is 'function'
-	// 	do(service)-> q_result= q_result.then -> service.server_start(kit)
-  
+  // # Run Server Start Functions from Kit Service Modules
+  // for nm, service of kit.services when typeof service.server_start is 'function'
+  // 	do(service)-> q_result= q_result.then -> service.server_start(kit)
+
   // Start the Server
-	if(server) {
-		q_result = q_result.then(() => {
+  if (server) {
+    q_result = q_result.then(() => {
       // Static File Server (Must be last Route Created)
-      if (config.api?.static_file_server) {
-        server.add_static_server() 
+      if (config.hasOwnProperty("api") && config.api.static_file_server) {
+        server.add_static_server();
       }
-			return new Promise((resolve, reject) => {
+      return new Promise((resolve, reject) => {
         try {
-					server.start(() => {
-						// log.info('Server listening at', server.server.url)
-						resolve(null);
-          })
+          server.start(() => {
+            // log.info('Server listening at', server.server.url)
+            resolve(null);
+          });
+        } catch (err) {
+          reject(err);
         }
-        catch(err) {
-					reject(err);
-        }
-      })
-    })
+      });
+    });
   }
 
-	q_result= q_result.then(() => {
-		// log.debug 'SERVER NORMAL START'
-		return kit // JCS: Return the kit so caller can get to servies (e.g. kit.services.server.server)
-  })
+  q_result = q_result.then(() => {
+    // log.debug 'SERVER NORMAL START'
+    return kit; // JCS: Return the kit so caller can get to servies (e.g. kit.services.server.server)
+  });
 
-	q_result= q_result.catch((err) => {
-		// log.error err
-		// log.error 'SERVER FAILED TO INITIALIZE. EXITING NOW!'
-		process.exit(1)
-  }) 
+  q_result = q_result.catch(err => {
+    // log.error err
+    // log.error 'SERVER FAILED TO INITIALIZE. EXITING NOW!'
+    process.exit(1);
+  });
 
-	return q_result
+  return q_result;
 };
 
 const updateDependencies = (
