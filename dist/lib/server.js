@@ -14,6 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const restify_1 = __importDefault(require("restify"));
 const merge_1 = __importDefault(require("lodash/merge"));
+const isString_1 = __importDefault(require("lodash/isString"));
 class Server {
     constructor(kit) {
         this.config = kit.services.config;
@@ -37,30 +38,44 @@ class Server {
             this.server.use(restify_1.default.plugins[handler], this.config.restify[handler]);
         }
     }
+    handleOptions() {
+        // Handle all OPTIONS requests to a deadend (Allows CORS to work them out)
+        // @log.info "(restify) Server.opts", @config.restify.allow_headers
+        this.server.opts('/*', (req, res) => {
+            res.setHeader('access-control-allow-headers', (this.config.restify.allow_headers || []).join(', '));
+            res.send(204);
+        });
+    }
     parseJSON() {
         this.server.use((req, res, next) => {
-            if ("JSON")
-                of;
-            req.params;
+            if ("JSON" in req.params) {
+                merge_1.default(req.params, JSON.parse(req.params.JSON));
+            }
+            next();
         });
-        {
-            merge_1.default(req.params, JSON.parse(req.params.JSON));
-        }
-        next();
+    }
+    stripHTML() {
+        this.server.use((req, res, next) => {
+            for (let param of req.params) {
+                if (req.params[param] && isString_1.default(req.params[param])) {
+                    req.params[param] = req.params[param].replace(/[<>]/g, "");
+                }
+            }
+            next();
+        });
+    }
+    addStaticServer() {
+        // Static File Server (Must be last Route Created)
+        const apiPath = '/api/*';
+        const m = 'Api request did not match your route + method (extra slash?)';
+        this.server.get(apiPath, (q, r, n) => {
+            // r.send(new E.BadRequestError(m) // Don't let static-server match api calls
+        });
+        const path = '/*';
+        // @log.debug "(restify) serveStatic", {path,"@config.api.static_file_server":@config.api.static_file_server}
+        this.server.get(path, restify_1.default.plugins.serveStatic(this.config.api.static_file_server));
+        // # serveStatic = require 'serve-static-restify'
     }
 }
 exports.default = Server;
-addStaticServer();
-{
-    // Static File Server (Must be last Route Created)
-    const apiPath = '/api/*';
-    const m = 'Api request did not match your route + method (extra slash?)';
-    this.server.get(apiPath, (q, r, n) => {
-        // r.send(new E.BadRequestError(m) // Don't let static-server match api calls
-    });
-    const path = '/*';
-    // @log.debug "(restify) serveStatic", {path,"@config.api.static_file_server":@config.api.static_file_server}
-    this.server.get(path, restify_1.default.plugins.serveStatic(this.config.api.static_file_server));
-    // # serveStatic = require 'serve-static-restify'
-}
 //# sourceMappingURL=server.js.map

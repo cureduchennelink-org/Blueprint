@@ -3,6 +3,8 @@
 #
 {EventEmitter}= require 'events'
 
+# TODO: Ask James what is going on here
+
 class Event extends EventEmitter
 	@deps= {}
 	constructor: (kit)->

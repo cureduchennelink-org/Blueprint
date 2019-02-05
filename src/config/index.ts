@@ -2,31 +2,31 @@ import merge from "lodash/merge";
 const path = require("path");
 const fs = require("fs");
 import config from "./default";
+import Logger from "../lib/logger";
+import * as types from "../types";
 
 // TODO: Logger? not just console.log
-const configIndex = async () => {
-  const env = process.env.npm_config_env;
-  const configDir = process.env.npm_config_config_dir;
+export default async (configOverrides: types.ConfigOverrides): types.Config => {
+  const log = new Logger();
+  const env = process.env.npm_config_env || "";
+  const configDir = process.env.npm_config_config_dir || ".";
   const execDir = process.cwd();
-  let envPath = "";
 
-  if (configDir) {
-    // TODO: come back to this
-    envPath = path.join(execDir, configDir, `${env}.js`);
-    // _log('Env Config Path:', envPath);
-  }
+  let appConfig = config;
+  let envPath = path.join(execDir, configDir, `${env}`);
+  // _log('Env Config Path:', envPath);
 
   // https://nodejs.org/api/fs.html#fs_fs_existssync_path
   if (fs.existsSync(envPath)) {
     // requires down here?
-    merge(config, await import(envPath));
+    appConfig = merge(config, await import(envPath));
   } else {
     // log that we don't have environment specific configuration
   }
 
-  config.env = env;
-  config.processDir = execDir;
-  return config;
+  appConfig.env = env;
+  appConfig.processDir = execDir;
+  return appConfig;
 };
 
-export default configIndex;
+// export default configIndex;

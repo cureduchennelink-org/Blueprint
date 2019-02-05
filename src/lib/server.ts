@@ -10,6 +10,7 @@
 
 import restify from "restify";
 import merge from "lodash/merge";
+import isString from "lodash/isString";
 
 interface Kit {}
 
@@ -22,10 +23,10 @@ export default class Server {
   log: IFunc;
   config: object;
   server: Server;
-  public constructor(kit) {
-    this.config = kit.services.config;
-    this.log = kit.services.logger.log;
-    this.restify_logger = kit.services.restify_logger;
+  public constructor(config: object, logger: object, restify_logger) {
+    this.config = config;
+    this.log = logger.log;
+    this.restify_logger = restify_logger;
     this.server = false;
     this.log.info("Server Initialized");
   }
@@ -52,13 +53,33 @@ export default class Server {
     }
   }
 
-  public parseJSON() {
-    this.server.use((req, res, next) => {
-      if ("JSON" of req.params) {
-        merge(req.params, JSON.parse(req.params.JSON))
+  public handleOptions() {
+    // Handle all OPTIONS requests to a deadend (Allows CORS to work them out)
+		// @log.info "(restify) Server.opts", @config.restify.allow_headers
+		this.server.opts('/*', ( req: restify.Request, res: restify.Response ) => {
+			res.setHeader('access-control-allow-headers', (this.config.restify.allow_headers || []).join(', '));
+      res.send(204);
+    });
 
+  }
+
+  public parseJSON() {
+    this.server.use((req: restify.Request, res: restify.Response, next: restify.Next) => {
+      if ("JSON" in req.params) {
+        merge(req.params, JSON.parse(req.params.JSON))
       }
       next();
+    })
+  }
+
+  public stripHTML() {
+    this.server.use((req, res, next) => {
+      for (let param of req.params) {
+      if(req.params[param] && isString(req.params[param])) {
+        req.params[param]= req.params[param].replace(/[<>]/g, "");
+      }
+    }
+    next();
     })
   }
 

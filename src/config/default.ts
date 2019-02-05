@@ -1,8 +1,9 @@
 const vp_email = "node_modules/blueprint/views/email";
 const vp_use = "node_modules/blueprint/views/use";
 const rq_max = 1000 * 1000;
+import * as types from "../types";
 
-const defaultConfig = {
+const defaultConfig: types.Config = {
   api: {
     port: 9500,
     ident_id: 98,
@@ -208,8 +209,7 @@ const defaultConfig = {
     upload: "/upload"
   },
   log: {
-    name: "server",
-    level: "debug"
+    name: "server"
   },
   auth: {
     key: "jQ9PhcT3Xz",

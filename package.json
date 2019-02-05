@@ -23,6 +23,7 @@
   "devDependencies": {
     "@types/bluebird": "^3.5.25",
     "@types/bunyan": "^1.8.5",
+    "@types/jest": "^23.3.13",
     "@types/lodash": "^4.14.120",
     "@types/restify": "^7.2.7",
     "@types/restify-errors": "^4.3.3",
@@ -31,8 +32,10 @@
     "coffee-script": "^1.9.2",
     "concurrently": "^4.1.0",
     "cross-env": "^5.2.0",
+    "jest": "^24.0.0",
     "mocha": "^4.1.0",
     "nodemon": "^1.18.9",
+    "ts-jest": "^23.10.5",
     "typescript": "^3.2.4"
   },
   "scripts": {
@@ -40,6 +43,8 @@
     "watch-ts": "tsc -w",
     "watch": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"cyan.bold,green.bold\" \"yarn watch-ts\" \"yarn watch-node\"",
     "watch-node": "nodemon dist",
+    "jtest": "jest",
+    "jtest:w": "jest --watchAll",
     "test": "cross-env NODE_ENV=development mocha test/services/db/*ee test/services/*ee test/routes/*ee --bail",
     "test-s": "NODE_ENV=development mocha test/services/*ee --bail",
     "test-s-db": "NODE_ENV=development mocha test/services/db/*ee --bail",
