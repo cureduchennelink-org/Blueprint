@@ -57,7 +57,7 @@ exports.start= (include_server, services_enabled, routes_enabled, mysql_enabled=
 
 	server.add_restify_handlers() if server
 	# Handle all OPTIONS requests to a deadend (Allows CORS to work them out)
-	server.handle_options() if server
+	# Use CORS service (In pangea-api-server for now) in place of this: server.handle_options() if server
 
 	# Service Handlers
 	if server
@@ -68,6 +68,15 @@ exports.start= (include_server, services_enabled, routes_enabled, mysql_enabled=
 	server.parse_json() if server
 	server.strip_html() if server
 
+	# Run Server Init Functions from Kit Service Modules
+	q_result= Promise.resolve().bind @
+	for nm, service of kit.services
+		do(service)->
+			if typeof service.server_init is 'function'
+				q_result= q_result.then -> service.server_init kit # Single return promise w/o embedded .then
+			if typeof service.server_init_promise is 'function'
+				do(service)-> q_result= service.server_init_promise kit, q_result # will chain it's .then's
+
 	# Routes
 	for nm in routes_enabled
 		mod= kit.services.config.route_modules[ nm]
@@ -77,15 +86,6 @@ exports.start= (include_server, services_enabled, routes_enabled, mysql_enabled=
 		routePath= path.join config.processDir, mod.file
 		kit.new_route_service mod.name, (require routePath)[mod.class]
 		kit.services.wrapper.add mod.name
-
-	# Run Server Init Functions from Kit Service Modules
-	q_result= Promise.resolve().bind @
-	for nm, service of kit.services
-		do(service)->
-			if typeof service.server_init is 'function'
-				q_result= q_result.then -> service.server_init kit # Single return promise w/o embedded .then
-			if typeof service.server_init_promise is 'function'
-				do(service)-> q_result= service.server_init_promise kit, q_result # will chain it's .then's
 
 	# Run Server Init Functions from Kit Route Modules
 	for nm, route of kit.routes when typeof route.server_init is 'function'

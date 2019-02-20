@@ -70,9 +70,6 @@
       server.add_restify_handlers();
     }
     if (server) {
-      server.handle_options();
-    }
-    if (server) {
       ref1 = kit.services;
       for (nm in ref1) {
         service = ref1[nm];
@@ -88,18 +85,6 @@
     }
     if (server) {
       server.strip_html();
-    }
-    for (j = 0, len1 = routes_enabled.length; j < len1; j++) {
-      nm = routes_enabled[j];
-      mod = kit.services.config.route_modules[nm];
-      if (!mod) {
-        throw new Error("No such route-module: " + nm);
-      }
-      mod.name = nm;
-      log.info("Initializing " + mod["class"] + " Routes...");
-      routePath = path.join(config.processDir, mod.file);
-      kit.new_route_service(mod.name, (require(routePath))[mod["class"]]);
-      kit.services.wrapper.add(mod.name);
     }
     q_result = Promise.resolve().bind(this);
     ref2 = kit.services;
@@ -118,6 +103,18 @@
     for (nm in ref2) {
       service = ref2[nm];
       fn(service);
+    }
+    for (j = 0, len1 = routes_enabled.length; j < len1; j++) {
+      nm = routes_enabled[j];
+      mod = kit.services.config.route_modules[nm];
+      if (!mod) {
+        throw new Error("No such route-module: " + nm);
+      }
+      mod.name = nm;
+      log.info("Initializing " + mod["class"] + " Routes...");
+      routePath = path.join(config.processDir, mod.file);
+      kit.new_route_service(mod.name, (require(routePath))[mod["class"]]);
+      kit.services.wrapper.add(mod.name);
     }
     ref3 = kit.routes;
     for (nm in ref3) {
