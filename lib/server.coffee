@@ -13,6 +13,7 @@ E= 	require 'restify-errors'
 _= 			require 'lodash'
 
 class Server
+	@deps = []
 	constructor: (kit)->
 		@config= kit.services.config
 		@log= 	kit.services.logger.log
