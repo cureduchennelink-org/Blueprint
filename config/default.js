@@ -125,6 +125,10 @@
       elb_redirect: {
         "class": 'ELBRedirect',
         file: 'node_modules/blueprint/lib/elb_redirect'
+      },
+      server: {
+        "class": 'Server',
+        file: 'node_modules/blueprint/lib/server'
       }
     },
     runqueue: {
