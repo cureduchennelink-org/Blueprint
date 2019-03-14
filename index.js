@@ -6,13 +6,19 @@
 
   path = require('path');
 
-  exports.start = function(include_server, services_enabled, routes_enabled, mysql_enabled, mysql_mods_enabled, mongo_enabled, more_config, more_kit) {
+  exports.start = function(include_server, services_enabled, routes_enabled, mysql_enabled, mysql_mods_enabled, psql_enabled, psql_mods_enabled, mongo_enabled, more_config, more_kit) {
     var ErrorMore, Kit, Logger, M, Promise, Server, config, fn, i, j, kit, len, len1, log, mod, nm, opts, q_result, ref, ref1, ref2, ref3, ref4, route, routePath, server, service, servicePath;
     if (mysql_enabled == null) {
       mysql_enabled = false;
     }
     if (mysql_mods_enabled == null) {
       mysql_mods_enabled = [];
+    }
+    if (psql_enabled == null) {
+      psql_enabled = false;
+    }
+    if (psql_mods_enabled == null) {
+      psql_mods_enabled = [];
     }
     if (mongo_enabled == null) {
       mongo_enabled = false;
@@ -44,6 +50,10 @@
       config.db.mysql.enable = mysql_enabled;
     }
     config.db.mysql.mods_enabled = mysql_mods_enabled;
+    if (psql_enabled) {
+      config.db.psql.enable = psql_enabled;
+    }
+    config.db.psql.mods_enabled = psql_mods_enabled;
     if (mongo_enabled) {
       config.db.mongo.enable = mongo_enabled;
     }
@@ -53,7 +63,7 @@
       server.create();
       kit.add_service('server', server);
     }
-    ref = update_deps(kit, services_enabled, routes_enabled, mysql_mods_enabled), services_enabled = ref[0], mysql_mods_enabled = ref[1];
+    ref = update_deps(kit, services_enabled, routes_enabled, mysql_mods_enabled, psql_mods_enabled), services_enabled = ref[0], mysql_mods_enabled = ref[1], psql_mods_enabled = ref[2];
     for (i = 0, len = services_enabled.length; i < len; i++) {
       nm = services_enabled[i];
       mod = kit.services.config.service_modules[nm];
