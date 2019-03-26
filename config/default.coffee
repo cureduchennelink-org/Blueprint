@@ -43,6 +43,7 @@ module.exports=
 		AgentHeader:	class: 'AgentHeader',	file: 'node_modules/blueprint/lib/agent_header'
 		RunQueue:		class: 'RunQueue',		file: 'node_modules/blueprint/lib/runqueue'
 		elb_redirect:   class: 'ELBRedirect',   file: 'node_modules/blueprint/lib/elb_redirect' # Force HTTPS if enabled
+		server:   		class: 'Server',   		file: 'node_modules/blueprint/lib/server'
 
 	runqueue:
 		# Notes: the *_at takes a 'moment().add' spec [number,string]; string should be one of:
