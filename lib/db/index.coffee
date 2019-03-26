@@ -12,7 +12,7 @@ class Db
 	constructor: (kit) ->
 		log= kit.services.logger.log
 		config= kit.services.config
-		{SqlCore}= 	require if config.db.mysql.type is 'pg' then './_postgresql/psql_core' else './_mysql/sql_core'
+		{SqlCore}= 	require if config.db.type is 'psql' then './_postgresql/psql_core' else './_mysql/sql_core'
 		@config_mongo= false
 
 		# MySql
