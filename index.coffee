@@ -5,7 +5,7 @@ _= require 'lodash'
 path= require 'path'
 
 # TODO HAVE A 'init' METHOD TO LOAD FIRST kit, config, logger AND MAYBE error WHICH TAKES PARAMS SO YOU CAN CIRCUMVENT ENV FOR E.G. TEST HARNESS DOING ONE MODULE UNIT TEST
-exports.start= (include_server, services_enabled, routes_enabled, mysql_enabled= false, mysql_mods_enabled= [], mongo_enabled= false, more_config= {}, more_kit= {})->
+exports.start= (include_server, services_enabled, routes_enabled, mysql_enabled= false, mysql_mods_enabled= [],psql_enabled= false, psql_mods_enabled= [], mongo_enabled= false, more_config= {}, more_kit= {})->
 	server= false # For unit tests, may not include the restify server logic
 	# Require Node Modules
 	M= 			require 'moment'
@@ -34,6 +34,8 @@ exports.start= (include_server, services_enabled, routes_enabled, mysql_enabled=
 	# Pass inbound module enabled preferences through, for db layer's use
 	config.db.mysql.enable= mysql_enabled if mysql_enabled
 	config.db.mysql.mods_enabled= mysql_mods_enabled
+	config.db.psql.enable= psql_enabled if psql_enabled
+	config.db.psql.mods_enabled= psql_mods_enabled
 	config.db.mongo.enable= mongo_enabled if mongo_enabled
 
 	if include_server
@@ -42,7 +44,7 @@ exports.start= (include_server, services_enabled, routes_enabled, mysql_enabled=
 		server.create()
 		kit.add_service 'server', server					# Add server-service to kit
 
-	[services_enabled, mysql_mods_enabled]= update_deps kit, services_enabled, routes_enabled, mysql_mods_enabled
+	[services_enabled, mysql_mods_enabled, psql_mods_enabled]= update_deps kit, services_enabled, routes_enabled, mysql_mods_enabled, psql_mods_enabled
 	# TODO When 'db' is added, caller will have to enable that?
 
 	# Services

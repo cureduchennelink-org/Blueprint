@@ -3,36 +3,14 @@
 #
 
 Promise=	require 'bluebird'
-mysql=		require 'mysql'
-{CommonCore}= require 'CommonCore'
 
-class SqlCore extends CommonCore
+class CommonCore
 	@deps= services: ['error','logger']
 	constructor: (kit, pool_opts)->
 		@E= kit.services.error
 		_log2= if pool_opts.level2_debug then kit.services.logger.log else debug: ->
 		@is_db_log_on= pool_opts.level2_debug
-		@pool= mysql.createPool pool_opts
-		@acquire= (callback)-> @pool.getConnection callback
-		@Acquire= Promise.promisify @acquire, context: @
-		@release= (conn)->
-			_log2.debug 'DB:SqlCore:release:', 'releasing conn'
-			conn.release()
-		@destroy= (conn)->
-			_log2.debug 'DB:SqlCore:destroy:', 'destroying conn'
-			conn.destroy
-
-		@sqlQuery= (ctx, sql, args)=>
-			ctx.log.debug 'DB:SqlCore:sqlQuery:', sql if @is_db_log_on
-			ctx.log.debug 'DB:SqlCore:args:', args if args and @is_db_log_on
-			throw new @E.DbError 'DB:SQL:BAD_CONN' if ctx.conn is null
-			query= Promise.promisify ctx.conn.query, context: ctx.conn
-			Promise.resolve().bind @
-			.then ->
-				query sql, args
-			.then (just_rows)->
-				ctx.log.debug 'DB:SqlCore:result:', just_rows if @is_db_log_on
-				just_rows
+		
 
 	StartTransaction: (ctx)=> # Assumes conn on ctx
 		f= 'DB:SqlCore:StartTransaction'
@@ -251,4 +229,4 @@ class SqlCore extends CommonCore
 			sql_mod.delete_by_id= delete_by_id # Deprecated
 			sql_mod.DeleteById= delete_by_id
 
-exports.SqlCore= SqlCore
+exports.CommonCore= CommonCore

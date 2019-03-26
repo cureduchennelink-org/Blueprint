@@ -17,7 +17,7 @@ class Db
 		# MySql
 		if config.db.mysql.enable
 			log.info 'Initializing MySql...'
-			{SqlCore}= 	require './_mysql/sql_core'
+			{SqlCore}= 	require if config.db.mysql.type is 'pg' then './_postgresql/psql_core' else './_mysql/sql_core' 
 
 			# Set up all enabled mysql modules
 			@mysql= core: new SqlCore kit, config.db.mysql.pool
@@ -28,6 +28,21 @@ class Db
 				modPath= path.join config.processDir, mod.file
 				log.info "Loading MySql module #{nm}@#{modPath}::#{mod.class}"
 				@mysql[nm]= new (require modPath)[mod.class] @mysql.core, kit
+
+		# PostgreSql
+		if config.db.psql.enable
+			log.info 'Initializing PostgreSql...'
+			{PostgreSqlCore}= 	require './_postgresql/psql_core'
+
+			# Set up all enabled mysql modules
+			@psql= core: new SqlCore kit, config.db.mysql.pool
+			for nm in config.db.psql.mods_enabled
+				mod= config.db.psql.modules[ nm]
+				throw new Error 'UNKNOW POSTGRESQL MODULE:'+nm unless mod
+				mod.name= nm
+				modPath= path.join config.processDir, mod.file
+				log.info "Loading PostgreSql module #{nm}@#{modPath}::#{mod.class}"
+				@psql[nm]= new (require modPath)[mod.class] @psql.core, kit
 
 		# MongoDB
 		if config.db.mongo.enable
