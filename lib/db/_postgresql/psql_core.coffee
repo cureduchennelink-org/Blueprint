@@ -4,7 +4,7 @@
 
 Promise=	require 'bluebird'
 { Pool, Client }= require 'pg'
-{CommonCore}= require 'CommonCore'
+{CommonCore}= require '../CommonCore'
 
 
 class PostgreSqlCore extends CommonCore

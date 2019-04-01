@@ -12,12 +12,13 @@ class Db
 	constructor: (kit) ->
 		log= kit.services.logger.log
 		config= kit.services.config
+		core = 	require if config.db.type is 'psql' then './_postgresql/psql_core' else './_mysql/sql_core'
 		@config_mongo= false
 
 		# MySql
 		if config.db.mysql.enable
 			log.info 'Initializing MySql...'
-			{SqlCore}= 	require if config.db.mysql.type is 'pg' then './_postgresql/psql_core' else './_mysql/sql_core' 
+			SqlCore = core.SqlCore
 
 			# Set up all enabled mysql modules
 			@mysql= core: new SqlCore kit, config.db.mysql.pool
@@ -32,10 +33,10 @@ class Db
 		# PostgreSql
 		if config.db.psql.enable
 			log.info 'Initializing PostgreSql...'
-			{PostgreSqlCore}= 	require './_postgresql/psql_core'
+			SqlCore = core.PostgreSqlCore
 
 			# Set up all enabled mysql modules
-			@psql= core: new SqlCore kit, config.db.mysql.pool
+			@psql= core: new SqlCore kit, config.db.psql.pool
 			for nm in config.db.psql.mods_enabled
 				mod= config.db.psql.modules[ nm]
 				throw new Error 'UNKNOW POSTGRESQL MODULE:'+nm unless mod
