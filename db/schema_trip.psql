@@ -1,0 +1,20 @@
+DROP   TABLE IF EXISTS trips;
+CREATE SEQUENCE trips_seq;
+
+CREATE TABLE trips (
+		id		INT			NOT NULL DEFAULT NEXTVAL ('trips_seq') PRIMARY KEY
+	,	di		SMALLINT    		DEFAULT 0 NOT NULL /* 'disposal' - 0:none,1:disabled,2:purge*/
+	,	cr		TIMESTAMP(0)		DEFAULT 0 /* 'created' Must be first TIMESTAMP colum */
+	,	mo		TIMESTAMP(0)		DEFAULT CURRENT_TIMESTAMP /* 'modified' */
+
+	,	auth_ident_id	INT		NOT NULL
+	,	ident_id		INT		DEFAULT NULL
+
+	,	token			VARCHAR( 128) 	DEFAULT NULL /* Random generated key string  */
+	,	domain			VARCHAR( 128) 	DEFAULT NULL /* purpose for the trip */
+	,	json			TEXT		  	DEFAULT NULL /* json data associated with a trip */
+	,	void			SMALLINT    		DEFAULT 0 NOT NULL /* 'void' the trip */
+	,	returned		TIMESTAMP(0)		DEFAULT NULL /* return date of trip */
+	,	expires			TIMESTAMP(0)		DEFAULT NULL /* 'when the trip will expire' */
+
+) ;

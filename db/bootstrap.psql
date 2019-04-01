@@ -1,0 +1,118 @@
+/* Schema for Authentication Tables
+   DB Schema:
+		ident: Authentication Table
+		refresh_tokens: Authentication Token Table
+		profile: Extended User information
+*/
+
+DROP   TABLE IF EXISTS ident;
+CREATE SEQUENCE ident_seq;
+
+CREATE TABLE ident (
+		/* System Values*/
+		id		INT			NOT NULL DEFAULT NEXTVAL ('ident_seq') PRIMARY KEY
+	,	di		SMALLINT    		DEFAULT 0 NOT NULL /* 'disposal' - 0:none,1:disabled,2:purge*/
+	,	cr		TIMESTAMP(0)		DEFAULT 0 /* 'created' Must be first TIMESTAMP colum */
+	,	mo		TIMESTAMP(0)		DEFAULT CURRENT_TIMESTAMP /* 'modified' */
+
+	/* Credentials*/
+	,	eml		VARCHAR( 128) UNIQUE DEFAULT NULL /* 'email' */
+	,	pwd		VARCHAR( 128) DEFAULT NULL /* 'password' */
+)  ;
+
+/* Then insert some recs for testing: */
+INSERT INTO ident (id,eml,cr) VALUES
+	 (99,'SYSTEM - TIMERS', NULL)
+	,(98,'SYSTEM - API', NULL)
+	,(97,'SYSTEM - TEST', NULL)
+	/* Additional System Idents descend from here */
+	;
+
+DROP TABLE IF EXISTS ident_tokens;
+CREATE SEQUENCE ident_tokens_seq;
+
+CREATE TABLE ident_tokens (
+		id		INT			NOT NULL DEFAULT NEXTVAL ('ident_tokens_seq') PRIMARY KEY
+	,	di		SMALLINT    		DEFAULT 0 NOT NULL /* 'disposal' - 0:none,1:disabled,2:purge*/
+	,	cr		TIMESTAMP(0)		DEFAULT 0 /* 'created' Must be first TIMESTAMP colum */
+	,	mo		TIMESTAMP(0)		DEFAULT CURRENT_TIMESTAMP /* 'modified' */
+	,	ident_id		INT		NOT NULL
+
+	,	exp				TIMESTAMP(0)		NOT NULL
+	,	client			VARCHAR(  32 )
+	,	token			VARCHAR(  32 )	NOT NULL
+)  ;
+CREATE UNIQUE INDEX ix_ident_tokens_token ON ident_tokens(token);
+
+/*
+	Push Database Schema
+*/
+
+DROP   TABLE IF EXISTS psets;
+CREATE SEQUENCE psets_seq;
+
+CREATE TABLE psets (
+		id		INT			NOT NULL DEFAULT NEXTVAL ('psets_seq') PRIMARY KEY
+	,	di		SMALLINT    		DEFAULT 0 NOT NULL /* 'disposal' - 0:none,1:disabled,2:purge*/
+	,	cr		TIMESTAMP(0)		DEFAULT 0 /* 'created' Must be first TIMESTAMP colum */
+	,	mo		TIMESTAMP(0)		DEFAULT CURRENT_TIMESTAMP /* 'modified' */
+
+	,	name	VARCHAR( 128) DEFAULT NULL /* Name of the Class of Push Set */
+) ;
+
+DROP   TABLE IF EXISTS pset_items;
+CREATE SEQUENCE pset_items_seq;
+
+CREATE TABLE pset_items (
+		id		INT			NOT NULL DEFAULT NEXTVAL ('pset_items_seq') PRIMARY KEY
+	,	di		SMALLINT    		DEFAULT 0 NOT NULL /* 'disposal' - 0:none,1:disabled,2:purge*/
+	,	cr		TIMESTAMP(0)		DEFAULT 0 /* 'created' Must be first TIMESTAMP colum */
+	,	mo		TIMESTAMP(0)		DEFAULT CURRENT_TIMESTAMP /* 'modified' */
+	,	pset_id	INT		NOT NULL
+
+	,	xref		VARCHAR( 128) DEFAULT NULL /* external table reference */
+	,	count		INT			  DEFAULT 0 /* change count */
+) ;
+
+DROP   TABLE IF EXISTS pset_item_changes;
+CREATE SEQUENCE pset_item_changes_seq;
+
+CREATE TABLE pset_item_changes (
+		id				INT			NOT NULL DEFAULT NEXTVAL ('pset_item_changes_seq') PRIMARY KEY
+	,	di				SMALLINT    		DEFAULT 0 NOT NULL /* 'disposal' - 0:none,1:disabled,2:purge*/
+	,	cr				TIMESTAMP(0)		DEFAULT 0 /* 'created' Must be first TIMESTAMP colum */
+	,	mo				TIMESTAMP(0)		DEFAULT CURRENT_TIMESTAMP /* 'modified' */
+	,	pset_id			INT		NOT NULL
+	,	pset_item_id	INT		NOT NULL
+
+	,	verb			VARCHAR( 128) DEFAULT NULL /* 'add, change, delete' */
+	,	tbl				VARCHAR( 128) DEFAULT NULL /* 'table that was changed' */
+	,	tbl_id			INT			  DEFAULT NULL /* 'id of record that was changed' */
+	,	resource		VARCHAR(1024) DEFAULT NULL /* 'name of the resource - client visible' */
+	,	prev			VARCHAR(1024) DEFAULT NULL /* 'fields and values before change' */
+	,	after			VARCHAR(1024) DEFAULT NULL /* 'fields and values after change' */
+) ;
+
+/*
+	Trip Database Schema
+*/
+DROP   TABLE IF EXISTS trips;
+CREATE SEQUENCE trips_seq;
+
+CREATE TABLE trips (
+		id		INT			NOT NULL DEFAULT NEXTVAL ('trips_seq') PRIMARY KEY
+	,	di		SMALLINT    		DEFAULT 0 NOT NULL /* 'disposal' - 0:none,1:disabled,2:purge*/
+	,	cr		TIMESTAMP(0)		DEFAULT 0 /* 'created' Must be first TIMESTAMP colum */
+	,	mo		TIMESTAMP(0)		DEFAULT CURRENT_TIMESTAMP /* 'modified' */
+
+	,	auth_ident_id	INT		NOT NULL
+	,	ident_id		INT		DEFAULT NULL
+
+	,	token			VARCHAR( 128) 	DEFAULT NULL /* Random generated key string  */
+	,	domain			VARCHAR( 128) 	DEFAULT NULL /* purpose for the trip */
+	,	json			TEXT		  	DEFAULT NULL /* json data associated with a trip */
+	,	void			SMALLINT    		DEFAULT 0 NOT NULL /* 'void' the trip */
+	,	returned		TIMESTAMP(0)		DEFAULT NULL /* return date of trip */
+	,	expires			TIMESTAMP(0)		DEFAULT NULL /* 'when the trip will expire' */
+
+) ;
