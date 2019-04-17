@@ -28,7 +28,7 @@ class PostgreSqlCore extends CommonCore
 			f = "#{@f}:sqlQuery::"
 			ctx.log.debug 'DB:PostgreSqlCore:sqlQuery:', sql if @is_db_log_on
 			ctx.log.debug 'DB:PostgreSqlCore:args:', args if args and @is_db_log_on
-			throw new @E.InvalidArg f + "args must be an array!" if args and !Array.isArray args
+			throw new @E.InvalidArg f + "args must be an array!" if !args or !Array.isArray args
 			throw new @E.DbError 'DB:PostgreSQL:BAD_CONN' if ctx.conn is null
 			statement = sql
 			query= Promise.promisify ctx.conn.query, context: ctx.conn
