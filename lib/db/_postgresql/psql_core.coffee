@@ -10,6 +10,7 @@ Promise=	require 'bluebird'
 class PostgreSqlCore extends CommonCore
 	@deps= services: ['error','logger']
 	constructor: (kit, pool_opts)->
+		@f = 'PostgreSqlCore'
 		@E= kit.services.error
 		_log2= if pool_opts.level2_debug then kit.services.logger.log else debug: ->
 		@is_db_log_on= pool_opts.level2_debug
@@ -23,20 +24,25 @@ class PostgreSqlCore extends CommonCore
 			_log2.debug 'DB:PostgreSqlCore:destroy:', 'destroying conn'
 			conn.end()
 
-		@sqlQuery= (ctx, sql, args)=>
+		#		CRB: args must be an array because there are many commands we make that don't use arguments
+		# 	CommonCore.js 29:9 sets the transaction level as serializable and doesn't use an argument
+		@sqlQuery= (ctx, sql, args = [])=>
+			f = "#{@f}:sqlQuery::"
 			ctx.log.debug 'DB:PostgreSqlCore:sqlQuery:', sql if @is_db_log_on
 			ctx.log.debug 'DB:PostgreSqlCore:args:', args if args and @is_db_log_on
+			throw new @E.InvalidArg f + "args must be an array!" if args and !Array.isArray args
 			throw new @E.DbError 'DB:PostgreSQL:BAD_CONN' if ctx.conn is null
+			statement = sql
 			query= Promise.promisify ctx.conn.query, context: ctx.conn
 			Promise.resolve().bind @
 			.then ->
-				for index, value in (if args instanceof Array then args else [])
-					if value instanceof Array
-						sql.replace('IN (?)', '= ANY($'+(index+1)+')', index)
+				for value, index in args
+					if Array.isArray value
+						statement.replace 'IN (?)', '= ANY($'+(index+1)+')'
 					else
-						sql.replace('?', '$'+(index+1), index)
+						statement = statement.replace '?', '$'+(index+1)
 
-				query sql, args
+				query statement, args
 			.then (just_rows)->
 				ctx.log.debug 'DB:PostgreSqlCore:result:', just_rows if @is_db_log_on
 				just_rows
