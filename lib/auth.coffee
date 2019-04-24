@@ -22,7 +22,9 @@ class Auth
 		@E=			kit.services.error
 		@config= 	kit.services.config.auth
 		@tokenMgr= 	kit.services.tokenMgr
-		@pwd_col= 	@sdb.auth.pwd_col
+#		CRB: The below line ruins this entire service. You HAVE to have @sdb intialized with the auth module (what if you're not using MySQL???)
+#    Furthermore, you HAVE to have a table / module named `auth`. Why?? What If I want it to be `the_pretty_password_table`???
+#		@pwd_col= 	@sdb.auth.pwd_col
 		@ITERATIONS= @config.pbkdf2.iterations
 		@SALT_SIZE= 	@config.pbkdf2.salt_size
 		@KEY_LENGTH= @config.pbkdf2.key_length
