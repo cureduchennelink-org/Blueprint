@@ -45,7 +45,7 @@ class PostgreSqlCore extends CommonCore
 				query statement, args
 			.then (just_rows)->
 				ctx.log.debug 'DB:PostgreSqlCore:result:', just_rows if @is_db_log_on
-				just_rows
+				just_rows.rows
 
 
 exports.PostgreSqlCore= PostgreSqlCore
