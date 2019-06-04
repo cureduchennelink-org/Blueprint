@@ -154,12 +154,12 @@ class CommonCore
 					cols= ['cr']; qs= ['?']; arg= [null]
 					(cols.push nm; qs.push '?'; arg.push val) for nm, val of new_values
 					sql= """
-						INSERT INTO #{table} (#{cols.join ','}) VALUES (#{qs.join ','})
+						INSERT INTO #{table} (#{cols.join ','}) VALUES (#{qs.join ','}) RETURNING id
 						 """
 					sqlQuery ctx, sql, arg
 				.then (db_result)->
 					result= db_result
-					throw new @E.DbError f+'NO_INSERT' if db_result.affectedRows isnt 1
+					throw new @E.DbError f+'NO_INSERT' if db_result.length isnt 1
 
 					return false unless re_read is true
 					throw new @E.ServerError f+'REREAD_NOT_DEFINED_IN_SCHEMA' unless schema.reread
@@ -168,12 +168,13 @@ class CommonCore
 						FROM #{table} 
 						WHERE id= ?
 						 """
-					sqlQuery ctx, sql, [db_result.insertId]
+					sqlQuery ctx, sql, [db_result[0].id]
 				.then (db_rows)->
 					if db_rows isnt false
 						throw new @E.NotFoundError f+'REREAD' if db_rows.length isnt 1
 						result= db_rows[0]
 					result
+
 			sql_mod.create= create # Deprecated
 			sql_mod.Create= create
 
