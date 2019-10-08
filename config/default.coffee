@@ -4,7 +4,7 @@
 
 module.exports=
 	api:
-		port: 9500
+		port: 9300
 		ident_id: 98	# When the API needs to do something that requires an ident_id
 		longPollTimeout: 60000* 10 # 10 Minutes
 		authReqForPoll: false
