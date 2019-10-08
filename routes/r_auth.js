@@ -186,6 +186,7 @@
             throw new this.E.OAuthError(401, 'invalid_grant', 'Refresh token invalid.');
           }
           result.auth = valid_token[0];
+          result.auth.id = valid_token[0].ident_id;
         }
         if (p.grant_type !== 'client_credentials') {
           return false;
