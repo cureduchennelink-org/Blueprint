@@ -168,7 +168,7 @@ class PrototypeModule
 				vals= _.clone new_values
 				vals= _.merge vals, id: r0id
 				@pset.ItemChange ctx, 0, 'update', before, vals, resource, r0id, null
-			.then -> # TODO: Have ItemChange return what the push service would
+
 		q_result
 		.then ->
 
@@ -204,7 +204,7 @@ class PrototypeModule
 
 				# Notify Push Set of Item Change
 				@pset.ItemChange ctx, 0, 'delete', before, {}, resource, r0id, null
-			.then ->
+
 		q_result
 		.then ->
 
