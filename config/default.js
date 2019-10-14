@@ -8,8 +8,8 @@
 //
 //	Default Config File
 //
-const vp_email= './views/email';
-const vp_use= './views/use';
+const vp_email= 'node_modules/blueprint/views/email';
+const vp_use= 'node_modules/blueprint/views/use';
 const rq_max= 1000* 1000;
 
 module.exports= {
@@ -30,55 +30,55 @@ module.exports= {
 		connect_url: 'mongodb://localhost/lamd?w=0&journal=false'
 	},
 	route_modules: {
-		Auth: {			class: 'AuthRoute', 	file: './routes/r_auth'
+		Auth: {			class: 'AuthRoute', 	file: 'node_modules/blueprint/routes/r_auth'
 	},
-		Poll: {			class: 'LongPoll', 		file: './routes/r_poll'
+		Poll: {			class: 'LongPoll', 		file: 'node_modules/blueprint/routes/r_poll'
 	},
-		Registration: {	class: 'Registration', 	file: './routes/r_registration'
+		Registration: {	class: 'Registration', 	file: 'node_modules/blueprint/routes/r_registration'
 	},
-		User: {			class: 'User', 			file: './routes/r_user'
+		User: {			class: 'User', 			file: 'node_modules/blueprint/routes/r_user'
 	},
-		Workout: {			class: 'Workout', 			file: './routes/r_workout'
+		Workout: {			class: 'Workout', 			file: 'node_modules/blueprint/routes/r_workout'
 	}
 	},
 	service_modules: {
-		web_config: {		class: 'WebConfig',		file: './lib/web_config'
+		web_config: {		class: 'WebConfig',		file: 'node_modules/blueprint/lib/web_config'
 	},
-		template: {		class: 'EpicTemplate', 	file: './lib/EpicTemplate', instConfig: {view_path: vp_email}
+		template: {		class: 'EpicTemplate', 	file: 'node_modules/blueprint/lib/EpicTemplate', instConfig: {view_path: vp_email}
 	},
-		template_use: {	class: 'EpicTemplate', 	file: './lib/EpicTemplate', instConfig: {view_path: vp_use}
+		template_use: {	class: 'EpicTemplate', 	file: 'node_modules/blueprint/lib/EpicTemplate', instConfig: {view_path: vp_use}
 	},
-		tokenMgr: {		class: 'TokenMgr', 		file: './lib/token_manager'
+		tokenMgr: {		class: 'TokenMgr', 		file: 'node_modules/blueprint/lib/token_manager'
 	},
-		event: {			class: 'Event',			file: './lib/event'
+		event: {			class: 'Event',			file: 'node_modules/blueprint/lib/event'
 	},
-		db: {				class: 'Db', 			file: './lib/db'
+		db: {				class: 'Db', 			file: 'node_modules/blueprint/lib/db'
 	},
-		util: {			class: 'Util', 			file: './lib/util'
+		util: {			class: 'Util', 			file: 'node_modules/blueprint/lib/util'
 	},
-		auth: {			class: 'Auth', 			file: './lib/auth'
+		auth: {			class: 'Auth', 			file: 'node_modules/blueprint/lib/auth'
 	},
-		router: {			class: 'Router', 		file: './lib/router'
+		router: {			class: 'Router', 		file: 'node_modules/blueprint/lib/router'
 	},
-		wrapper: {		class: 'Wrapper', 		file: './lib/wrapper'
+		wrapper: {		class: 'Wrapper', 		file: 'node_modules/blueprint/lib/wrapper'
 	},
-		prototype: {		class: 'Prototype', 	file: './lib/prototype'
+		prototype: {		class: 'Prototype', 	file: 'node_modules/blueprint/lib/prototype'
 	},
-		push: {			class: 'Push', 			file: './lib/push'
+		push: {			class: 'Push', 			file: 'node_modules/blueprint/lib/push'
 	},
-		pollMgr: {		class: 'PollManager', 	file: './lib/poll_manager'
+		pollMgr: {		class: 'PollManager', 	file: 'node_modules/blueprint/lib/poll_manager'
 	},
-		ses: {			class: 'SES', 			file: './lib/ses'
+		ses: {			class: 'SES', 			file: 'node_modules/blueprint/lib/ses'
 	},
-		tripMgr: {		class: 'TripManager', 	file: './lib/trip_manager'
+		tripMgr: {		class: 'TripManager', 	file: 'node_modules/blueprint/lib/trip_manager'
 	},
-		lamd: {			class:  'Lamd',			file: './lib/lamd'
+		lamd: {			class:  'Lamd',			file: 'node_modules/blueprint/lib/lamd'
 	},
-		AgentHeader: {	class: 'AgentHeader',	file: './lib/agent_header'
+		AgentHeader: {	class: 'AgentHeader',	file: 'node_modules/blueprint/lib/agent_header'
 	},
-		RunQueue: {		class: 'RunQueue',		file: './lib/runqueue'
+		RunQueue: {		class: 'RunQueue',		file: 'node_modules/blueprint/lib/runqueue'
 	},
-		elb_redirect: {   class: 'ELBRedirect',   file: './lib/elb_redirect'
+		elb_redirect: {   class: 'ELBRedirect',   file: 'node_modules/blueprint/lib/elb_redirect'
 	}
 	}, // Force HTTPS if enabled
 
@@ -170,23 +170,23 @@ module.exports= {
 				level2_debug: false
 			},
 			modules: {
-				auth: {				class: 'SqlAuth', 			file: './lib/db/_mysql/sql_auth'
+				auth: {				class: 'SqlAuth', 			file: 'node_modules/blueprint/lib/db/_mysql/sql_auth'
 			},
-				user: {				class: 'SqlUser', 			file: './lib/db/_mysql/sql_user'
+				user: {				class: 'SqlUser', 			file: 'node_modules/blueprint/lib/db/_mysql/sql_user'
 			},
-				token: {				class: 'SqlToken', 			file: './lib/db/_mysql/sql_token'
+				token: {				class: 'SqlToken', 			file: 'node_modules/blueprint/lib/db/_mysql/sql_token'
 			},
-				trip: {				class: 'SqlTrip', 			file: './lib/db/_mysql/sql_trip'
+				trip: {				class: 'SqlTrip', 			file: 'node_modules/blueprint/lib/db/_mysql/sql_trip'
 			},
-				pset: {				class: 'SqlPSet', 			file: './lib/db/_mysql/sql_pset'
+				pset: {				class: 'SqlPSet', 			file: 'node_modules/blueprint/lib/db/_mysql/sql_pset'
 			},
-				pset_item: {			class: 'SqlPSetItem', 		file: './lib/db/_mysql/sql_pset'
+				pset_item: {			class: 'SqlPSetItem', 		file: 'node_modules/blueprint/lib/db/_mysql/sql_pset'
 			},
-				pset_item_change: {	class: 'SqlPSetItemChange', file: './lib/db/_mysql/sql_pset'
+				pset_item_change: {	class: 'SqlPSetItemChange', file: 'node_modules/blueprint/lib/db/_mysql/sql_pset'
 			},
-				agent_header: {		class: 'SqlAgentHeader',	file: './lib/db/_mysql/sql_agent_header'
+				agent_header: {		class: 'SqlAgentHeader',	file: 'node_modules/blueprint/lib/db/_mysql/sql_agent_header'
 			},
-				runqueue: {			class: 'SqlRunQueue',		file: './lib/db/_mysql/sql_runqueue'
+				runqueue: {			class: 'SqlRunQueue',		file: 'node_modules/blueprint/lib/db/_mysql/sql_runqueue'
 			}
 			}
 		},
@@ -194,7 +194,7 @@ module.exports= {
 		mongo: {
 			options: 'mongodb://localhost/mydb',
 			models: {
-				Workout: {file: './lib/db/_mongo/models/workout'}
+				Workout: {file: 'node_modules/blueprint/lib/db/_mongo/models/workout'}
 			}
 		}
 	},
