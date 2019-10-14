@@ -16,6 +16,7 @@
     "moment-timezone": "^0.5.21",
     "mongodb": "^3.1.6",
     "mongoose": "^5.2.15",
+    "mysql": "^2.17.1",
     "restify": "^7.2.1",
     "restify-errors": "^6.1.1",
     "user-agent-parser": "^0.6.0"
@@ -25,6 +26,8 @@
     "chai-as-promised": "^7.1.1",
     "coffee-script": "^1.9.2",
     "cross-env": "^5.2.0",
+    "eslint": "^6.5.1",
+    "eslint-config-google": "^0.14.0",
     "mocha": "^4.1.0"
   },
   "scripts": {

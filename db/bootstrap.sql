@@ -1,3 +1,7 @@
+drop database if exists blueprint;
+create database blueprint;
+use blueprint;
+
 /* Schema for Authentication Tables
    DB Schema:
 		ident: Authentication Table
