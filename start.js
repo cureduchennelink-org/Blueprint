@@ -1,7 +1,11 @@
 blueprint = require("./index")
 
-services = ['RunQueue']
-routes = ['Registration', 'Auth', 'Poll', 'User', 'Workout']
-mysql = ['auth', 'pset','pset_item','pset_item_change']
+services = []
+routes = []
+// mysql = ['auth', 'pset','pset_item','pset_item_change']
+mysql = []
+psql= ["token", "auth"]
 
-blueprint.start(true, services, routes, true, mysql, false)
+
+// blueprint.start(true, services, routes, true, mysql, false)
+blueprint.start(true, services, routes, false, mysql, true, psql, false)

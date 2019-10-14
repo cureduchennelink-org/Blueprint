@@ -62,7 +62,7 @@ describe('AgentHeader:service:', function(){
         return server.start(false, [ 'AgentHeader', ], [], true, mysql_mods, false, config_extra);}).then(function(the_kit){
         kit= the_kit;
         module= kit.services.AgentHeader;
-        sdb= kit.services.db.mysql;
+        sdb= kit.services.db.psql;
 
         // wrapper was populating ctx.conn
         return sdb.core.Acquire();}).then(function(c) {

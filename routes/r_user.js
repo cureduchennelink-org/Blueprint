@@ -20,7 +20,7 @@ class User {
 		this._view_profile = this._view_profile.bind(this);
 		this._update_profile = this._update_profile.bind(this);
 		this._pl_user = this._pl_user.bind(this);
-		this.sdb= 		kit.services.db.mysql;
+		this.sdb= 		kit.services.db.psql;
 		this.E= 		kit.services.error;
 
 		// User Endpoint

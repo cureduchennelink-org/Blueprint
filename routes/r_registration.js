@@ -27,7 +27,7 @@ class Registration {
     this._register_signup = this._register_signup.bind(this);
     this.E = kit.services.E;
     this.config = kit.services.config;
-    this.sdb = kit.services.db.mysql;
+    this.sdb = kit.services.db.psql;
     this.ses = kit.services.ses;
     this.auth = kit.services.auth;
     this.tripMgr = kit.services.tripMgr;

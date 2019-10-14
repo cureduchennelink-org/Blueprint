@@ -37,7 +37,7 @@ class AuthRoute {
 		this.tripMgr=	kit.services.tripMgr;
 		this.tokenMgr= 	kit.services.tokenMgr;
 		this.event=		kit.services.event != null ? kit.services.event : {emit() {}};
-		this.sdb= 		kit.services.db.mysql;
+		this.sdb= 		kit.services.db.psql;
 
 		// Authentication  Endpoints
 		this.endpoints= {

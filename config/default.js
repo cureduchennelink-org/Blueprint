@@ -37,6 +37,8 @@ module.exports= {
 		Registration: {	class: 'Registration', 	file: 'node_modules/blueprint/routes/r_registration'
 	},
 		User: {			class: 'User', 			file: 'node_modules/blueprint/routes/r_user'
+	},
+		Workout: { class: 'Workout', file: 'node_modules/blueprint/routes/r_workout'
 	}
 	},
 	service_modules: {
@@ -155,6 +157,24 @@ module.exports= {
 	}
 	},
 	db: {
+		type: "psql",
+		psql: {
+			enable: true,
+			pool: {
+				host: "localhost",
+				port: 5432,
+				user: "user",
+				password: "password",
+				database: "blueprint",
+				level2_debug: true,
+				waitForConnections: true,
+				connectionLimit: 60
+			},
+			modules: {
+				token: { class: 'SqlToken', file: 'node_modules/blueprint/lib/db/_postgresql/sql_token' },
+				auth: { class: 'SqlAuth', file: 'node_modules/blueprint/lib/db/_postgresql/sql_auth' }
+			}
+		},
 		mysql: {
 			pool: {
 				host: 'localhost',
