@@ -1,100 +1,111 @@
-Promise= require 'bluebird'
-mysql= require 'mysql'
-_= require 'lodash'
+/*
+ * decaffeinate suggestions:
+ * DS102: Remove unnecessary code created because of implicit returns
+ * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
+ */
+const Promise= require('bluebird');
+const mysql= require('mysql');
+const _= require('lodash');
 
-db= false # Singleton
-exports.Instance= (config)->
-	return db if db isnt false
-	console.log 'Connecting to DB...', {config}
-	db= new Db config
-	return db
+let db= false; // Singleton
+exports.Instance= function(config){
+	if (db !== false) { return db; }
+	console.log('Connecting to DB...', {config});
+	db= new Db(config);
+	return db;
+};
 
-# Databse Abrstration Object
-class Db
-	constructor: (@config)->
-		@conn= mysql.createConnection @config.pool
+// Databse Abrstration Object
+class Db {
+	constructor(config){
+		this.SqlQuery = this.SqlQuery.bind(this);
+		this.GetByKey = this.GetByKey.bind(this);
+		this.PutByKey = this.PutByKey.bind(this);
+		this.config = config;
+		this.conn= mysql.createConnection(this.config.pool);
+	}
 
-	End: ()-> @conn.end; @conn= null
-	SqlQuery: (sql, args)=>
-		console.log "\n----SQL----> ", sql
-		console.log '----ARGS---> ', (JSON.stringify args) if args
-		throw new E.DbError 'DB:SQL:BAD_CONN' if @conn is null
-		#console.log '----RUN--... '
-		p_query= Promise.promisify @conn.query, context: @conn
-		(p_query sql, args).bind @
-		.then (just_rows) ->
-			console.log '----RESULT-> ', if 'affectedRows' of just_rows then (JSON.stringify just_rows) else just_rows
-			just_rows
-#.catch (e) ->
-#console.log '----FAIL---> ', e
-#throw e
+	End(){ this.conn.end; return this.conn= null; }
+	SqlQuery(sql, args){
+		console.log("\n----SQL----> ", sql);
+		if (args) { console.log('----ARGS---> ', (JSON.stringify(args))); }
+		if (this.conn === null) { throw new E.DbError('DB:SQL:BAD_CONN'); }
+		//console.log '----RUN--... '
+		const p_query= Promise.promisify(this.conn.query, {context: this.conn});
+		return (p_query(sql, args)).bind(this)
+		.then(function(just_rows) {
+			console.log('----RESULT-> ', 'affectedRows' in just_rows ? (JSON.stringify(just_rows)) : just_rows);
+			return just_rows;
+		});
+	}
+//.catch (e) ->
+//console.log '----FAIL---> ', e
+//throw e
 
-	# Grabs an entire record by id
-	GetOne: (table, id)->
-		Promise.resolve().bind @
-		.then ->
+	// Grabs an entire record by id
+	GetOne(table, id){
+		return Promise.resolve().bind(this)
+		.then(function() {
 
-			sql= 'SELECT * FROM '+ table+ ' WHERE id= ? AND di= 0'
-			@SqlQuery sql, [id]
-		.then (db_rows)->
-			db_rows[0]
+			const sql= 'SELECT * FROM '+ table+ ' WHERE id= ? AND di= 0';
+			return this.SqlQuery(sql, [id]);})
+		.then(db_rows => db_rows[0]);
+	}
 
-	# Inserts one record in to the database
-	# Returns the full record that was inserted
-	InsertOne: (table, new_values, reread)->
-		Promise.resolve().bind @
-		.then ->
+	// Inserts one record in to the database
+	// Returns the full record that was inserted
+	InsertOne(table, new_values, reread){
+		return Promise.resolve().bind(this)
+		.then(function() {
 
-			cols= ['cr']; qs= ['?']; arg= [null]
-			(cols.push nm; qs.push '?'; arg.push val) for nm, val of new_values
-			sql= 'INSERT INTO '+ table+ ' ('+ (cols.join ',')+
-				 ') VALUES ('+ (qs.join ',')+ ')'
-			@SqlQuery sql, arg
-		.then (db_result)->
+			const cols= ['cr']; const qs= ['?']; const arg= [null];
+			for (let nm in new_values) { const val = new_values[nm]; cols.push(nm); qs.push('?'); arg.push(val); }
+			const sql= 'INSERT INTO '+ table+ ' ('+ (cols.join(','))+
+				 ') VALUES ('+ (qs.join(','))+ ')';
+			return this.SqlQuery(sql, arg);}).then(function(db_result){
 
-			return db_result if reread is false
-			@GetOne table, db_result.insertId
-		.then (rec)-> rec
+			if (reread === false) { return db_result; }
+			return this.GetOne(table, db_result.insertId);}).then(rec => rec);
+	}
 
-	# Deletes records from the database where the column
-	# 'key' matches values in the 'values' array
-	DeleteByKey: (table, key, values)->
-		Promise.resolve().bind @
-		.then ->
+	// Deletes records from the database where the column
+	// 'key' matches values in the 'values' array
+	DeleteByKey(table, key, values){
+		return Promise.resolve().bind(this)
+		.then(function() {
 
-			sql= 'DELETE FROM '+ table+
-				  ' where '+ key+ ' IN (?)'
-			args= [values]
-			@SqlQuery sql, args
-		.then (db_result)-> db_result
+			const sql= 'DELETE FROM '+ table+
+				  ' where '+ key+ ' IN (?)';
+			const args= [values];
+			return this.SqlQuery(sql, args);}).then(db_result => db_result);
+	}
 
-	GetByKey: (table, key, vals)=>
-		throw new Error 'EMPTY_VALS' unless vals
-		vals_type= typeof vals
+	GetByKey(table, key, vals){
+		if (!vals) { throw new Error('EMPTY_VALS'); }
+		const vals_type= typeof vals;
 
-		Promise.resolve().bind @
-		.then ->
+		return Promise.resolve().bind(this)
+		.then(function() {
 
-			args= if vals_type in ['number','string'] then [[vals]] else [vals]
-			sql= 'SELECT * FROM '+ table+
-				' WHERE di= 0 AND '+ key+ ' IN (?)'
-			@SqlQuery sql, args
-		.then (db_rows)->
-			db_rows
+			const args= ['number','string'].includes(vals_type) ? [[vals]] : [vals];
+			const sql= 'SELECT * FROM '+ table+
+				' WHERE di= 0 AND '+ key+ ' IN (?)';
+			return this.SqlQuery(sql, args);}).then(db_rows => db_rows);
+	}
 
-	PutByKey: (table, key, key_val, vals)=>
-		throw new Error 'OBJECT_VALS' unless typeof vals is 'object'
+	PutByKey(table, key, key_val, vals){
+		if (typeof vals !== 'object') { throw new Error('OBJECT_VALS'); }
 
-		Promise.resolve().bind @
-		.then ->
+		return Promise.resolve().bind(this)
+		.then(function() {
 
-			vals_stuff= []
-			args= []
-			(vals_stuff.push " #{nm} = ?"; args.push vals[ nm]) for nm of vals
-			args.push key_val
-			sql= 'UPDATE '+ table+
-				' SET '+ (vals_stuff.join ',')+
-				' WHERE di= 0 AND '+ key+ ' = ?'
-			@SqlQuery sql, args
-		.then (db_rows)->
-			db_rows
+			const vals_stuff= [];
+			const args= [];
+			for (let nm in vals) { vals_stuff.push(` ${nm} = ?`); args.push(vals[ nm]); }
+			args.push(key_val);
+			const sql= 'UPDATE '+ table+
+				' SET '+ (vals_stuff.join(','))+
+				' WHERE di= 0 AND '+ key+ ' = ?';
+			return this.SqlQuery(sql, args);}).then(db_rows => db_rows);
+	}
+}
