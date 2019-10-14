@@ -1,17 +1,17 @@
 #
 #	Poll Manager
 #
-
 _= require 'lodash'
 {CircularBuffer}= require './circular_buffer'
 
 _log= false
-_log2= debug: ()->
+_log2= debug: ->
 
 class PollManager
+	@deps= services: ['logger', 'push'], config: 'push_service.max_buffer_size'
 	constructor: (kit)->
 		_log= 		kit.services.logger.log
-		_log2= 		kit.services.logger.log
+		# DEBUG _log2= 		kit.services.logger.log
 		@config= 	kit.services.config.push_service
 		@push= 		kit.services.push
 		@buffer= 	new CircularBuffer @C_ChangesAddedToBuffer, @C_ChangesRemovedFromBuffer, @config.max_buffer_size
@@ -176,7 +176,7 @@ class PollManager
 		return unless id of @pollers
 		for handle in @pollers[id].handles when @registry[handle]
 			_log2.debug f, "remove id:#{id} from registry:#{handle}", @registry[handle]
-			ix= (@registry[handle].indexOf id) # TODO: BROWSERS: IE < 9 indexOf
+			ix= (@registry[handle].indexOf id)
 			@registry[handle].splice ix, 1 if ix > -1
 			delete @registry[handle] if @registry[handle].length is 0
 		delete @pollers[id]

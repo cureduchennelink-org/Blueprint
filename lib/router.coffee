@@ -2,8 +2,6 @@
 #	Route Pre-Loader
 #
 
-Q= require 'q'
-
 log_map=
 	get:  'GET '
 	post: 'POST'
@@ -16,14 +14,13 @@ use_map=
 	put:  'PUT'
 	del:  'DEL'
 
-usage= []
-
 class Router
+	@deps: services: ['template_use', 'server'], config: 'route_prefix.api'
 	constructor: (kit) ->
 		@log= 		kit.services.logger.log
 		@pfx= 		kit.services.config.route_prefix.api
 		@template= 	kit.services.template_use
-		@server= 	kit.services.server
+		@server= 	kit.services.server.server
 		@usage= []
 		@usage_by_mod= {}
 
@@ -52,17 +49,20 @@ class Router
 
 	server_init: ()=>
 		f= 'Router:server_init'
-		@server.get @pfx, (q,r,n)=>
+		@server['get'] @pfx, (q,r,n)=>
 			if q.params.format is 'json'
 				r.send @usage
 			else
 				try
-					result= @template.render 'Usage','Usage','usage_main', @make_tbl()
+					body= @template.render 'Usage','Usage','usage_main', @make_tbl()
 				catch e
 					@log.debug e, e.stack
 					throw e
-				r.set 'Content-Type', 'text/html'
-				r.send 200, result, {'Content-Type':'text/html; charset=utf-8'}
+				r.writeHead 200,
+					'Content-Length': Buffer.byteLength body
+					'Content-Type': 'text/html; charset=utf-8'
+				r.write body
+				r.end()
 			n()
 
 exports.Router= Router

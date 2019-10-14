@@ -16,6 +16,7 @@ rename= Util.rename
 
 kit= new Kit
 kit.add_service 'config', config
+kit.add_service 'error', {}
 kit.new_service 'logger', Logger
 
 _log= kit.services.logger.log
@@ -29,7 +30,7 @@ class SqlToken
 ###
 
 describe 'Sql Token Module', ()->
-	core= new SqlCore config.db.mysql.pool, _log
+	core= new SqlCore kit, config.db.mysql.pool
 	tokenDb= false
 	the_token= rename 'SECRET_TOKEN'
 	valid_token= rename 'VALID_TOKEN'
@@ -38,7 +39,6 @@ describe 'Sql Token Module', ()->
 	exp_rec= false
 
 	before ()->
-
 		# Insert a valid token
 		valid_vals=
 			token: valid_token
@@ -62,16 +62,15 @@ describe 'Sql Token Module', ()->
 	after ()->
 
 	it 'should be instantiated',(done)->
-		try
-			tokenDb= new SqlToken core, kit
-		catch e
-			_log.error e.body.error, e.body.message; done e
+		tokenDb= new SqlToken core, kit
 		tokenDb.should.be.instanceOf SqlToken
 		done()
+
 	it 'should use the ident_tokens table', ()->
 		tokenDb.should.have.property 'table'
 		tokenDb.table.should.equal 'ident_tokens'
-	it 'should create an ident_token using token, ident_id, client and exp', (done)-> # Create (re_read)
+
+	it 'should create an ident_token using token, ident_id, client and exp', -> # Create (re_read)
 		ctx= conn: null, log: _log
 		new_values= {}
 		ident_token= false
@@ -104,13 +103,13 @@ describe 'Sql Token Module', ()->
 			db_rows[0].client.should.equal new_values.client
 			db_rows[0].exp.toString().should.equal new_values.exp.toString()
 			core.release ctx.conn
-			done()
 
-		.fail (err)->
+		.catch (err)->
 			_log.error {err}
 			core.release ctx.conn unless ctx.conn is null
-			done err
-	it 'should not allow identical tokens to be inserted', (done)->
+			throw err
+
+	it 'should not allow identical tokens to be inserted', ->
 		ctx= conn: null, log: _log
 		new_values= {}
 		ident_token= false
@@ -128,14 +127,12 @@ describe 'Sql Token Module', ()->
 			tokenDb.Create ctx, new_values, re_read= true
 		.then (new_rec)->
 			_log.debug {new_rec}
-			done new Error 'Test should not have gotten here'
-		.fail (err)->
-			try
-				err.code.should.equal 'ER_DUP_ENTRY'
-				done()
-			catch e
-				done e
-	it 'should return a full record for a specific token if not expired', (done)->
+			new Error 'Test should not have gotten here'
+
+		.catch (err)->
+			err.code.should.equal 'ER_DUP_ENTRY'
+
+	it 'should return a full record for a specific token if not expired', ->
 		ctx= conn: null, log: _log
 		new_values= {}
 		ident_token= false
@@ -145,14 +142,12 @@ describe 'Sql Token Module', ()->
 			ctx.conn= c
 
 			# Using token module
+			# JCS: This function was updated to return only the matching ident record with only what is re-encoded into an access token
 			tokenDb.GetNonExpiredToken ctx, valid_token
 		.then (db_rows)->
-			db_rows.length.should.equal 1
-			db_rows[0].should.deep.equal valid_rec
-			(moment db_rows[0].exp).unix().should.be.above moment().unix()
-			done()
-		.fail (err)-> _log.error {err}; done err
-	it 'should return nothing for a specific token if expired', (done)->
+			db_rows.should.deep.equal [ id: Util.test_ident_id, role: null, tenant: null]
+
+	it 'should return nothing for a specific token if expired', ->
 		ctx= conn: null, log: _log
 		new_values= {}
 		ident_token= false
@@ -165,9 +160,8 @@ describe 'Sql Token Module', ()->
 			tokenDb.GetNonExpiredToken ctx, exp_token
 		.then (db_rows)->
 			db_rows.length.should.equal 0
-			done()
-		.fail (err)-> _log.error {err}; done err
-	it 'should insert a new token and remove the old one if given on update', (done)->
+
+	it 'should insert a new token and remove the old one if given on update', ->
 		ctx= conn: null, log: _log
 		nv= {}
 		ident_token= false
@@ -203,13 +197,12 @@ describe 'Sql Token Module', ()->
 		.then (db_rows)->
 			db_rows.length.should.equal 0
 			core.release ctx.conn
-			done()
 
-		.fail (err)->
+		.catch (err)->
 			_log.error {err}
 			core.release ctx.conn unless ctx.conn is null
-			done err
-	it 'should insert and return a new token if not given an old one', ()->
+
+	it 'should insert and return a new token if not given an old one', ->
 		ctx= conn: null, log: _log
 		nv= {}
 		ident_token= false
@@ -240,10 +233,10 @@ describe 'Sql Token Module', ()->
 			db_rows[0].client.should.equal nv.client
 			db_rows[0].exp.toString().should.equal nv.exp.toString()
 
-		.fail (err)->
+		.catch (err)->
 			_log.error {err}
 			core.release ctx.conn unless ctx.conn is null
-			done err
+			throw err
 
 
 

@@ -1,4 +1,4 @@
-DROP   TABLE trips;
+DROP   TABLE IF EXISTS trips;
 CREATE TABLE trips (
 		id		INT(10)			NOT NULL AUTO_INCREMENT PRIMARY KEY
 	,	di		TINYINT    		DEFAULT 0 NOT NULL /* 'disposal' - 0:none,1:disabled,2:purge*/

@@ -5,11 +5,7 @@ chai.should()
 
 describe 'Routes', ()->
 
-	it 'should be true', (done)->
+	it 'should be true', ->
 		(Util.db.SqlQuery 'SELECT * FROM ident')
 		.then (db_rows)->
-			done()
-
-		.fail (err)->
-			console.log {err}
-			done err
+			true

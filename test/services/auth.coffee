@@ -41,6 +41,7 @@ kit.add_service 'logger', log: debug: console.log
 kit.add_service 'config', config
 kit.add_service 'db', mockDb
 kit.new_service 'tokenMgr', TokenMgr
+kit.add_service 'error', E
 kit.new_service 'auth', Auth
 
 _log= console.log
@@ -76,7 +77,7 @@ describe 'Auth Service', ()->
 		(auth.ComparePassword 'password', encryptedPassword+ 'BROKEN').should.eventually.be.false
 
 	it 'should validate a username and password combination', ()->
-		(auth.ValidateCredentials {}, 'test@email.com', 'password').should.eventually.equal 42
+		(auth.ValidateCredentials {}, 'test@email.com', 'password').should.eventually.deep.equal id: 42, role: undefined, tenant: undefined
 
 	describe 'server_use', ()->
 		future= moment().add config.auth.accessTokenExpiration, 'seconds'
@@ -126,15 +127,8 @@ describe 'Auth Service', ()->
 				auth.server_use req, res, ()->
 				req.auth.authorize()
 				res.headers.should.have.property 'WWW-Authenticate'
-				res.data.should.be.an.instanceof E.OAuthError
+				res.data.name.should.equal 'OAuthError'
+				#res.data.should.be.an.instanceof E.OAuthError
 				res.data.statusCode.should.equal 401
 				res.data.body.error.should.equal 'invalid_token'
-
-
-
-
-
-
-
-
 

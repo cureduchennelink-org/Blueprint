@@ -1,9 +1,7 @@
 #
 #	Token Manager
 #
-
-Q= require 'q'
-E= require './error'
+Promise= require 'bluebird'
 crypto = require 'crypto'
 moment = require 'moment'
 
@@ -15,9 +13,9 @@ urlSafeBase64EncodeFix= (str)->
 	str.replace(/\+/g, '-').replace(/\//g, '_').replace(/\=/g, '')
 
 class TokenMgr
+	@deps= services: []
 	constructor: (kit)->
-		@log= kit.services.logger.log
-		@CreateToken= Q.nbind @createToken, @
+		@CreateToken=( Promise.promisify @createToken).bind @
 
 	createToken: (length, callback)->
 		crypto.randomBytes length, (err, buf)->

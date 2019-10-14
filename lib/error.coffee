@@ -1,104 +1,113 @@
-restify = require 'restify'
-util = require 'util'
+#
+# Custom rest errors
+#
+errors = require 'restify-errors'
+my_errors= {}
+f= 'lib/errors:'
 
-InvalidArg= (message)->
-	restify.RestError.call this,
-		statusCode: 400
-		body: {error: 'InvalidParam', message}
-		constructorOpt: InvalidArg
-	this.name= 'Invalid Argument'
+nm= 'ServerControlledException'
+do (nm)->
+	ec= errors.makeConstructor nm, statusCode: 420
+	my_errors[ nm]= (old_code, title, text, commands, goto)->
+		throw new Error "lib/error::#{nm}: Missing 'goto' in function arguments" unless typeof goto is 'string'
+		commands= commands.join '~' unless typeof commands is 'string'
+		server_control= {title,text,commands,goto}
+		message= 'See server_control'
+		e= new ec {message}
+		e.body= {code: 'ServerControl', message: 'See server_control', old_code, server_control}
+		console.log f+ nm, e.body
+		e
 
-util.inherits InvalidArg, restify.RestError
-exports.InvalidArg= InvalidArg
+nm= 'InvalidArg'
+do (nm)->
+	ec= errors.makeConstructor nm, statusCode: 400
+	my_errors[ nm]= (message)->
+		e= new ec message: message
+		e.body= { code: nm, message}
+		console.log f+ nm, e.body
+		e
 
-MissingArg= (message)->
-	restify.RestError.call this,
-		statusCode: 400
-		body: {error: 'MissingParam', message}
-		constructorOpt: MissingArg
-	this.name= 'Missing Argument'
+nm= 'MissingArg'
+do (nm)->
+	ec= errors.makeConstructor nm, statusCode: 400
+	my_errors[ nm]= (message)->
+		e= new ec {message}
+		e.body= { code: nm, message}
+		console.log f+ nm, e.body
+		e
 
-util.inherits MissingArg, restify.RestError
-exports.MissingArg= MissingArg
+nm= 'NotFoundError'
+do (nm)->
+	ec= errors.makeConstructor nm, statusCode: 404
+	my_errors[ nm]= (token, message)->
+		e= new ec {message}
+		e.body= { code: nm, message}
+		console.log f+ nm, e.body
+		e
 
-NotFoundError= (token, message)->
-	restify.RestError.call this,
-		statusCode: 404
-		body: {error: token, message }
-		constructorOpt: NotFoundError
-	this.name= 'Resource Not Found'
+nm= 'OAuthError'
+do (nm)->
+	ec= errors.makeConstructor nm, statusCode: 401
+	my_errors[ nm]= (code, error, message)->
+		e= new ec message: 'Invalid OAuth Request'
+		e.body= if message then {code: error, message} else {code: error}
+		console.log f+ nm, e.body
+		e
 
-util.inherits NotFoundError, restify.RestError
-exports.NotFoundError= NotFoundError
-
-OAuthError= (code, error, message)->
-	body= if message
-	then {error, message} else {error}
-	restify.RestError.call this,
-		statusCode: code
-		restCode: 'OAuthError'
-		message: 'Invalid OAuth Request'
-		body: body
-		constructorOpt: OAuthError
-	this.name= 'OAuth 2.0 Error'
-
-util.inherits OAuthError, restify.RestError
-exports.OAuthError= OAuthError
-
-BasicAuthError= (error, message)->
-	body= if message
-	then {error, message} else {error}
-	restify.RestError.call this,
-		statusCode: 401
-		restCode: 'BasicAuthError'
-		message: 'Invalid Basic Auth Request'
-		body: body
-		constructorOpt: BasicAuthError
-	this.name= 'OAuth 2.0 Error'
-
-util.inherits BasicAuthError, restify.RestError
-exports.BasicAuthError= BasicAuthError
+nm= 'BasicAuthError'
+do (nm)->
+	ec= errors.makeConstructor nm, statusCode: 401
+	my_errors[ nm]= (error, message)->
+		e= new ec message: 'Invalid Basic Auth Request'
+		e.body= body= if message then {code: error, message} else {code: error}
+		console.log f+ nm, e.body
+		e
 
 # token in the form 'MODULE:FUNCTION:CUSTOM_STRING'
-AccessDenied= (token, message)->
-	restify.RestError.call this,
-		statusCode: 403
-		body: {error: token, message}
-		constructorOpt: AccessDenied
-	this.name= 'Access Denied'
-util.inherits AccessDenied, restify.RestError
-exports.AccessDenied= AccessDenied
+nm= 'AccessDenied'
+do (nm)->
+	ec= errors.makeConstructor nm, statusCode: 403
+	my_errors[ nm]= (token, message)->
+		e= new ec {message}
+		e.body= {code: token, message}
+		console.log f+ nm, e.body
+		e
 
-DbError= (token)->
-	restify.RestError.call this,
-		statusCode: 500
-		restCode: 'DatabaseError'
-		body: {error: token}
-		constructorOpt: DbError
-	this.name= 'Database Error'
+nm= 'DbError'
+do (nm)->
+	ec= errors.makeConstructor nm, statusCode: 500
+	my_errors[ nm]= (token)->
+		e= new ec message: token, restCode: 'DatabaseError'
+		e.body= {code: token}
+		console.log f+ nm, e.body
+		e
 
-util.inherits DbError, restify.RestError
-exports.DbError= DbError
+nm= 'ServerError'
+do (nm)->
+	ec= errors.makeConstructor nm, statusCode: 500
+	my_errors[ nm]= (token, message)->
+		e= new ec {message}
+		e.body= {code: token, message}
+		console.log f+ nm, e.body
+		e
 
-ServerError= (token, message)->
-	restify.RestError.call this,
-		statusCode: 500
-		restCode: 'ServerError'
-		body: {error: token, message}
-		constructorOpt: ServerError
-	this.name= 'Server Error'
+nm= 'MongoDbError'
+do (nm)->
+	ec= errors.makeConstructor nm, statusCode: 500
+	my_errors[ nm]= (message)->
+		e= new ec {message}
+		e.body= {code: 'mongo_error', message}
+		console.log f+ nm, e.body
+		e
 
-util.inherits ServerError, restify.RestError
-exports.ServerError= ServerError
+nm= 'TooManyConnectionsError'
+do (nm)->
+	ec= errors.makeConstructor nm, statusCode: 426
+	my_errors[ nm]= (message)->
+		e= new ec {message}
+		e.body= {code: 'too_many_connections_error', message}
+		console.log f+ nm, e.body
+		e
 
-MongoDbError= (message)->
-	restify.RestError.call this,
-		statusCode: 500
-		restCode: 'MongoDbError'
-		message: message
-		body: {error: 'mongo_error', message}
-		constructorOpt: MongoDbError
-	this.name= 'Mongo Database Error'
-
-util.inherits MongoDbError, restify.RestError
-exports.MongoDbError= MongoDbError
+#console.log my_errors
+exports[nm]= val for nm,val of my_errors

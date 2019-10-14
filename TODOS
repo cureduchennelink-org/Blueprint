@@ -1,0 +1,9 @@
+From 2018_Kyrio
+
+ - Put mysql back for RunQueue
+ - Change table 'profile' to be 3 tables: executive, vendor, seceratary
+ - For LinkedIn, need to add a 'realm' to ident, and have Auth endpoint allow a linked-in token
+ - Mabye add a 'type' to ident, to match the table it ties to for profile
+ - On-board flow might be done where ident is created before a profile-type record - so returning to login flows to on-board again.
+ - Local code would clone /User route, and update for its own profile-type purposes
+ - Have not determined if we want a generic /User or a separate /Exectutive and /Vendor to get/create profiles.

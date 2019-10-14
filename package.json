@@ -1,30 +1,41 @@
 {
   "name": "blueprint",
-  "version": "0.1.0-140926",
-  "repository":{
-    "type":"git",
-    "url":"https://bitbucket.org/dv-mobile/blueprint"
-    },
+  "version": "1.0.0-x",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://bitbucket.org/dv-mobile/blueprint"
+  },
   "dependencies": {
-    "aws-sdk": "^2.0.17",
-    "bunyan": "^1.1.0",
-    "lodash": "^2.4.1",
-    "moment": "^2.8.3",
-    "mongoose": "^3.8.16",
-    "mysql": "^2.5.1",
-    "nedb": "^0.11.1",
-    "q": "^1.0.1",
-    "restify": "^2.8.2"
+    "aws-sdk": "^2.317.0",
+    "bluebird": "^3.5.2",
+    "bunyan": "^1.8.12",
+    "is_js": "^0.9.0",
+    "lodash": "^4.17.11",
+    "moment": "^2.22.2",
+    "moment-timezone": "^0.5.21",
+    "mongodb": "^3.1.6",
+    "mongoose": "^5.2.15",
+    "pg": "^7.8.0",
+    "restify": "^7.2.1",
+    "restify-errors": "^6.1.1",
+    "user-agent-parser": "^0.6.0"
   },
   "devDependencies": {
-    "chai": "1.9.1",
-    "chai-as-promised": "4.1.1",
-    "coffee-script": "1.4.0",
-    "mocha": "1.20.1"
+    "chai": "^4.1.2",
+    "chai-as-promised": "^7.1.1",
+    "coffee-script": "^1.9.2",
+    "cross-env": "^5.2.0",
+    "mocha": "^4.1.0"
   },
   "scripts": {
-    "test": "mocha test/services test/routes",
-    "test-services": "mocha test/services",
-    "test-routes": "mocha test/routes"
+    "test": "NODE_ENV=development mocha test/services/db/*ee test/services/*ee test/routes/*ee --bail",
+    "test-s": "NODE_ENV=development mocha test/services/*ee --bail",
+    "test-s-db": "NODE_ENV=development mocha test/services/db/*ee --bail",
+    "test-r": "NODE_ENV=development mocha test/routes/*ee --bail",
+    "test-s-auth": "NODE_ENV=development mocha test/services/auth.coffee --bail",
+    "test-s-db-token": "NODE_ENV=development mocha test/services/db/sql_token.coffee --bail",
+    "test-s-runqueue": "NODE_ENV=development mocha test/services/runqueue.coffee --bail",
+    "west-s-runqueue": "cross-env NODE_ENV=development mocha test/services/runqueue.coffee --bail"
   }
 }

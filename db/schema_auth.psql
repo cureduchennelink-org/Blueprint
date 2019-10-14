@@ -1,0 +1,49 @@
+/* Schema for Authentication Tables
+   DB Schema:
+		ident: Authentication Table
+		refresh_tokens: Authentication Token Table
+		profile: Extended User information
+*/
+
+DROP   TABLE IF EXISTS ident;
+CREATE SEQUENCE ident_seq;
+
+CREATE TABLE ident (
+		/* System Values*/
+		id		INT			NOT NULL DEFAULT NEXTVAL ('ident_seq') PRIMARY KEY
+	,	di		SMALLINT    		DEFAULT 0 NOT NULL /* 'disposal' - 0:none,1:disabled,2:purge*/
+	,	cr		TIMESTAMP(0)		DEFAULT 0 /* 'created' Must be first TIMESTAMP colum */
+	,	mo		TIMESTAMP(0)		DEFAULT CURRENT_TIMESTAMP /* 'modified' */
+
+	/* Credentials*/
+	,	eml		VARCHAR( 128) UNIQUE DEFAULT NULL /* 'email' */
+	,	pwd		VARCHAR( 128) DEFAULT NULL /* 'password' */
+
+	/* Additional info encoded into access token */
+	,	tenant	VARCHAR( 128) DEFAULT NULL /* tenant reference (optional) */
+	,	role	VARCHAR( 128) DEFAULT NULL /* role string (optional) */
+)  ;
+
+/* Then insert some recs for testing: */
+INSERT INTO ident (id,eml,cr) VALUES
+	 (99,'SYSTEM - TIMERS', NULL)
+	,(98,'SYSTEM - API', NULL)
+	,(97,'SYSTEM - TEST', NULL)
+	/* Additional System Idents descend from here */
+	;
+
+DROP TABLE IF EXISTS ident_tokens;
+CREATE SEQUENCE ident_tokens_seq;
+
+CREATE TABLE ident_tokens (
+		id		INT			NOT NULL DEFAULT NEXTVAL ('ident_tokens_seq') PRIMARY KEY
+	,	di		SMALLINT    		DEFAULT 0 NOT NULL /* 'disposal' - 0:none,1:disabled,2:purge*/
+	,	cr		TIMESTAMP(0)		DEFAULT 0 /* 'created' Must be first TIMESTAMP colum */
+	,	mo		TIMESTAMP(0)		DEFAULT CURRENT_TIMESTAMP /* 'modified' */
+	,	ident_id		INT		NOT NULL
+
+	,	exp				TIMESTAMP(0)		NOT NULL
+	,	client			VARCHAR(  32 )
+	,	token			VARCHAR(  32 )	NOT NULL
+)  ;
+CREATE UNIQUE INDEX ix_ident_tokens_token ON ident_tokens(token);

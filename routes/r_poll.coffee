@@ -17,6 +17,7 @@ _= require 'lodash'
 _log= false
 
 class LongPoll
+	@deps= services:[ 'logger', 'config', 'push', 'pollMgr', ],config: 'api[longPollTimeout,authReqForPoll]'
 	constructor: (kit)->
 		_log= 		 	kit.services.logger.log
 		@config= 	 	kit.services.config
@@ -53,7 +54,6 @@ class LongPoll
 		req.connection.pause()
 		req.connection.setTimeout @safe_timeout # Allow unlimited http-keepalive requests
 		req.on 'close', => # Clean up request, if unexpected close
-			_log.debug 'REQ-EVENT:CLOSE', id
 			@pollMgr.PollerClosed id
 
 		# Hand off request to Poll Manager

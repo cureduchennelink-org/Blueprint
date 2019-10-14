@@ -1,0 +1,98 @@
+/*
+	Push Database Schema
+*/
+
+DROP   TABLE IF EXISTS psets;
+CREATE SEQUENCE psets_seq;
+
+CREATE TABLE psets (
+		id		INT			NOT NULL DEFAULT NEXTVAL ('psets_seq') PRIMARY KEY
+	,	di		SMALLINT    		DEFAULT 0 NOT NULL /* 'disposal' - 0:none,1:disabled,2:purge*/
+	,	cr		TIMESTAMP(0)		DEFAULT 0 /* 'created' Must be first TIMESTAMP colum */
+	,	mo		TIMESTAMP(0)		DEFAULT CURRENT_TIMESTAMP /* 'modified' */
+
+	,	name	VARCHAR( 128) DEFAULT NULL /* Name of the Class of Push Set */
+) ;
+
+DROP   TABLE IF EXISTS pset_items;
+CREATE SEQUENCE pset_items_seq;
+
+CREATE TABLE pset_items (
+		id		INT			NOT NULL DEFAULT NEXTVAL ('pset_items_seq') PRIMARY KEY
+	,	di		SMALLINT    		DEFAULT 0 NOT NULL /* 'disposal' - 0:none,1:disabled,2:purge*/
+	,	cr		TIMESTAMP(0)		DEFAULT 0 /* 'created' Must be first TIMESTAMP colum */
+	,	mo		TIMESTAMP(0)		DEFAULT CURRENT_TIMESTAMP /* 'modified' */
+	,	pset_id	INT		NOT NULL
+
+	,	xref		VARCHAR( 128) DEFAULT NULL /* external table reference */
+	,	count		INT			  DEFAULT 0 /* change count */
+) ;
+
+DROP   TABLE IF EXISTS pset_item_changes;
+CREATE SEQUENCE pset_item_changes_seq;
+
+CREATE TABLE pset_item_changes (
+		id				INT			NOT NULL DEFAULT NEXTVAL ('pset_item_changes_seq') PRIMARY KEY
+	,	di				SMALLINT    		DEFAULT 0 NOT NULL /* 'disposal' - 0:none,1:disabled,2:purge*/
+	,	cr				TIMESTAMP(0)		DEFAULT 0 /* 'created' Must be first TIMESTAMP colum */
+	,	mo				TIMESTAMP(0)		DEFAULT CURRENT_TIMESTAMP /* 'modified' */
+	,	pset_id			INT		NOT NULL
+	,	pset_item_id	INT		NOT NULL
+
+	,	verb			VARCHAR( 128) DEFAULT NULL /* 'add, change, delete' */
+	,	tbl				VARCHAR( 128) DEFAULT NULL /* 'table that was changed' */
+	,	tbl_id			INT			  DEFAULT NULL /* 'id of record that was changed' */
+	,	resource		VARCHAR(1024) DEFAULT NULL /* 'name of the resource - client visible' */
+	,	prev			VARCHAR(1024) DEFAULT NULL /* 'fields and values before change' */
+	,	after			VARCHAR(1024) DEFAULT NULL /* 'fields and values after change' */
+) ;/*
+	Push Database Schema
+*/
+
+DROP   TABLE IF EXISTS psets;
+CREATE SEQUENCE psets_seq;
+
+CREATE TABLE psets (
+		id		INT			NOT NULL DEFAULT NEXTVAL ('psets_seq') PRIMARY KEY
+	,	di		SMALLINT    		DEFAULT 0 NOT NULL /* 'disposal' - 0:none,1:disabled,2:purge*/
+	,	cr		TIMESTAMP(0)		DEFAULT 0 /* 'created' Must be first TIMESTAMP colum */
+	,	mo		TIMESTAMP(0)		DEFAULT CURRENT_TIMESTAMP /* 'modified' */
+
+	,	name	VARCHAR( 128) DEFAULT NULL /* Name of the Class of Push Set */
+) ;
+
+DROP   TABLE IF EXISTS pset_items;
+CREATE SEQUENCE pset_items_seq;
+
+CREATE TABLE pset_items (
+		id		INT			NOT NULL DEFAULT NEXTVAL ('pset_items_seq') PRIMARY KEY
+	,	di		SMALLINT    		DEFAULT 0 NOT NULL /* 'disposal' - 0:none,1:disabled,2:purge*/
+	,	cr		TIMESTAMP(0)		DEFAULT 0 /* 'created' Must be first TIMESTAMP colum */
+	,	mo		TIMESTAMP(0)		DEFAULT CURRENT_TIMESTAMP /* 'modified' */
+	,	pset_id	INT		NOT NULL
+
+	,	xref		VARCHAR( 128) DEFAULT NULL /* external table reference */
+	,	count		INT			  DEFAULT 0 /* change count */
+) ;
+
+DROP   TABLE IF EXISTS pset_item_changes;
+CREATE SEQUENCE pset_item_changes_seq;
+
+CREATE TABLE pset_item_changes (
+		id				INT			NOT NULL DEFAULT NEXTVAL ('pset_item_changes_seq') PRIMARY KEY
+	,	di				SMALLINT    		DEFAULT 0 NOT NULL /* 'disposal' - 0:none,1:disabled,2:purge*/
+	,	cr				TIMESTAMP(0)		DEFAULT 0 /* 'created' Must be first TIMESTAMP colum */
+	,	mo				TIMESTAMP(0)		DEFAULT CURRENT_TIMESTAMP /* 'modified' */
+	,	pset_id			INT		NOT NULL
+	,	pset_item_id	INT		NOT NULL
+
+	,	verb			VARCHAR( 128) DEFAULT NULL /* 'add, change, delete' */
+	,	tbl				VARCHAR( 128) DEFAULT NULL /* 'table that was changed' */
+	,	tbl_id			INT			  DEFAULT NULL /* 'id of record that was changed' */
+	,	resource		VARCHAR(1024) DEFAULT NULL /* 'name of the resource - client visible' */
+	,	prev			VARCHAR(1024) DEFAULT NULL /* 'fields and values before change' */
+	,	after			VARCHAR(1024) DEFAULT NULL /* 'fields and values after change' */
+) ;
+
+
+

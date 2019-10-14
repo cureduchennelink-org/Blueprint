@@ -1,0 +1,11 @@
+--
+-- Notes: You need to create your DB yourself, then 'use' it, as below
+--
+DROP DATABASE IF EXISTS blueprint;
+CREATE DATABASE IF NOT EXISTS blueprint DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
+USE blueprint;
+
+source db/bootstrap.sql
+
+source db/schema_runqueue.sql
+-- source db/sample_data.sql

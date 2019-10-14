@@ -1,0 +1,7 @@
+DROP   TABLE IF EXISTS lamd;
+CREATE SEQUENCE lamd_seq;
+
+CREATE TABLE lamd (
+	id		INT			NOT NULL DEFAULT NEXTVAL ('lamd_seq') PRIMARY KEY,
+	info 	json 		NOT NULL
+) ;

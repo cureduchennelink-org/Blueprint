@@ -1,17 +1,13 @@
 #
 # Prototype Route Service
 #
-
-Q= require 'q'
-E= require '../lib/error'
+Promise= require 'bluebird'
 _= require 'lodash'
 
-_log= false
-
 class Prototype
+	@deps= services: ['push', 'wrapper'], config: 'prototype[modules,clear_psets_on_restart]'
 	constructor: (kit)->
 		f= 'Prototype:constructor'
-		@log= 		kit.services.logger.log
 		@config= 	kit.services.config.prototype
 
 	# optional server_init func
@@ -23,14 +19,13 @@ class Prototype
 		protos=		@config.modules
 		clear_pset= @config.clear_psets_on_restart
 
-		q_result= Q.resolve true
+		q_result= Promise.resolve().bind @
 		for mod in protos when mod.enable
-			do(mod)=>
-				q_result= q_result.then =>
+			do(mod)->
+				q_result= q_result.then ->
 					# Initiate the Push Set
-					ctx= conn: null, log: @log
-					push.GetPushSet ctx, clear_pset, "Prototype/#{mod.name}"
-				.then (pset)=>
+					push.GetPushSet clear_pset, "Prototype/#{mod.name}"
+				.then (pset)->
 					kit.add_route_service mod.name, new PrototypeModule mod, pset
 					wrapper.add mod.name
 		q_result
@@ -74,12 +69,11 @@ class PrototypeModule
 		use_doc.response[nm]= 'list' for nm of @resource
 		return use_doc if ctx is 'use'
 		f= "Prototype:S_Get:#{@mod.name}:"
-		_log= ctx.log
 		result= {}
 		result[@mod.name]= {}
 
-		Q.resolve()
-		.then ()=>
+		Promise.resolve().bind @
+		.then ()->
 
 			for nm, r_obj of @resource
 				result[@mod.name][nm]= []
@@ -102,8 +96,6 @@ class PrototypeModule
 		use_doc.response[resource]= 'list'
 		return use_doc if ctx is 'use'
 		p= 	  ctx.p
-		conn= ctx.conn
-		_log= ctx.log
 
 		f= "Prototype:S_Create:#{@mod.name}:#{resource}:"
 		r= @resource[resource]
@@ -113,12 +105,12 @@ class PrototypeModule
 
 		# Validate all schema columns are included in params
 		for col of schema
-			throw new E.MissingArg col unless col of p
+			throw new @E.MissingArg col unless col of p
 			rec[col]= p[col]
 		rec.id= r.counter++
 
-		Q.resolve()
-		.then ()=>
+		Promise.resolve().bind @
+		.then ()->
 
 			# Create new record
 			r.idx[rec.id]= rec
@@ -126,7 +118,7 @@ class PrototypeModule
 
 			# Notify Push Set of Item Change
 			@pset.ItemChange ctx, 0, 'add', {}, rec, resource, rec.id, null
-		.then ()=>
+		.then ()->
 
 			# Respond to Client
 			result.success= true
@@ -139,8 +131,6 @@ class PrototypeModule
 		use_doc.response[resource]= 'list'
 		return use_doc if ctx is 'use'
 		p= 	  ctx.p
-		conn= ctx.conn
-		_log= ctx.log
 
 		f= "Prototype:S_Update:#{@mod.name}:#{resource}:"
 		r= @resource[resource]
@@ -149,7 +139,7 @@ class PrototypeModule
 		result= {}
 
 		if p.r0id is 'batch'
-			throw new E.MissingArg 'batch_ids' unless 'batch_ids' of p
+			throw new @E.MissingArg 'batch_ids' unless 'batch_ids' of p
 			batch_ids= ( (Number id) for id in p.batch_ids )
 		else
 			batch_ids= [ (Number p.r0id) ]
@@ -160,12 +150,12 @@ class PrototypeModule
 
 		# Validate that r0id exists
 		for r0id in batch_ids
-			throw new E.NotFoundError "PROTO:UPDATE:#{@mod.name}:#{resource}:r0id" unless r0id of r.idx
+			throw new @E.NotFoundError "PROTO:UPDATE:#{@mod.name}:#{resource}:r0id" unless r0id of r.idx
 
 		result[resource]= []
-		q_result= Q.resolve true
+		q_result= Promise.resolve().bind @
 		for r0id in batch_ids
-			do (r0id)=> q_result= q_result.then () =>
+			do (r0id)-> q_result= q_result.then ()->
 				before= {}
 				for nm of new_values
 					before[nm]= r.idx[r0id][nm]
@@ -178,7 +168,7 @@ class PrototypeModule
 				vals= _.clone new_values
 				vals= _.merge vals, id: r0id
 				@pset.ItemChange ctx, 0, 'update', before, vals, resource, r0id, null
-			.then => # TODO: Have ItemChange return what the push service would
+			.then -> # TODO: Have ItemChange return what the push service would
 		q_result
 		.then ->
 
@@ -191,8 +181,6 @@ class PrototypeModule
 			params: {}, response: success: 'bool'
 		return use_doc if ctx is 'use'
 		p= 	  ctx.p
-		conn= ctx.conn
-		_log= ctx.log
 
 		f= "Prototype:S_Delete:#{@mod.name}:#{resource}:"
 		r= @resource[resource]
@@ -200,17 +188,17 @@ class PrototypeModule
 
 		if p.r0id is 'batch'
 			batch_ids= ( (Number id) for id in p.batch_ids )
-			throw new E.MissingArg 'batch_ids' unless batch_ids.length
+			throw new @E.MissingArg 'batch_ids' unless batch_ids.length
 		else
 			batch_ids= [ (Number p.r0id) ]
 
 		# Validate that r0id or batch ids exist
 		for r0id in batch_ids
-			throw new E.NotFoundError "PROTO:DELETE:#{@mod.name}:#{resource}:r0id", r0id unless r0id of r.idx
+			throw new @E.NotFoundError "PROTO:DELETE:#{@mod.name}:#{resource}:r0id", r0id unless r0id of r.idx
 
-		q_result= Q.resolve true
+		q_result= Promise.resolve().bind @
 		for r0id in batch_ids
-			do (r0id)=> q_result= q_result.then () =>
+			do (r0id)-> q_result= q_result.then ()->
 				# Delete record
 				delete r.idx["#{r0id}"]
 

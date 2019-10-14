@@ -1,14 +1,11 @@
 #
 #	Trip Database Functions
 #
-
-Q= require 'q'
-E= require '../../error'
-
+Promise= require 'bluebird'
 
 class SqlTrip
+	@deps: {}
 	constructor: (core, kit)->
-		@log= kit.services.logger.log
 		@db= core
 		@table= 'trips'
 		@schema=
@@ -21,13 +18,16 @@ class SqlTrip
 
 	get_by_token: (ctx, token)->
 		f= "DB:SqlTrip:get_by_token:"
-		@log.debug f, token
+		ctx.log.debug f, token
 
-		Q.resolve()
-		.then =>
+		Promise.resolve().bind @
+		.then ->
 
-			sql= 'SELECT ' + (@schema.get_by_token.join ',') + ' FROM ' + @table +
-				' WHERE token= ? AND di= 0'
+			sql= """
+				SELECT #{@schema.get_by_token.join ','} 
+				FROM #{@table}
+				WHERE token= ? AND di= 0
+				 """
 			@db.sqlQuery ctx, sql, [token]
 		.then (db_rows)->
 			db_rows

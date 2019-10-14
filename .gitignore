@@ -27,3 +27,6 @@ git-version.txt
 
 *.sublime-project
 *.sublime-workspace
+
+.idea/
+.vscode/

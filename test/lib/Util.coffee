@@ -1,12 +1,12 @@
-Q= 		require 'q'
+Promise=require 'bluebird'
 _= 		require 'lodash'
 http= 	require 'http'
 mysql= 	require 'mysql'
 config= (require '../../config')()
 
-throw new Error 'MYSQL NOT ENABLED' unless config.db.mysql.enable
+throw new Error 'MYSQL NOT ENABLED' unless config.db?.mysql?.pool?.host
 config.db.mysql.pool.database+= '_test' # TODO: Move to config file?
-config.log= name: 'test', level: 'info'
+config.log= name: 'test', level: 'trace'
 exports.config= config
 
 
@@ -18,6 +18,7 @@ exports.config= config
 exports.test_ident_id= 97 # SYSTEM - TEST ident rec id
 exports.rename= (name)-> 'bp-'+ name+ ''+ new Date().getTime()
 exports.encryptedPassword= 'xfGuZKjVkoNgQyXxYT8+Hg==.f+uw2I+dqzfOE4O82Znikrbdb0lOONBxl/xcWGsQtFI='
+m= 'test/lib/Util::'
 
 class Db
 	constructor: (@config)->
@@ -26,14 +27,17 @@ class Db
 	End: ()-> @conn.end; @conn= null
 	SqlQuery: (sql, args)=>
 		throw new E.DbError 'DB:SQL:BAD_CONN' if @conn is null
-		(Q.ninvoke @conn, 'query', sql, args)
-		.then (rows_n_cols) ->
-			rows_n_cols[0]
+		query= Promise.promisify @conn.query, context: @conn
+		console.log m+'SqlQuery', {query,sql,args}
+		(query sql, args)
+		.then (just_rows)->
+			console.log m+'SqlQuery-result', {just_rows}
+			just_rows
 
 	# Grabs an entire record by id
 	GetOne: (table, id)->
-		Q.resolve()
-		.then ()=>
+		Promise.resolve().bind @
+		.then ->
 
 			sql= 'SELECT * FROM '+ table+ ' WHERE id= ? AND di= 0'
 			@SqlQuery sql, [id]
@@ -43,15 +47,15 @@ class Db
 	# Inserts one record in to the database
 	# Returns the full record that was inserted
 	InsertOne: (table, new_values)->
-		Q.resolve()
-		.then ()=>
+		Promise.resolve().bind @
+		.then ->
 
 			cols= ['cr']; qs= ['?']; arg= [null]
 			(cols.push nm; qs.push '?'; arg.push val) for nm, val of new_values
 			sql= 'INSERT INTO '+ table+ ' ('+ (cols.join ',')+
 				 ') VALUES ('+ (qs.join ',')+ ')'
 			@SqlQuery sql, arg
-		.then (db_result)=>
+		.then (db_result)->
 
 			@GetOne table, db_result.insertId
 		.then (rec)-> rec
@@ -60,8 +64,8 @@ class Db
 		throw new Error 'EMPTY_VALS' unless vals
 		vals_type= typeof vals
 
-		Q.resolve()
-		.then =>
+		Promise.resolve().bind @
+		.then ->
 
 			args= if vals_type in ['number','string'] then [[vals]] else [vals]
 			sql= 'SELECT * FROM '+ table+
