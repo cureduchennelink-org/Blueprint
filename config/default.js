@@ -37,8 +37,6 @@ module.exports= {
 		Registration: {	class: 'Registration', 	file: 'node_modules/blueprint/routes/r_registration'
 	},
 		User: {			class: 'User', 			file: 'node_modules/blueprint/routes/r_user'
-	},
-		Workout: {			class: 'Workout', 			file: 'node_modules/blueprint/routes/r_workout'
 	}
 	},
 	service_modules: {
@@ -79,8 +77,10 @@ module.exports= {
 		RunQueue: {		class: 'RunQueue',		file: 'node_modules/blueprint/lib/runqueue'
 	},
 		elb_redirect: {   class: 'ELBRedirect',   file: 'node_modules/blueprint/lib/elb_redirect'
-	}
 	}, // Force HTTPS if enabled
+		server: {   		class: 'Server',   		file: 'node_modules/blueprint/lib/server'
+	}
+	},
 
 	runqueue: {
 		// Notes: the *_at takes a 'moment().add' spec [number,string]; string should be one of:
@@ -158,9 +158,9 @@ module.exports= {
 		mysql: {
 			pool: {
 				host: 'localhost',
-				port: 3309,
+				port: 8889,
 				user: 'root',
-				password: 'password',
+				password: 'root',
 				database: 'blueprint',
 				multipleStatements: true,
 				supportBigNumbers: true,

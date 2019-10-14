@@ -15,10 +15,12 @@ let _= require('lodash');
 const path= require('path');
 
 // TODO HAVE A 'init' METHOD TO LOAD FIRST kit, config, logger AND MAYBE error WHICH TAKES PARAMS SO YOU CAN CIRCUMVENT ENV FOR E.G. TEST HARNESS DOING ONE MODULE UNIT TEST
-exports.start= function(include_server, services_enabled, routes_enabled, mysql_enabled, mysql_mods_enabled, mongo_enabled, more_config, more_kit){
+exports.start= function(include_server, services_enabled, routes_enabled, mysql_enabled, mysql_mods_enabled,psql_enabled, psql_mods_enabled, mongo_enabled, more_config, more_kit){
 	let mod, nm, service;
 	if (mysql_enabled == null) { mysql_enabled = false; }
 	if (mysql_mods_enabled == null) { mysql_mods_enabled = []; }
+	if (psql_enabled == null) { psql_enabled = false; }
+	if (psql_mods_enabled == null) { psql_mods_enabled = []; }
 	if (mongo_enabled == null) { mongo_enabled = false; }
 	if (more_config == null) { more_config = {}; }
 	if (more_kit == null) { more_kit = {}; }
@@ -52,6 +54,8 @@ exports.start= function(include_server, services_enabled, routes_enabled, mysql_
 	// Pass inbound module enabled preferences through, for db layer's use
 	if (mysql_enabled) { config.db.mysql.enable= mysql_enabled; }
 	config.db.mysql.mods_enabled= mysql_mods_enabled;
+	if (psql_enabled) { config.db.psql.enable= psql_enabled; }
+	config.db.psql.mods_enabled= psql_mods_enabled;
 	if (mongo_enabled) { config.db.mongo.enable= mongo_enabled; }
 
 	if (include_server) {
@@ -61,7 +65,7 @@ exports.start= function(include_server, services_enabled, routes_enabled, mysql_
 		kit.add_service('server', server);					// Add server-service to kit
 	}
 
-	[services_enabled, mysql_mods_enabled]= Array.from(update_deps(kit, services_enabled, routes_enabled, mysql_mods_enabled));
+	[services_enabled, mysql_mods_enabled, psql_mods_enabled]= Array.from(update_deps(kit, services_enabled, routes_enabled, mysql_mods_enabled, psql_mods_enabled));
 	// TODO When 'db' is added, caller will have to enable that?
 
 	// Services
@@ -77,7 +81,7 @@ exports.start= function(include_server, services_enabled, routes_enabled, mysql_
 
 	if (server) { server.add_restify_handlers(); }
 	// Handle all OPTIONS requests to a deadend (Allows CORS to work them out)
-	if (server) { server.handle_options(); }
+	// Use CORS service (In pangea-api-server for now) in place of this: server.handle_options() if server
 
 	// Service Handlers
 	if (server) {
@@ -93,17 +97,6 @@ exports.start= function(include_server, services_enabled, routes_enabled, mysql_
 	if (server) { server.parse_json(); }
 	if (server) { server.strip_html(); }
 
-	// Routes
-	for (nm of Array.from(routes_enabled)) {
-		mod= kit.services.config.route_modules[ nm];
-		if (!mod) { throw new Error(`No such route-module: ${nm}`); }
-		mod.name= nm;
-		log.info(`Initializing ${mod.class} Routes...`);
-		const routePath= path.join(config.processDir, mod.file);
-		kit.new_route_service(mod.name, (require(routePath))[mod.class]);
-		kit.services.wrapper.add(mod.name);
-	}
-
 	// Run Server Init Functions from Kit Service Modules
 	let q_result= Promise.resolve().bind(this);
 	for (nm in kit.services) {
@@ -116,6 +109,17 @@ exports.start= function(include_server, services_enabled, routes_enabled, mysql_
 				return ((service => q_result= service.server_init_promise(kit, q_result)))(service); // will chain it's .then's
 			}
 		})(service);
+	}
+
+	// Routes
+	for (nm of Array.from(routes_enabled)) {
+		mod= kit.services.config.route_modules[ nm];
+		if (!mod) { throw new Error(`No such route-module: ${nm}`); }
+		mod.name= nm;
+		log.info(`Initializing ${mod.class} Routes...`);
+		const routePath= path.join(config.processDir, mod.file);
+		kit.new_route_service(mod.name, (require(routePath))[mod.class]);
+		kit.services.wrapper.add(mod.name);
 	}
 
 	// Run Server Init Functions from Kit Route Modules
@@ -166,7 +170,7 @@ exports.start= function(include_server, services_enabled, routes_enabled, mysql_
 	return q_result;
 };
 
-var update_deps= function(kit, services_enabled, routes_enabled, mysql_mods_enabled){
+var update_deps= function(kit, services_enabled, routes_enabled, mysql_mods_enabled, psql_mods_enabled){
 	let dep, deps, mod, module, servicePath;
 	let start_length;
 	let nm, service, child;
@@ -176,7 +180,7 @@ var update_deps= function(kit, services_enabled, routes_enabled, mysql_mods_enab
     } = kit.services;
 	const _log= kit.services.logger.log;
 	//_log.debug f+"USER_REQUESTED", {services_enabled,routes_enabled,mysql_mods_enabled}
-	const all_mods= mysql_mods_enabled; // TODO NEED TO LOAD THESE DEPS ALSO
+	const all_mods= mysql_mods_enabled.concat(psql_mods_enabled); // TODO NEED TO LOAD THESE DEPS ALSO
 	const special= []; // TODO MAYBE KIT FILTERED WHAT WAS ALREADY LOADED ['config','logger','error']
 	const service_to_deps= {}; // False if needing to get deps, else [] of deps
 	for (nm of Array.from(services_enabled)) { service_to_deps[ nm]= false; }
