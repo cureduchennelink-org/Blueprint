@@ -1,3 +1,3 @@
-exports.services=['AgentHeader'];
-exports.mysql = ['SqlAgentHeader'];
+exports.services=['AgentHeader', 'Auth'];
+exports.mysql = ['agentHeader', 'auth'];
 // , routes, mysql

@@ -251,6 +251,8 @@ var update_deps= function(kit, services_enabled, routes_enabled, mysql_mods_enab
     const new_services= []; // Added to if not already in the list
     for (nm of Array.from(services_to_check)) {
       mod= config.service_modules[nm];
+      console.log('config.service_modules :', nm);
+      console.log('config.service_modules :', config.service_modules);
       if (!mod) {
         throw new Error(f+ `No such service-module: ${nm}`);
       }

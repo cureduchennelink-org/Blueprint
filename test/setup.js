@@ -35,6 +35,7 @@ before(async () => {
       debug: console.log,
     },
   };
+  global.ctx = ctx;
   const f = `${resource}`;
   console.log(f, 'starting test server!!');
   const kit = await blueprint.start(true, services, [], true, mysql, false);

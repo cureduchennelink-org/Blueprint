@@ -26,6 +26,24 @@ module.exports= {
       default: 'index.html',
     },
   },
+  auth: {
+    key: 'jQ9PhcT3Xz', // Used for crypto
+    pbkdf2: {
+      iterations: 150000,
+      salt_size: 16,
+      key_length: 32,
+    },
+    bearer: 'blueprint',
+    refreshTokenExpiration: '2050-01-01 23:59:59',
+    accessTokenExpiration: 10 * 60, // seconds (10 Minutes)
+    basic: {
+      apiKeys: {
+        username: {
+          password: 'password',
+        },
+      },
+    },
+  },
   throttling: { // Wrapper uses this for rejecting requests when we are this far behind
     max_connections: 1000,
   },
@@ -45,6 +63,14 @@ module.exports= {
     },
   },
   service_modules: {
+    AgentHeader: {
+      class: 'AgentHeader',
+      file: './lib/agentHeader',
+    },
+    Auth: {
+      class: 'Auth',
+      file: './lib/auth',
+    },
     web_config: {class: 'WebConfig',		file: './lib/web_config',
     },
     template: {class: 'EpicTemplate', 	file: './lib/EpicTemplate', instConfig: {view_path: vp_email},
@@ -58,8 +84,6 @@ module.exports= {
     db: {class: 'Db', 			file: './lib/db',
     },
     util: {class: 'Util', 			file: './lib/util',
-    },
-    auth: {class: 'Auth', 			file: './lib/auth',
     },
     router: {class: 'Router', 		file: './lib/router',
     },
@@ -77,8 +101,7 @@ module.exports= {
     },
     lamd: {class: 'Lamd',			file: './lib/lamd',
     },
-    AgentHeader: {class: 'AgentHeader',	file: './lib/agentHeader',
-    },
+
     RunQueue: {class: 'RunQueue',		file: './lib/runqueue',
     },
     elb_redirect: {class: 'ELBRedirect', file: './lib/elb_redirect',
@@ -144,26 +167,14 @@ module.exports= {
     name: 'server',
     level: 'debug',
   },
-  auth: {
-    key: 'jQ9PhcT3Xz', // Used for crypto
-    pbkdf2: {
-      iterations: 150000,
-      salt_size:	16,
-      key_length:	32,
-    },
-    bearer: 'blueprint',
-    refreshTokenExpiration: '2050-01-01 23:59:59',
-    accessTokenExpiration: 10 * 60, // seconds (10 Minutes)
-    basic: {api_keys: {},
-    },
-  },
+
   db: {
     mysql: {
       pool: {
         host: 'localhost',
         port: 3309,
         user: 'root',
-        password: 'password',
+        password: 'garfield2cat',
         database: 'blueprint',
         multipleStatements: true,
         supportBigNumbers: true,
@@ -173,8 +184,8 @@ module.exports= {
         level2_debug: false,
       },
       modules: {
-        auth: {class: 'SqlAuth', 			file: './lib/db/_mysql/sql_auth',
-        },
+        agentHeader: {class: 'SqlAgentHeader', file: './lib/db/mysql/agentHeader'},
+        auth: {class: 'SqlAuth', file: './lib/db/mysql/auth'},
         user: {class: 'SqlUser', 			file: './lib/db/_mysql/sql_user',
         },
         token: {class: 'SqlToken', 			file: './lib/db/_mysql/sql_token',
@@ -187,7 +198,6 @@ module.exports= {
         },
         pset_item_change: {class: 'SqlPSetItemChange', file: './lib/db/_mysql/sql_pset',
         },
-        SqlAgentHeader: {class: 'SqlAgentHeader', file: './lib/db/mysql/agentHeader'},
         runqueue: {class: 'SqlRunQueue',		file: './lib/db/_mysql/sql_runqueue',
         },
       },
