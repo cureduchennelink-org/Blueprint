@@ -1,3 +1,4 @@
+--file ./test/setup.js
 -R spec
 --timeout 20s
 --exit

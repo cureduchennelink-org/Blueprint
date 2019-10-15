@@ -19,7 +19,7 @@
     "mysql": "^2.17.1",
     "restify": "^7.2.1",
     "restify-errors": "^6.1.1",
-    "user-agent-parser": "^0.6.0"
+    "ua-parser-js": "^0.7.20"
   },
   "devDependencies": {
     "chai": "^4.1.2",
