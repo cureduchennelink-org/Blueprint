@@ -99,6 +99,7 @@ class AuthRoute
 				throw new @E.OAuthError 401, 'invalid_grant', 'Refresh token invalid.' if valid_token.length is 0
 				result.auth= valid_token[0]
 				result.auth.id = valid_token[0].ident_id
+				i_info.irole= valid_token[0].role
 
 			# Validate Confidential Client if requesting client_credentials
 			return false unless p.grant_type is 'client_credentials'

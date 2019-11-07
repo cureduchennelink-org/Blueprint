@@ -187,6 +187,7 @@
           }
           result.auth = valid_token[0];
           result.auth.id = valid_token[0].ident_id;
+          i_info.irole = valid_token[0].role;
         }
         if (p.grant_type !== 'client_credentials') {
           return false;
