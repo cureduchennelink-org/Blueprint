@@ -10,7 +10,7 @@ class SqlToken
 		@log= kit.services.logger.log
 		@table= 'ident_tokens'
 		@schema=
-			Create: ['token','ident_id','client','exp']
+			Create: ['token','ident_id','role','client','exp']
 			get: ['*']
 			reread: ['*']
 		@core.method_factory @, 'SqlToken'
