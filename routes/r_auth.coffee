@@ -99,6 +99,7 @@ class AuthRoute
 				throw new @E.OAuthError 401, 'invalid_grant', 'Refresh token invalid.' if valid_token.length is 0
 				result.auth= valid_token[0]
 				result.auth.id = valid_token[0].ident_id
+				result.auth.role= valid_token[0].role
 
 			# Validate Confidential Client if requesting client_credentials
 			return false unless p.grant_type is 'client_credentials'
@@ -119,7 +120,7 @@ class AuthRoute
 			return false unless need_refresh
 			current_token= p.refresh_token if p.grant_type is 'refresh_token'
 			exp= refresh_expires_in
-			nv= {ident_id: result.auth.id, client: p.client_id, token, exp}
+			nv= {ident_id: result.auth.id, role:result.auth.role, client: p.client_id, token, exp}
 			@sdb.token.UpdateActiveToken ctx, nv, current_token
 		.then (ident_token)->
 			if ident_token isnt false

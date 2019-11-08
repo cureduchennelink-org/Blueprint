@@ -187,6 +187,7 @@
           }
           result.auth = valid_token[0];
           result.auth.id = valid_token[0].ident_id;
+          result.auth.role = valid_token[0].role;
         }
         if (p.grant_type !== 'client_credentials') {
           return false;
@@ -216,6 +217,7 @@
         exp = refresh_expires_in;
         nv = {
           ident_id: result.auth.id,
+          role: result.auth.role,
           client: p.client_id,
           token: token,
           exp: exp
