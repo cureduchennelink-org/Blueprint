@@ -33,7 +33,7 @@ CREATE TABLE ident_tokens (
 	,	cr		TIMESTAMP		DEFAULT 0 /* 'created' Must be first TIMESTAMP colum */
 	,	mo		TIMESTAMP		DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP /* 'modified' */
 	,	ident_id		INT(  10 )		NOT NULL
-	,	client			VARCHAR(  32 )  DEFAULT NULL
+	,	role			VARCHAR(  32 )  DEFAULT NULL
 
 	,	exp				DATETIME		NOT NULL
 	,	client			VARCHAR(  32 )
