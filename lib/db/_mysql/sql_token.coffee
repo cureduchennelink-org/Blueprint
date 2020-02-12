@@ -8,7 +8,7 @@ class SqlToken
 	constructor: (@core, kit)->
 		@table= 'ident_tokens'
 		@schema=
-			Create: ['token', 'ident_id', 'client', 'exp']
+			Create: ['token', 'ident_id', 'client', 'exp', 'permissions', 'synapse_token']
 			get: ['i.id', 'i.tenant', 'i.role']
 			reread: ['*']
 		@core.method_factory @, 'SqlToken'
