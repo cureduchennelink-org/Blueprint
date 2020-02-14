@@ -10,9 +10,9 @@ class SqlAuth
 		@cred_col= 'eml'
 		@pwd_col= 'pwd'
 		@schema=
-			auth: ['id', 'tenant', 'role', @pwd_col, 'synapse_user', 'synapse_pwd']
+			auth: ['id', 'tenant', 'role', @pwd_col, 'org']
 			cred: ['*']
-			Create: [@cred_col,@pwd_col, 'role', 'synapse_user', 'synapse_pwd']
+			Create: [@cred_col,@pwd_col, 'role', 'org']
 			UpdateById: [@cred_col,@pwd_col]
 			GetByKey:
 				id: ['id', @cred_col, 'tenant', 'role']
