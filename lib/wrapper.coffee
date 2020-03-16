@@ -155,7 +155,7 @@ class Wrapper
 				# Authorize calls res.send so don't put this logic inside promise change where we try to 'send' on error
 				return next() if not req.auth.authorize()
 				pre_loaded.auth_id= req.auth.authId
-			ctx.lamd.auth_id= pre_loaded.auth_id
+			ctx.lamd.auth_id= ctx.auth_id= pre_loaded.auth_id
 
 		Promise.resolve().bind @
 		.then ->

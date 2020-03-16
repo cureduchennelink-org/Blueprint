@@ -60,7 +60,7 @@ class Lamd
 		f = 'Lamd:_write:'
 		# Write record using zero wait time; Assume data does not have to be cloned
 		@collection_debug.insertOne data, forceServerObjectId: true, (err, result)=>
-			@log.debug f, { err, result } if err?
+			@log.debug f, { err, data } #TODO if err?
 
 	read: (ctx, method, query, projection, options, hint, sort)=> # Called typically from inside a 'wrapper', so errors could either cause havac or be silently discarded
 		f= 'Lamd-Custom:read:'

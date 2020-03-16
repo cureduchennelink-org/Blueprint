@@ -41,7 +41,8 @@ class SqlCore
 			.then ->
 				query sql, args
 			.then (just_rows)->
-				ctx.log.debug f + 'result:', just_rows if @is_db_log_on
+				#JCS: ctx.log.debug f + 'result:', just_rows if @is_db_log_on
+				ctx.log.debug "#{f}result:", (if !Array.isArray just_rows or just_rows.length < 3 then just_rows else (rows: just_rows.length, trunc: just_rows.slice 0, 3)) if @is_db_log_on
 				just_rows
 			.catch (e)->
 				ctx.log.debug f + 'error:', e if @is_db_log_on
