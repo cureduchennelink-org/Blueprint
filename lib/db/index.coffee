@@ -23,7 +23,7 @@ class Db
 			@mysql= core: new SqlCore kit, config.db.mysql.pool
 			for nm in config.db.mysql.mods_enabled
 				mod= config.db.mysql.modules[ nm]
-				throw new Error 'UNKNOW MYSQL MODULE:'+nm unless mod
+				throw new Error 'UNKNOWN MYSQL MODULE:'+nm unless mod
 				mod.name= nm
 				modPath= path.join config.processDir, mod.file
 				log.info "Loading MySql module #{nm}@#{modPath}::#{mod.class}"

@@ -1,4 +1,3 @@
-#
 # Lamd: "Logging, Auditing, Monitoring and Debugging" Service using MongoDB
 #
 # Uses: kit.services.config.lamd: connect_url: 'mongodb://localhost/lamd?w=0&journal=false'
@@ -19,43 +18,68 @@
 #   Add server up/down events into MongoDB stream (will need to add 'down' logic to blueprint, that gives services time to end things?)
 
 {MongoClient}= require 'mongodb'
-_= require 'lodash'
+_ = require 'lodash'
 
 class Lamd
-	@deps= services:[ 'logger'], config: 'lamd'
+
+	@deps =
+		services: ['logger'], config: 'lamd'
+
 	constructor: (kit)->
-		f= 'Lamd:constructor'
-		@config= kit.services.config.lamd
-		@log= kit.services.logger.log
-		@db= false
+		f = 'Lamd:constructor'
+		@config = kit.services.config.lamd
+		@log = kit.services.logger.log
+		@db = false
+		@collection_debug = false
 
 	# optional server_init func (can be a promise)
 	# Runs after all services are constructed, before routes added, also before server starts listening
 	server_init_promise: (kit, promise_chain)=> # Return the promise_chain
-		f= 'Lamd:server_init:'
-		server= kit.services.server.server
+		f = 'Lamd:server_init:'
+		server = kit.services.server.server
 
 		# Load and attach mongo-client to server with one connection for writing requests
-		promise_chain= promise_chain.then => MongoClient.connect @config.connect_url #, @config.options ? {}
-		promise_chain= promise_chain.then (db)=>
-			@log.debug f, _.pick db, ['databaseName','options']
-			throw new Error f+ 'MongoDB connection is empty' if not db? # Why does MongoDB need this check?
+		promise_chain = promise_chain.then => MongoClient.connect @config.connect_url, @config.options
+		promise_chain = promise_chain.then (db)=>
+			@log.debug 'Successfully connected to MongoDB database.' if db?
+			@log.debug f, _.pick db.s, ['url', 'options']
+			throw new Error f + 'MongoDB connection is empty' if not db? # Why does MongoDB need this check?
 			@db= db
-			@collection_debug= db.collection 'debug'
+			@collection_debug= db.db().collection 'debug'
 
 		promise_chain
 
 	write: (data)=> # Called typically from inside a 'wrapper', so errors could either cause havac or be silently discarded
-		f= 'Lamd:write:'
+		f = 'Lamd:write:'
 		try
 			@_write data
 		catch err
-			@log.warn f+ 'err', err
+			@log.warn f + 'err', err
 
 	_write: (data)->
-		f= 'Lamd:_write:'
+		f = 'Lamd:_write:'
 		# Write record using zero wait time; Assume data does not have to be cloned
 		@collection_debug.insertOne data, forceServerObjectId: true, (err, result)=>
-			@log.debug f, {err,result} if err?
+			@log.debug f, { err, result } if err?
 
-exports.Lamd= Lamd
+	read: (ctx, method, query, projection, options, hint, sort)=> # Called typically from inside a 'wrapper', so errors could either cause havac or be silently discarded
+		f= 'Lamd-Custom:read:'
+		ctx.log.debug f, {method, query, projection, options, hint, sort}
+		if method is "find"
+			query = (ctx.pool.db().collection "debug").find(query).project(projection)
+			query = query.sort(sort) if sort
+			query = query.limit(100)
+			query = query.hint(hint) if hint
+			query = query.toArray()
+			query.then (docs)->
+				ctx.log.debug f, {docs}
+				return docs
+		else if method is "aggregate"
+			query = (ctx.pool.db().collection "debug").aggregate(query, options)
+			query = query.toArray()
+			query.then (docs)->
+				ctx.log.debug f, {docs}
+				return docs
+
+
+exports.Lamd = Lamd

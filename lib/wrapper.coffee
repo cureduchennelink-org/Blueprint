@@ -88,6 +88,7 @@ class Wrapper
 			@sdb.core.Acquire()
 		.then (c) ->
 			ctx.conn= c if c isnt false
+			throw new @E.ServerError f + 'BadHandle:' + JSON.stringify @_exposeErrorProperties ctx.conn._protocol._fatalError if ctx.conn isnt null and ctx.conn._protocol._fatalError isnt null
 
 			# Start a Transaction
 			@sdb.core.StartTransaction(ctx)
@@ -96,6 +97,7 @@ class Wrapper
 			# Call the Auth Logic. Pass in pre_loaded variables
 			route_logic ctx, pre_loaded
 		.then (result_hash) ->
+			throw new @E.ServerError f + 'BadHandle:' + JSON.stringify @_exposeErrorProperties ctx.conn._protocol._fatalError if ctx.conn isnt null and ctx.conn._protocol._fatalError isnt null
 			send_result= result_hash.send
 
 			# Commit the transaction
@@ -140,6 +142,7 @@ class Wrapper
 			lamd:
 				start: (new Date().getTime()), route: endpoint.route, verb: endpoint.verb
 				params: req.params, headers: req.headers, req_uuid: req._id, auth_id: 0
+				conn_id: 0
 		p= ctx.p
 		pre_loaded= {}
 		result= false
@@ -174,7 +177,8 @@ class Wrapper
 			@sdb.core.Acquire()
 		.then (c)->
 			ctx.conn= c if c isnt false
-
+			ctx.lamd.conn_id= c.__pool_id
+			throw new @E.ServerError f + 'BadHandle:' + JSON.stringify @_exposeErrorProperties ctx.conn._protocol._fatalError if ctx.conn isnt null and ctx.conn._protocol._fatalError isnt null
 			# Start a Transaction
 			return false unless endpoint.sql_tx
 			throw new @E.ServerError 'WRAPPER:DEFAULT:MYSQL_NOT_ENABLED' unless @config.db.mysql.enable
@@ -196,6 +200,7 @@ class Wrapper
 			# Call the Route Logic. Pass in pre_loaded variables
 			route_logic ctx, pre_loaded
 		.then (result_hash)->
+			throw new @E.ServerError f + 'BadHandle:' + JSON.stringify @_exposeErrorProperties ctx.conn._protocol._fatalError if ctx.conn isnt null and ctx.conn._protocol._fatalError isnt null
 			result= result_hash
 
 			# Commit the transaction

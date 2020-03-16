@@ -12,26 +12,40 @@ class SqlCore
 		_log2= if pool_opts.level2_debug then kit.services.logger.log else debug: ->
 		@is_db_log_on= pool_opts.level2_debug
 		@pool= mysql.createPool pool_opts
+		@pool_id= 100 # 3 digits everywhere
 		@acquire= (callback)-> @pool.getConnection callback
-		@Acquire= Promise.promisify @acquire, context: @
+		@Acquire= ->
+			return new Promise (resolve, reject)=>
+				@pool.getConnection (err, result)=>
+					return reject err if err
+					result.__pool_id?= @pool_id++
+					resolve result
+
 		@release= (conn)->
-			_log2.debug 'DB:SqlCore:release:', 'releasing conn'
+			f = 'DB:release:'
+			_log2.debug f, { pool_id: conn.__pool_id, fatalError: conn._protocol._fatalError }
 			conn.release()
 		@destroy= (conn)->
-			_log2.debug 'DB:SqlCore:destroy:', 'destroying conn'
-			conn.destroy
+			f = 'DB:destroy:'
+			_log2.debug f, conn.__pool_id
+			conn.destroy()
 
 		@sqlQuery= (ctx, sql, args)=>
-			ctx.log.debug 'DB:SqlCore:sqlQuery:', sql if @is_db_log_on
-			ctx.log.debug 'DB:SqlCore:args:', args if args and @is_db_log_on
+			f= "DB:sqlQuery:-#{ctx.conn.__pool_id}-:"
 			throw new @E.DbError 'DB:SQL:BAD_CONN' if ctx.conn is null
+			ctx.log.debug f + "fatalError:", ctx.conn._protocol._fatalError if ctx.conn._protocol?._fatalError
+			ctx.log.debug f + "sql:", sql if @is_db_log_on
+			ctx.log.debug f + 'arguments:', args if args and @is_db_log_on
 			query= Promise.promisify ctx.conn.query, context: ctx.conn
 			Promise.resolve().bind @
 			.then ->
 				query sql, args
 			.then (just_rows)->
-				ctx.log.debug 'DB:SqlCore:result:', just_rows if @is_db_log_on
+				ctx.log.debug f + 'result:', just_rows if @is_db_log_on
 				just_rows
+			.catch (e)->
+				ctx.log.debug f + 'error:', e if @is_db_log_on
+				throw e
 
 	StartTransaction: (ctx)=> # Assumes conn on ctx
 		f= 'DB:SqlCore:StartTransaction'
@@ -185,8 +199,8 @@ class SqlCore
 					return false unless re_read is true
 					throw new @E.ServerError f+'REREAD_NOT_DEFINED_IN_SCHEMA' unless schema.reread
 					sql= """
-						SELECT #{schema.reread.join ','} 
-						FROM #{table} 
+						SELECT #{schema.reread.join ','}
+						FROM #{table}
 						WHERE id= ?
 						 """
 					sqlQuery ctx, sql, [db_result.insertId]
