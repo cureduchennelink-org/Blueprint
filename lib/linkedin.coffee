@@ -6,7 +6,7 @@ Promise = require 'bluebird'
 request = require 'request-promise'
 querystring = require 'querystring'
 
-class LinkedinService
+class Linkedin
 	@deps = services: ['error', 'logger', 'auth', 'config']
 	constructor: (kit)->
 		@E = kit.services.error
@@ -15,7 +15,7 @@ class LinkedinService
 		@config = kit.services.config
 
 	get_access_token: (ctx, authorization_code)=>
-		f = 'LinkedinService:_get_access_token'
+		f = 'Linkedin:_get_access_token'
 		_log = ctx.log
 		data = querystring.stringify
 			grant_type: 'authorization_code'
@@ -41,7 +41,7 @@ class LinkedinService
 
 
 	get_linkedin_user: (ctx, accessToken)=>
-		f = 'LinkedinService:_get_linkedin_user'
+		f = 'Linkedin:_get_linkedin_user'
 		opts = {
 			uri: 'https://api.linkedin.com/v2/me?projection=(id,firstName,lastName,profilePicture(displayImage~:playableStreams))'
 			method: 'GET'
@@ -60,7 +60,7 @@ class LinkedinService
 			@handleErrors ctx, e
 
 	get_linkedin_user_email: (ctx, accessToken)=>
-		f = 'LinkedinService:get_linkedin_user_email'
+		f = 'Linkedin:get_linkedin_user_email'
 		opts = {
 			uri: 'https://api.linkedin.com/v2/emailAddress?q=members&projection=(elements*(handle~))'
 			method: 'GET'
@@ -78,8 +78,8 @@ class LinkedinService
 			@handleErrors ctx, e
 
 	handleErrors: (ctx, e)->
-		f= "LinkedinService::handleErrors"
+		f= "Linkedin::handleErrors"
 		ctx.log.error f, {e}
 		throw new @E.ServerError f, e
 
-exports.LinkedinService = LinkedinService
+exports.Linkedin = Linkedin

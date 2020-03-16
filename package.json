@@ -9,6 +9,7 @@
   "dependencies": {
     "aws-sdk": "^2.317.0",
     "bluebird": "^3.5.2",
+    "braintree": "^2.22.0",
     "bunyan": "^1.8.12",
     "html-to-text": "^5.1.1",
     "is_js": "^0.9.0",

@@ -125,6 +125,22 @@
       elb_redirect: {
         "class": 'ELBRedirect',
         file: 'node_modules/blueprint/lib/elb_redirect'
+      },
+      linkedin: {
+        "class": 'Linkedin',
+        file: 'node_modules/blueprint/lib/linkedin'
+      },
+      interceptor: {
+        "class": 'Interceptor',
+        file: 'node_modules/blueprint/lib/interceptor'
+      },
+      braintree: {
+        "class": 'Braintree',
+        file: 'node_modules/blueprint/lib/braintree'
+      },
+      cors: {
+        "class": 'CORS',
+        file: 'node_modules/blueprint/lib/cors'
       }
     },
     runqueue: {
