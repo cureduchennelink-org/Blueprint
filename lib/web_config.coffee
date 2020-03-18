@@ -15,7 +15,7 @@ class WebConfig
 		f = 'WebConfig:server_start:'
 		server = kit.services.server.server
 
-		path= /\/config.js$/
+		path= '/config.js' # JCS: Restify now only like strings here
 		@log.debug f, "Adding GET #{path}"
 		server.get path, (req, res, next) =>
 			res.header 'Content-Type', 'text/plain'
