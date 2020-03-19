@@ -233,7 +233,7 @@
           i_info.itenant = result.auth.tenant;
         }
         if (result.auth.role != null) {
-          i_info.irole = result.auth.role;
+          i_info.irole = result.auth.role.split(",");
         }
         access_token = this.tokenMgr.encode(i_info, exp, this.config.auth.key);
         this.event.emit('r_auth.login', {

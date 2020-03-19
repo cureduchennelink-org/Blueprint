@@ -129,7 +129,7 @@ class AuthRoute
 			i_info= iid: result.auth.id
 			# These additional entries are added if exists
 			i_info.itenant= result.auth.tenant if result.auth.tenant?
-			i_info.irole= result.auth.role if result.auth.role?
+			i_info.irole= result.auth.role.split(",") if result.auth.role?
 			access_token= @tokenMgr.encode i_info, exp, @config.auth.key
 
 			# Publish event for other modules

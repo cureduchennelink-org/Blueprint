@@ -184,6 +184,13 @@ class Wrapper
 			throw new @E.ServerError 'WRAPPER:DEFAULT:MYSQL_NOT_ENABLED' unless @config.db.mysql.enable
 			@sdb.core.StartTransaction(ctx)
 		.then ->
+			accessDeniedError = (message) => throw new @E.AccessDenied "#{f} #{message}"
+			if endpoint.domain then accessDeniedError('INVALID DOMAIN') unless req.auth.token.domain is endpoint.domain
+			if endpoint.roles
+				roles = req.auth.role
+				accessDeniedError('MISSING ROLE') if !roles or roles.length is 0 or !Array.isArray roles
+				role = (aRole for aRole in roles when aRole in endpoint.roles)
+				accessDeniedError('INVALID ROLE') if role.length is 0
 
 			# Loop through the endpoint's pre_load functions
 			q_result = Promise.resolve().bind @
