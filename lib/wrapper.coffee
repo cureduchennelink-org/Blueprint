@@ -151,6 +151,7 @@ class Wrapper
 		if endpoint.auth_required or endpoint.permit
 			if @config.perf?.test_user_override is true and typeof p.mock_id is "string"
 				pre_loaded.auth_id= Number p.mock_id
+				req.auth.role= pre_loaded.role= p.mock_role ? 'mock_role'
 			else
 				# Authorize calls res.send so don't put this logic inside promise change where we try to 'send' on error
 				return next() if not req.auth.authorize()
