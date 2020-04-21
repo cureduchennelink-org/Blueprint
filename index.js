@@ -73,6 +73,9 @@
       server.handle_options();
     }
     if (server) {
+      server.parse_json();
+    }
+    if (server) {
       ref1 = kit.services;
       for (nm in ref1) {
         service = ref1[nm];
@@ -82,9 +85,6 @@
         log.info("Calling server.use for service: " + nm);
         server.server.use(service.server_use);
       }
-    }
-    if (server) {
-      server.parse_json();
     }
     if (server) {
       server.strip_html();

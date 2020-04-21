@@ -58,6 +58,8 @@ exports.start= (include_server, services_enabled, routes_enabled, mysql_enabled=
 	server.add_restify_handlers() if server
 	# Handle all OPTIONS requests to a deadend (Allows CORS to work them out)
 	server.handle_options() if server
+	# Before services
+	server.parse_json() if server
 
 	# Service Handlers
 	if server
@@ -65,7 +67,6 @@ exports.start= (include_server, services_enabled, routes_enabled, mysql_enabled=
 			log.info "Calling server.use for service: "+ nm
 			server.server.use service.server_use
 
-	server.parse_json() if server
 	server.strip_html() if server
 
 	# Routes
