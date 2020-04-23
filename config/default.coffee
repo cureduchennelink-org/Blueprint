@@ -17,7 +17,12 @@ module.exports=
 	throttling: # Wrapper uses this for rejecting requests when we are this far behind
 		max_connections: 1000
 	lamd:
-		connect_url: 'mongodb://localhost/lamd?w=0&journal=false'
+		connect_url: 'mongodb://localhost'
+		connect_db: 'blueprint'
+		options:
+			useNewUrlParser: true
+			useUnifiedTopology: true # To avoid deprecation warning
+
 	route_modules:
 		Auth:			class: 'AuthRoute', 	file: 'node_modules/blueprint/routes/r_auth'
 		Poll:			class: 'LongPoll', 		file: 'node_modules/blueprint/routes/r_poll'

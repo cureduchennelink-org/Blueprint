@@ -23,7 +23,12 @@
       max_connections: 1000
     },
     lamd: {
-      connect_url: 'mongodb://localhost/lamd?w=0&journal=false'
+      connect_url: 'mongodb://localhost',
+      connect_db: 'blueprint',
+      options: {
+        useNewUrlParser: true,
+        useUnifiedTopology: true
+      }
     },
     route_modules: {
       Auth: {
