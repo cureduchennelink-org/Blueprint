@@ -33,7 +33,7 @@
           version: {
             any: this._GetHealth
           },
-          sql_conn: true,
+          sql_conn: false,
           auth_required: false
         },
         pingAuth: {
@@ -66,7 +66,7 @@
           version: {
             any: this._GetStatus
           },
-          sql_conn: true,
+          sql_conn: false,
           auth_required: false
         },
         getDebug: {

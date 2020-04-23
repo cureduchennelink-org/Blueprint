@@ -17,7 +17,7 @@ class HealthCheck
 			getHealth:
 				verb: 'get', route: '/Health'
 				use: on, wrap: 'default_wrap', version: any: @_GetHealth
-				sql_conn: on, auth_required: off
+				sql_conn: off, auth_required: off
 			pingAuth:
 				verb: 'get', route: '/PingAuth'
 				use: on, wrap: 'default_wrap', version: any: @_GetPingAuth
@@ -29,7 +29,7 @@ class HealthCheck
 			getStatus:
 				verb: 'get', route: '/Status'
 				use: on, wrap: 'default_wrap', version: any: @_GetStatus
-				sql_conn: on, auth_required: off
+				sql_conn: off, auth_required: off
 			getDebug:
 				verb: 'get', route: '/Debug', lamd: false
 				use: on, wrap: 'default_wrap', version: any: @_GetDebug
