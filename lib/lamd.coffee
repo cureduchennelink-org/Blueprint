@@ -18,6 +18,7 @@
 #   Can hook into server middleware to log inbound requests even when they match nothing (like hacks or broken clients)
 #   Add server up/down events into MongoDB stream (will need to add 'down' logic to blueprint, that gives services time to end things?)
 #   Add Runque wrapper calls to lamd logging
+#   TODO Avoid console.log so disks dont' fill up; maybe only if to_debug
 
 Promise= require 'bluebird'
 _ = require 'lodash'
@@ -31,6 +32,20 @@ class Lamd
 		@log= kit.services.logger.log
 		@db= false
 		@collection_debug= false
+		@collection_deep_debug= false
+
+	GetLog: (ctx)->
+		ctx.lamd_logger= debug: []
+		lamd_logger= {}
+		for method in [ 'fatal', 'error', 'warn', 'info', 'debug', 'trace', 'child', ]
+			do (method)=>
+				lamd_logger[ method]= (f, data)=> @_log ctx, method, f, data
+		lamd_logger
+
+	_log: (ctx, method, f, data)->
+		@log.debug f+( if method isnt 'debug' then method else ''), data if @config.to_debug
+		return if method is 'child'
+		ctx.lamd_logger.debug.push {method, f, data} # TODO FIGURE OUT IF ERROR OBJECTS SHOW 'MESSAGE' ETC. ALSO IF SANITIZE IS NEEDED
 
 	server_init: (kit)=>
 		f= 'Lamd:server_init:'
@@ -51,6 +66,7 @@ class Lamd
 			@db= client.db @config.connect_db
 			@log.debug f, _.pick @db, ['databaseName','options']
 			@collection_debug= @db.collection 'debug'
+			@collection_deep_debug= @db.collection 'deep_debug'
 
 	# Called typically from inside a 'wrapper', so errors are ignored using @_write
 	write: (data)=>
@@ -67,25 +83,44 @@ class Lamd
 			@log.debug f, { err, result } if err?
 			@log.debug f, data if @config.to_debug
 
+	# Called typically from inside a 'wrapper', so errors are ignored using @_write_deep
+	write_deep: (ctx)=>
+		f = 'Lamd:write:'
+		try
+			@_write_deep ctx
+		catch err
+			@log.warn f + 'err', err
+
+	_write_deep: (ctx)-> # The 'ctx' has accumulated the 'debug' lines
+		f = 'Lamd:_write_deep:'
+		data= ctx.lamd_logger.debug
+		# Write record using zero wait time; Assume data does not have to be cloned
+		@collection_deep_debug.insertOne {_id: ctx.lamd.req_uuid, lamd: ctx.lamd, debug: data}, forceServerObjectId: true, (err, result)=>
+			@log.debug f, { err, result } if err?
+
 	# Called typically from Health check or Status endpoints; 'projection' is used to limit exposed information
 	read: (ctx, method, query, projection, options, hint, sort)=>
+		@_read ctx, @collection_debug, method, query, projection, options, hint, sort
+
+	read_deep: (ctx, method, query, projection, options, hint, sort)=>
+		@_read ctx, @collection_deep_debug, method, query, projection, options, hint, sort
+
+	_read: (ctx, collection, method, query, projection, options, hint, sort)=>
 		f= 'Lamd-Custom:read:'
-		ctx.log.debug f, {method, query, projection, options, hint, sort}
 		if method is "find"
-			query= (ctx.pool.db().collection "debug").find(query).project(projection)
-			query= query.sort(sort) if sort
-			query= query.limit(100)
-			query= query.hint(hint) if hint
-			query= query.toArray()
+			query = collection.find(query).project(projection)
+			query = query.sort(sort) if sort
+			query = query.limit(100)
+			query = query.hint(hint) if hint
+			query = query.toArray()
 			query.then (docs)->
 				ctx.log.debug f, {docs}
 				return docs
 		else if method is "aggregate"
-			query= (ctx.pool.db().collection "debug").aggregate(query, options)
-			query= query.toArray()
+			query = collection.aggregate(query, options)
+			query = query.toArray()
 			query.then (docs)->
 				ctx.log.debug f, {docs}
 				return docs
-
 
 exports.Lamd= Lamd
