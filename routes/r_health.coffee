@@ -17,7 +17,7 @@ class HealthCheck
 			getHealth:
 				verb: 'get', route: '/Health'
 				use: on, wrap: 'default_wrap', version: any: @_GetHealth
-				sql_conn: on, auth_required: off, mongo_pool: "health"
+				sql_conn: on, auth_required: off
 			pingAuth:
 				verb: 'get', route: '/PingAuth'
 				use: on, wrap: 'default_wrap', version: any: @_GetPingAuth
@@ -33,7 +33,7 @@ class HealthCheck
 			getDebug:
 				verb: 'get', route: '/Debug', lamd: false
 				use: on, wrap: 'default_wrap', version: any: @_GetDebug
-				sql_conn: off, auth_required: off, mongo_pool: "health"
+				sql_conn: off, auth_required: off
 
 	_GetDebug: (ctx, pre_loaded)=>
 		use_doc=

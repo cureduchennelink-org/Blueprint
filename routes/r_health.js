@@ -34,8 +34,7 @@
             any: this._GetHealth
           },
           sql_conn: true,
-          auth_required: false,
-          mongo_pool: "health"
+          auth_required: false
         },
         pingAuth: {
           verb: 'get',
@@ -80,8 +79,7 @@
             any: this._GetDebug
           },
           sql_conn: false,
-          auth_required: false,
-          mongo_pool: "health"
+          auth_required: false
         }
       };
     }
