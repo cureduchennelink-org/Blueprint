@@ -17,12 +17,18 @@ module.exports=
 	throttling: # Wrapper uses this for rejecting requests when we are this far behind
 		max_connections: 1000
 	lamd:
-		connect_url: 'mongodb://localhost/lamd?w=0&journal=false'
+		connect_url: 'mongodb://localhost'
+		connect_db: 'blueprint'
+		options:
+			useNewUrlParser: true
+			useUnifiedTopology: true # To avoid deprecation warning
+
 	route_modules:
 		Auth:			class: 'AuthRoute', 	file: 'node_modules/blueprint/routes/r_auth'
 		Poll:			class: 'LongPoll', 		file: 'node_modules/blueprint/routes/r_poll'
 		Registration:	class: 'Registration', 	file: 'node_modules/blueprint/routes/r_registration'
 		User:			class: 'User', 			file: 'node_modules/blueprint/routes/r_user'
+		Health:			class: 'HealthCheck', 	file: 'node_modules/blueprint/routes/r_health'
 	service_modules:
 		web_config:		class: 'WebConfig',		file: 'node_modules/blueprint/lib/web_config'
 		template:		class: 'EpicTemplate', 	file: 'node_modules/blueprint/lib/EpicTemplate', instConfig: view_path: vp_email
@@ -39,7 +45,7 @@ module.exports=
 		pollMgr:		class: 'PollManager', 	file: 'node_modules/blueprint/lib/poll_manager'
 		ses:			class: 'SES', 			file: 'node_modules/blueprint/lib/ses'
 		tripMgr:		class: 'TripManager', 	file: 'node_modules/blueprint/lib/trip_manager'
-		lamd:			class:  'Lamd',			file: 'node_modules/blueprint/lib/lamd'
+		lamd:			class: 'Lamd',			file: 'node_modules/blueprint/lib/lamd'
 		AgentHeader:	class: 'AgentHeader',	file: 'node_modules/blueprint/lib/agent_header'
 		RunQueue:		class: 'RunQueue',		file: 'node_modules/blueprint/lib/runqueue'
 		elb_redirect:   class: 'ELBRedirect',	file: 'node_modules/blueprint/lib/elb_redirect' # Force HTTPS if enabled

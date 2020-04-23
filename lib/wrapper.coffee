@@ -68,14 +68,14 @@ class Wrapper
 		throw new @E.ServerError 'WRAPPER:AUTH:MYSQL_NOT_ENABLED' unless @config.db.mysql.enable
 		route_logic= caller.version[req.params?.Version] ? caller.version.any
 		return (if caller.use isnt true then caller.use else route_logic req) if req is 'use'
-		ctx= conn: null, p: req.params, log: req.log
+		ctx= conn: null, p: req.params, log: req.log, lamd: {} #TODO LAMD
 		p= ctx.p
 		pre_loaded= {}
 		send_result= false
 		supported_grant_type= if p.grant_type in ['password','refresh_token','client_credentials'] then true else false
 		@start_connection_limit()
-		p.request_count= request_count
-		p.request_count_high= request_count_high
+		ctx.lamd.request_count= request_count
+		ctx.lamd.request_count_high= request_count_high
 
 		Promise.resolve().bind @
 		.then ->
@@ -143,26 +143,41 @@ class Wrapper
 				start: (new Date().getTime()), route: endpoint.route, verb: endpoint.verb
 				params: req.params, headers: req.headers, req_uuid: req._id, auth_id: 0
 				conn_id: 0
+		log_stdout= false # TODO GET FROM CONFIG
+		ctx.log= @lamd.GetLog ctx if log_stdout is false # Upgrade to lamd
 		p= ctx.p
 		pre_loaded= {}
 		result= false
 
 		# 'Authorize' calls res.send so don't put this logic inside promise chain where we try to 'send' on error
 		if endpoint.auth_required or endpoint.permit
-			if @config.perf?.test_user_override is true and typeof p.mock_id is "string"
-				pre_loaded.auth_id= Number p.mock_id
-				req.auth.role= pre_loaded.role= p.mock_role ? 'mock_role'
+			if @config.perf?.test_user_override is true and p.mock_id?
+				req.auth.authId= Number p.mock_id
+				req.auth.role= p.mock_role ? 'mock_role'
 			else
 				# Authorize calls res.send so don't put this logic inside promise change where we try to 'send' on error
 				return next() if not req.auth.authorize()
-				pre_loaded.auth_id= req.auth.authId
-			ctx.lamd.auth_id= ctx.auth_id= pre_loaded.auth_id
+				# Now req.auth.{authId,role} now set
+
+			# TODO NEED TO STANDARIZE ON A LOCATION FOR THE POSSIBLE RICH SET OF AUTH VALUES (POSSIBLY NOT ALWAYS FROM A TOKEN, MAYBE DB?)
+			# TODO LAMD LOGIC HERE MIGHT NEED BETTER STRATEGY WHEN TOKENS HAVE ARBITRARY KEYS ADDED VIA /AUTH
+			pre_loaded.auth_id= ctx.auth_id= ctx.lamd.auth_id= req.auth.authId
+			pre_loaded.role   = ctx.role=    ctx.lamd.role   = req.auth.role
 
 		Promise.resolve().bind @
 		.then ->
+			# Validate permissions (using only the token) against 'endpoint' prior to consuming ANY resources (to avoid DoS)
+			accessDeniedError = (message) => throw new @E.AccessDenied "#{f} #{message}"
+			if endpoint.domain then accessDeniedError('INVALID DOMAIN') unless req.auth.token.domain is endpoint.domain
+			if endpoint.roles
+				roles = req.auth.role
+				accessDeniedError('MISSING ROLE') if !roles or roles.length is 0 or !Array.isArray roles
+				role = (aRole for aRole in roles when aRole in endpoint.roles)
+				accessDeniedError('INVALID ROLE') if role.length is 0
+
 			@start_connection_limit() # Keep this below any logic that might return before end_* is called
-			p.request_count= ctx.lamd.request_count= request_count
-			p.request_count_high= request_count_high
+			ctx.lamd.request_count= request_count
+			ctx.lamd.request_count_high= request_count_high
 
 		.then ->
 
@@ -181,18 +196,10 @@ class Wrapper
 			ctx.lamd.conn_id= c.__pool_id
 			throw new @E.ServerError f + 'BadHandle:' + JSON.stringify @_exposeErrorProperties ctx.conn._protocol._fatalError if ctx.conn isnt null and ctx.conn._protocol._fatalError isnt null
 			# Start a Transaction
-			return false unless endpoint.sql_tx
+			return false unless endpoint.sql_tx is true
 			throw new @E.ServerError 'WRAPPER:DEFAULT:MYSQL_NOT_ENABLED' unless @config.db.mysql.enable
 			@sdb.core.StartTransaction(ctx)
 		.then ->
-			accessDeniedError = (message) => throw new @E.AccessDenied "#{f} #{message}"
-			if endpoint.domain then accessDeniedError('INVALID DOMAIN') unless req.auth.token.domain is endpoint.domain
-			if endpoint.roles
-				roles = req.auth.role
-				accessDeniedError('MISSING ROLE') if !roles or roles.length is 0 or !Array.isArray roles
-				role = (aRole for aRole in roles when aRole in endpoint.roles)
-				accessDeniedError('INVALID ROLE') if role.length is 0
-
 			# Loop through the endpoint's pre_load functions
 			q_result = Promise.resolve().bind @
 			for nm,func of endpoint.pre_load
@@ -212,18 +219,20 @@ class Wrapper
 			result= result_hash
 
 			# Commit the transaction
-			return false unless endpoint.sql_conn
+			return false unless endpoint.sql_tx is true
 			@sdb.core.sqlQuery ctx, 'COMMIT'
 		.then (db_result)->
 
 			# Release database conn; Respond to Client
 			delete ctx.pool
 			@sdb.core.release ctx.conn if ctx.conn isnt null
+			result.send?.req_uuid= ctx.lamd.req_uuid # TODO ASSUMES RESULT.SEND IS AN OBJECT
 			res.send result.send unless endpoint.is_websock
 			ctx.lamd.statusCode= res.statusCode
 			end = (new Date().getTime())
 			ctx.lamd.duration = end - ctx.lamd.start
 			@lamd.write ctx.lamd unless endpoint.lamd is false
+			@lamd.write_deep ctx unless endpoint.lamd is false # TODO CHECK CONFIG IF WE WANT 200'S TO ALSO LOG THIS
 			@end_connection_limit()
 			next()
 
@@ -234,22 +243,29 @@ class Wrapper
 			else
 				req.log.debug f, '.catch', err
 			if ctx.conn isnt null
-				ctx.conn.query 'ROLLBACK', (err)=>
-					if err
-						req.log.warn f, 'destroy db conn (failed rollback)'
-						@sdb.core.destroy ctx.conn
-						req.log.error f, '.catch', err.stack
-					else
-						req.log.debug f, 'release db conn (successful rollback)'
-						@sdb.core.release ctx.conn
-			res.send if err.body then err else new @E.ServerError err.name, err.message
+				if endpoint.sql_tx isnt true
+					@sdb.core.release ctx.conn
+				else
+					ctx.conn.query 'ROLLBACK', (err)=>
+						if err
+							req.log.warn f, 'destroy db conn (failed rollback)'
+							@sdb.core.destroy ctx.conn
+							req.log.error f, '.catch', err.stack
+						else
+							req.log.debug f, 'release db conn (successful rollback)'
+							@sdb.core.release ctx.conn
+			e= if err.body then err else new @E.ServerError err.name, err.message
+			e.body.req_uuid= ctx.lamd.req_uuid
+			# TODO CONFIRM / TEST THAT IT WORKS BETTER TO PASS THIS TO next() INSTEAD OF: res.send e
 			ctx.lamd.statusCode= res.statusCode
 			end = (new Date().getTime())
 			ctx.lamd.duration = end - ctx.lamd.start
 			ctx.lamd.err= @_exposeErrorProperties err
 			@lamd.write ctx.lamd
+			@lamd.write_deep ctx # TODO CHECK CONFIG IF WE WANT ALL STATUS CODES (LIKE 401) TO ALSO DO THIS
 			@end_connection_limit()
-			next()
+			e.toJSON= => @_exposeErrorProperties e.body
+			next e # TODO TESTING
 
 	# https://www.bennadel.com/blog/3278-using-json-stringify-replacer-function-to-recursively-serialize-and-sanitize-log-data.htm
 	_exposeErrorProperties: (error)->
