@@ -45,7 +45,7 @@ class Lamd
 	_log: (ctx, method, f, data)->
 		@log.debug f+( if method isnt 'debug' then method else ''), data if @config.to_debug
 		return if method is 'child'
-		ctx.lamd_logger.debug.push {method, f, data} # TODO FIGURE OUT IF ERROR OBJECTS SHOW 'MESSAGE' ETC. ALSO IF SANITIZE IS NEEDED
+		ctx.lamd_logger.debug.push {method, f, data}
 
 	server_init: (kit)=>
 		f= 'Lamd:server_init:'
@@ -80,7 +80,7 @@ class Lamd
 		f= 'Lamd:_write:'
 		# Write record using zero wait time; Assume data does not have to be cloned
 		@collection_debug.insertOne data, forceServerObjectId: true, (err, result)=>
-			@log.debug f, { err, result } if err?
+			return @log.debug f, { err, result } if err?
 			@log.debug f, data if @config.to_debug
 
 	# Called typically from inside a 'wrapper', so errors are ignored using @_write_deep
@@ -95,8 +95,8 @@ class Lamd
 		f = 'Lamd:_write_deep:'
 		data= ctx.lamd_logger.debug
 		# Write record using zero wait time; Assume data does not have to be cloned
-		@collection_deep_debug.insertOne {_id: ctx.lamd.req_uuid, lamd: ctx.lamd, debug: data}, forceServerObjectId: true, (err, result)=>
-			@log.debug f, { err, result } if err?
+		@collection_deep_debug.insertOne {_id: ctx.lamd.req_uuid, lamd: ctx.lamd, debug: data}, {}, (err, result)=>
+			return @log.debug f, { err, result } if err?
 
 	# Called typically from Health check or Status endpoints; 'projection' is used to limit exposed information
 	read: (ctx, method, query, projection, options, hint, sort)=>
@@ -114,13 +114,13 @@ class Lamd
 			query = query.hint(hint) if hint
 			query = query.toArray()
 			query.then (docs)->
-				ctx.log.debug f, {docs}
+				@log.debug f, {docs} if @config.to_debug
 				return docs
 		else if method is "aggregate"
 			query = collection.aggregate(query, options)
 			query = query.toArray()
 			query.then (docs)->
-				ctx.log.debug f, {docs}
+				@log.debug f, {docs} if @config.to_debug
 				return docs
 
 exports.Lamd= Lamd
