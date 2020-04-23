@@ -41,6 +41,10 @@
       User: {
         "class": 'User',
         file: 'node_modules/blueprint/routes/r_user'
+      },
+      Health: {
+        "class": 'HealthCheck',
+        file: 'node_modules/blueprint/routes/r_health'
       }
     },
     service_modules: {
