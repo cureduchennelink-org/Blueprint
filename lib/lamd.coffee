@@ -113,13 +113,13 @@ class Lamd
 			query = query.limit(100)
 			query = query.hint(hint) if hint
 			query = query.toArray()
-			query.then (docs)->
+			query.then (docs)=>
 				@log.debug f, {docs} if @config.to_debug
 				return docs
 		else if method is "aggregate"
 			query = collection.aggregate(query, options)
 			query = query.toArray()
-			query.then (docs)->
+			query.then (docs)=>
 				@log.debug f, {docs} if @config.to_debug
 				return docs
 
