@@ -53,6 +53,10 @@
       }
     },
     service_modules: {
+      S3Proxy: {
+        "class": 'S3Proxy',
+        file: 'node_nodules/blueprint./lib/s3_proxy'
+      },
       web_config: {
         "class": 'WebConfig',
         file: 'node_modules/blueprint/lib/web_config'
@@ -346,6 +350,14 @@
           }
         }
       ]
+    },
+    s3_creds: {
+      accessKey: 'ACCESS_KEY',
+      secretKey: 'SECRET_KEY',
+      bucket: 'C_BUCKET',
+      endpoint: "https://C_BUCKET.s3.amazonaws.com/",
+      region: 'us-east-1',
+      encrypted: false
     },
     ses: {
       accessKeyId: 'ACCESS_KEY_ID',
