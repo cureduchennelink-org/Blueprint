@@ -30,6 +30,7 @@ module.exports=
 		User:			class: 'User', 			file: 'node_modules/blueprint/routes/r_user'
 		Health:			class: 'HealthCheck', 	file: 'node_modules/blueprint/routes/r_health'
 	service_modules:
+		S3Proxy:		class: 'S3Proxy',		file: 'node_modules/blueprint/lib/s3_proxy'
 		web_config:		class: 'WebConfig',		file: 'node_modules/blueprint/lib/web_config'
 		template:		class: 'EpicTemplate', 	file: 'node_modules/blueprint/lib/EpicTemplate', instConfig: view_path: vp_email
 		template_use:	class: 'EpicTemplate', 	file: 'node_modules/blueprint/lib/EpicTemplate', instConfig: view_path: vp_use
@@ -155,6 +156,13 @@ module.exports=
 			}
 
 		]
+	s3_creds:
+		accessKey: 'ACCESS_KEY'
+		secretKey: 'SECRET_KEY'
+		bucket: 'C_BUCKET'
+		endpoint: "https://C_BUCKET.s3.amazonaws.com/"
+		region: 'us-east-1'
+		encrypted: false
 	ses:
 		accessKeyId: 	'ACCESS_KEY_ID'
 		secretAccessKey: 'SECRET_KEY'
