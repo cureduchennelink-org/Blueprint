@@ -24,6 +24,7 @@ class S3Proxy
 
 	# PUBLIC: Given {filename, content_type} return URL for client's POST, and params (e.g. header values, etc.) for proper upload
 	s3Credentials: (ctx, params) =>
+		f= 'S3Proxy:s3Credentials'
 		result=
 			endpoint_url: @config.endpoint
 			params: @_s3Params params
@@ -82,7 +83,7 @@ class S3Proxy
 			acl: if @config.encrypted then 'bucket-owner-full-control' else 'public-read'
 			success_action_status: '201'
 			policy: policyBase64
-			'Content-Type': params.contentType
+			'Content-Type': params.content_type
 			'x-amz-algorithm': 'AWS4-HMAC-SHA256'
 			'x-amz-credential': credential
 			'x-amz-date': @_dateString() + 'T000000Z'
