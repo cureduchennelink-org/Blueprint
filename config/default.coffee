@@ -30,7 +30,7 @@ module.exports=
 		User:			class: 'User', 			file: 'node_modules/blueprint/routes/r_user'
 		Health:			class: 'HealthCheck', 	file: 'node_modules/blueprint/routes/r_health'
 	service_modules:
-		S3Proxy:		class: 'S3Proxy',		file: 'node_nodules/blueprint./lib/s3_proxy'
+		S3Proxy:		class: 'S3Proxy',		file: 'node_nodules/blueprint/lib/s3_proxy'
 		web_config:		class: 'WebConfig',		file: 'node_modules/blueprint/lib/web_config'
 		template:		class: 'EpicTemplate', 	file: 'node_modules/blueprint/lib/EpicTemplate', instConfig: view_path: vp_email
 		template_use:	class: 'EpicTemplate', 	file: 'node_modules/blueprint/lib/EpicTemplate', instConfig: view_path: vp_use

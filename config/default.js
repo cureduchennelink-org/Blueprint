@@ -55,7 +55,7 @@
     service_modules: {
       S3Proxy: {
         "class": 'S3Proxy',
-        file: 'node_nodules/blueprint./lib/s3_proxy'
+        file: 'node_nodules/blueprint/lib/s3_proxy'
       },
       web_config: {
         "class": 'WebConfig',
