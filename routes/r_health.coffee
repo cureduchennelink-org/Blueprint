@@ -43,7 +43,7 @@ class HealthCheck
 		# ServiceHealth
 		@services[ nm]= @all_services[ nm] for nm of @all_services when typeof @all_services[ nm].HealthCheck is 'function'
 
-	_ServiceHelath: (ctx, pre_loaded)=>
+	_ServiceHealth: (ctx, pre_loaded)=>
 		use_doc=
 			params:
 				any: '{ANY} - reflected back in params:'

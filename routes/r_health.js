@@ -18,7 +18,7 @@
       this._GetPing = bind(this._GetPing, this);
       this._GetLogs = bind(this._GetLogs, this);
       this._GetDebug = bind(this._GetDebug, this);
-      this._ServiceHelath = bind(this._ServiceHelath, this);
+      this._ServiceHealth = bind(this._ServiceHealth, this);
       this.E = kit.services.error;
       this.log = kit.services.logger.log;
       this.lamd = kit.services.lamd;
@@ -99,7 +99,7 @@
       return results;
     };
 
-    HealthCheck.prototype._ServiceHelath = function(ctx, pre_loaded) {
+    HealthCheck.prototype._ServiceHealth = function(ctx, pre_loaded) {
       var f, nm, p, send, use_doc;
       use_doc = {
         params: {
