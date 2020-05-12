@@ -53,6 +53,10 @@
       }
     },
     service_modules: {
+      Firebase: {
+        "class": 'Firebase',
+        file: 'node_modules/blueprint/lib/firebase'
+      },
       S3Proxy: {
         "class": 'S3Proxy',
         file: 'node_modules/blueprint/lib/s3_proxy'
