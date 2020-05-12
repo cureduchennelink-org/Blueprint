@@ -1,6 +1,7 @@
 Promise= require 'bluebird'
 
 {ObjectId} = require 'mongodb'
+SERVICE_NAME= process.env.npm_package_name || "blueprint"
 
 class HealthCheck
 	@deps= services:[ 'logger', 'error', 'ses', 'lamd']
@@ -11,29 +12,64 @@ class HealthCheck
 		@ses= kit.services.ses
 		@ses_email_config= kit.services.config.ses.emails
 		@config= kit.services.config
+		# ServiceHealth
+		@all_services= kit.services
+		@services= {} # Populate with list of services that implement a health-check method
 
 		# Lead Endpoints
 		@endpoints=
-			getHealth:
-				verb: 'get', route: '/Health'
-				use: on, wrap: 'default_wrap', version: any: @_GetHealth
+			getLogs:
+				verb: 'get', route: '/Logs'
+				use: on, wrap: 'default_wrap', version: any: @_GetLogs
 				sql_conn: off, auth_required: off
 			pingAuth:
 				verb: 'get', route: '/PingAuth'
-				use: on, wrap: 'default_wrap', version: any: @_GetPingAuth
+				use: on, wrap: 'default_wrap', version: any: @_GetPing
 				sql_conn: off, auth_required: on
-			ping:
+			getPing:
 				verb: 'get', route: '/Ping'
-				use: on, wrap: 'simple_wrap', version: any: @_GetPing
-				sql_conn: off, auth_required: off
-			getStatus:
-				verb: 'get', route: '/Status'
-				use: on, wrap: 'default_wrap', version: any: @_GetStatus
+				use: on, wrap: 'default_wrap', version: any: @_GetPing
 				sql_conn: off, auth_required: off
 			getDebug:
 				verb: 'get', route: '/Debug', lamd: false
 				use: on, wrap: 'default_wrap', version: any: @_GetDebug
 				sql_conn: off, auth_required: off
+			getHealth:
+				verb: 'get', route: '/Health', lamd: false
+				use: on, wrap: 'default_wrap', version: any: @_ServiceHealth
+				sql_conn: off, auth_required: off
+
+	server_init: ->
+		# ServiceHealth
+		@services[ nm]= @all_services[ nm] for nm of @all_services when typeof @all_services[ nm].HealthCheck is 'function'
+
+	_ServiceHelath: (ctx, pre_loaded)=>
+		use_doc=
+			params:
+				any: '{ANY} - reflected back in params:'
+				service: '{String} - optional service name e.g. RunQueue to query for health-check'
+				red: '{Number} - optional, status code when service is "red"'
+				yellow: '{Number} - optional, status code when service is "yellow"'
+			response: success: '{Bool}', params: '{Ojbect}', health: '{Object}'
+		return use_doc if ctx is 'use'
+		f= 'R_Status:_Get:'
+		p= ctx.p
+		send= success: false, service_name: SERVICE_NAME, params: p, service: false, services: (nm for nm of @services)
+
+		Promise.resolve().bind @
+		.then ->
+			return false unless p.service of @services
+
+			@services[ p.service].HealthCheck ctx
+		.then (result)->
+			if result isnt false
+				send.service= result unless result is false
+				ctx.res.status Number p.red if p.red? and result?.status is 'r'
+				ctx.res.status Number p.yellow if p.yellow? and result?.status is 'y'
+
+			# Return back to the Client
+			send.success= true
+			{send}
 
 	_GetDebug: (ctx, pre_loaded)=>
 		use_doc=
@@ -65,27 +101,7 @@ class HealthCheck
 
 			{send}
 
-
-	_GetPingAuth: (ctx, pre_loaded)=>
-		use_doc=
-			params:
-				dummy: '{String}'
-			response:
-				success: '{Bool}'
-		return use_doc if ctx is 'use'
-		send: {success:true}
-
-	_GetPing: (req, res, next)=>
-		use_doc=
-			params:
-				dummy: '{String}'
-			response:
-				success: '{Bool}'
-		return use_doc if req is 'use'
-		res.send success:true
-		next()
-
-	_GetHealth: (ctx, pre_loaded)=>
+	_GetLogs: (ctx, pre_loaded)=>
 		use_doc=
 			params:
 				type: '{String}'
@@ -106,17 +122,17 @@ class HealthCheck
 			lastbad100:
 				subject: 'Last Bad Queries'
 				query: { "statusCode": { $ne: 200 }}
-				projection: {"_id": 0, "statusCode":1, "start":1, "route":1,"verb":1,"err":1}
+				projection: {"_id": 0, "statusCode":1, "start":1, "route":1,"verb":1,"err":1,"req_uuid":1}
 				sort: { $natural:-1 }
 			last100:
 				subject: 'Last Query'
 				query: {}
-				projection: {"_id": 0, "statusCode":1, "start":1, "route":1,"verb":1,"err":1}
+				projection: {"_id": 0, "statusCode":1, "start":1, "route":1,"verb":1,"err":1,"req_uuid":1}
 				sort: { $natural:-1 }
 			deadlocks:
 				subject: 'API Deadlocks'
 				query: {"_id": {"$gt": new ObjectId( Math.floor(new Date(new Date()-1000*60*60).getTime()/1000).toString(16) + "0000000000000000")},"err.code" : "ER_LOCK_DEADLOCK"}
-				projection: {"_id": 0, "statusCode":1, "start":1, "route":1,"verb":1,"err":1}
+				projection: {"_id": 0, "statusCode":1, "start":1, "route":1,"verb":1,"err":1,"req_uuid":1}
 				hint: {"err.code":1}
 			daily:
 				subject: 'Daily Aggregations API'
@@ -153,14 +169,14 @@ class HealthCheck
 			success= true
 			send: {success, num_results: lamd_results.length, results: lamd_results }
 
-	_GetStatus: (ctx, pre_loaded)=>
+	_GetPing: (ctx, pre_loaded)=>
 		use_doc=
 			params:
 				dummy: '{String}'
 			response:
 				success: '{Bool}'
 		return use_doc if ctx is 'use'
-		f= 'R_Health:_GetStatus:'
+		f= 'R_Health:_GetPing:'
 		p= ctx.p
 		success= false
 
