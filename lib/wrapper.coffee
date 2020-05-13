@@ -1,14 +1,20 @@
 #
 #	Route Wrapper Module
 #
+# LAMD is not included in 'services' and must be manually added in your start-up. If it is not detected, standard bunyan is used
+# TODO for LAMD:
+#  - Sanitize function (I think SWMD has it)
+#  - .start that is human readable
+#
 Promise= require 'bluebird'
+_= require 'lodash'
 
 request_count = 0
 request_count_high= 0
 
 class Wrapper
 	@deps=
-		mysql: ['core'], mongo: ['pool'], services:[ 'router', 'lamd', 'error', 'auth', ] # auth for req.auth via server.use
+		mysql: ['core'], mongo: ['pool'], services:[ 'router', 'error', 'auth', ] # auth for req.auth via server.use
 		config: 'throttling.max_connections,db.mysql.enable,auth.bearer,perf?.test_user_override'
 	constructor: (kit) ->
 		@config=	kit.services.config
@@ -16,7 +22,11 @@ class Wrapper
 		@odb= 		kit.services.db.mongo
 		@sdb= 		kit.services.db.mysql
 		@router= 	kit.services.router
-		@lamd= 	    kit.services.lamd
+		stubb_lamd=
+			GetLog: (ctx)->ctx.log
+			write: (lamd)-> console.log lamd
+			write_deep: (ctx)-> console.log 'stubb_lamd::write_deep'
+		@lamd= 	    kit.services.lamd ? stubb_lamd # You would need to add this service in your start-up script
 		@routes= 	kit.routes
 		@wraps= {}
 
@@ -63,19 +73,26 @@ class Wrapper
 		# Call the Route Logic.
 		route_logic req, res, next
 
-	auth: (req, res, next, caller)=>
+	auth: (req, res, next, endpoint)=>
 		f= "Wrapper:auth"
 		throw new @E.ServerError 'WRAPPER:AUTH:MYSQL_NOT_ENABLED' unless @config.db.mysql.enable
-		route_logic= caller.version[req.params?.Version] ? caller.version.any
-		return (if caller.use isnt true then caller.use else route_logic req) if req is 'use'
-		ctx= conn: null, p: req.params, log: req.log, lamd: {} #TODO LAMD
+		route_logic= endpoint.version[req.params?.Version] ? endpoint.version.any
+		return (if endpoint.use isnt true then endpoint.use else route_logic req) if req is 'use'
+		ctx=
+			conn: null, p: req.params
+			log: req.log, auth_id: req.auth?.authId
+			files: req.files, req: req, res: res
+			spec: endpoint
+			lamd:
+				start: (new Date().getTime()), date: (new Date().toJSON()), # Timestamps
+				route: endpoint.route, verb: endpoint.verb, req_uuid: req._id, auth_id: 0 # Filters
+				params: (_.cloneDeep req.params) , headers: req.headers # Inputs
+				conn_id: 0 # Debugging
+		ctx.log= @lamd.GetLog ctx # Potentially overwrite Bunyan with lamd.debug logging
 		p= ctx.p
 		pre_loaded= {}
-		send_result= false
+		result= false
 		supported_grant_type= if p.grant_type in ['password','refresh_token','client_credentials'] then true else false
-		@start_connection_limit()
-		ctx.lamd.request_count= request_count
-		ctx.lamd.request_count_high= request_count_high
 
 		Promise.resolve().bind @
 		.then ->
@@ -84,10 +101,15 @@ class Wrapper
 			throw new @E.MissingArg 'client_id' if not p.client_id
 			throw new @E.OAuthError 400, 'unsupported_grant_type' if not supported_grant_type
 
+			@start_connection_limit() # Keep this below any logic that might return before end_* is called
+			ctx.lamd.request_count= request_count
+			ctx.lamd.request_count_high= request_count_high
+
 			# Acquire DB Connection
 			@sdb.core.Acquire()
 		.then (c) ->
 			ctx.conn= c if c isnt false
+			ctx.lamd.conn_id= c.__pool_id
 			throw new @E.ServerError f + 'BadHandle:' + JSON.stringify @_exposeErrorProperties ctx.conn._protocol._fatalError if ctx.conn isnt null and ctx.conn._protocol._fatalError isnt null
 
 			# Start a Transaction
@@ -98,7 +120,7 @@ class Wrapper
 			route_logic ctx, pre_loaded
 		.then (result_hash) ->
 			throw new @E.ServerError f + 'BadHandle:' + JSON.stringify @_exposeErrorProperties ctx.conn._protocol._fatalError if ctx.conn isnt null and ctx.conn._protocol._fatalError isnt null
-			send_result= result_hash.send
+			result= result_hash
 
 			# Commit the transaction
 			@sdb.core.sqlQuery ctx, 'COMMIT'
@@ -106,9 +128,15 @@ class Wrapper
 
 			# Release database conn; Respond to Client
 			@sdb.core.release ctx.conn if ctx.conn isnt null
-			res.send send_result
+			result.send?.req_uuid= ctx.lamd.req_uuid # TODO ASSUMES RESULT.SEND IS AN OBJECT
+			res.send result.send # Not for /Auth - unless endpoint.is_websock
+			ctx.lamd.statusCode= res.statusCode
+			end = (new Date().getTime())
+			ctx.lamd.duration = end - ctx.lamd.start
+			@lamd.write ctx.lamd unless endpoint.lamd is false
+			@lamd.write_deep ctx unless endpoint.lamd is false # TODO CHECK CONFIG IF WE WANT 200'S TO ALSO LOG THIS
 			@end_connection_limit()
-			next()
+			next() # Note, when this fails, connection limit get messed up, like the HEADERS ALREADY SENT error
 
 		.catch (err) ->
 			if err.statusCode not in [ 400, 401, 403 ]
@@ -126,9 +154,18 @@ class Wrapper
 					else
 						req.log.debug f, 'release db conn (successful rollback)'
 						@sdb.core.release ctx.conn
-			res.send if err.body then err else new @E.ServerError err.name, err.message
+			e= if err.body then err else new @E.ServerError err.name, err.message
+			e.body.req_uuid= ctx.lamd.req_uuid
+			# TODO CONFIRM / TEST THAT IT WORKS BETTER TO PASS THIS TO next() INSTEAD OF: res.send e
+			ctx.lamd.statusCode= res.statusCode
+			end = (new Date().getTime())
+			ctx.lamd.duration = end - ctx.lamd.start
+			ctx.lamd.err= @_exposeErrorProperties err
+			@lamd.write ctx.lamd
+			@lamd.write_deep ctx # TODO CHECK CONFIG IF WE WANT ALL STATUS CODES (LIKE 401) TO ALSO DO THIS
 			@end_connection_limit()
-			next()
+			e.toJSON= => @_exposeErrorProperties e.body
+			next e # TODO TESTING
 
 	default: (req, res, next, endpoint) =>
 		f= "Wrapper:default:#{endpoint.name}"
@@ -140,11 +177,11 @@ class Wrapper
 			files: req.files, req: req, res: res
 			spec: endpoint
 			lamd:
-				start: (new Date().getTime()), route: endpoint.route, verb: endpoint.verb
-				params: req.params, headers: req.headers, req_uuid: req._id, auth_id: 0
-				conn_id: 0
-		log_stdout= false # TODO GET FROM CONFIG
-		ctx.log= @lamd.GetLog ctx if log_stdout is false # Upgrade to lamd
+				start: (new Date().getTime()), date: (new Date().toJSON()), # Timestamps
+				route: endpoint.route, verb: endpoint.verb, req_uuid: req._id, auth_id: 0 # Filters
+				params: (_.cloneDeep req.params) , headers: req.headers # Inputs
+				conn_id: 0 # Debugging
+		ctx.log= @lamd.GetLog ctx # Potentially overwrite Bunyan with lamd.debug logging
 		p= ctx.p
 		pre_loaded= {}
 		result= false
