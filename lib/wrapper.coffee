@@ -69,11 +69,11 @@ class Wrapper
 		# Call the Route Logic.
 		route_logic req, res, next
 
-	auth: (req, res, next, caller)=>
+	auth: (req, res, next, endpoint)=>
 		f= "Wrapper:auth"
 		throw new @E.ServerError 'WRAPPER:AUTH:MYSQL_NOT_ENABLED' unless @config.db.mysql.enable
-		route_logic= caller.version[req.params?.Version] ? caller.version.any
-		return (if caller.use isnt true then caller.use else route_logic req) if req is 'use'
+		route_logic= endpoint.version[req.params?.Version] ? endpoint.version.any
+		return (if endpoint.use isnt true then endpoint.use else route_logic req) if req is 'use'
 		ctx= conn: null, p: req.params, log: req.log
 			lamd:
 				start: (new Date().getTime()), route: endpoint.route, verb: endpoint.verb
