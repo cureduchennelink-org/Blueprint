@@ -74,7 +74,11 @@ class Wrapper
 		throw new @E.ServerError 'WRAPPER:AUTH:MYSQL_NOT_ENABLED' unless @config.db.mysql.enable
 		route_logic= endpoint.version[req.params?.Version] ? endpoint.version.any
 		return (if endpoint.use isnt true then endpoint.use else route_logic req) if req is 'use'
-		ctx= conn: null, p: req.params, log: req.log
+		ctx=
+			conn: null, p: req.params
+			log: req.log, auth_id: req.auth?.authId
+			files: req.files, req: req, res: res
+			spec: endpoint
 			lamd:
 				start: (new Date().getTime()), route: endpoint.route, verb: endpoint.verb
 				params: (_.cloneDeep req.params) , headers: req.headers, req_uuid: req._id, auth_id: 0
