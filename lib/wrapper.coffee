@@ -84,10 +84,11 @@ class Wrapper
 			files: req.files, req: req, res: res
 			spec: endpoint
 			lamd:
-				start: (new Date().getTime()), route: endpoint.route, verb: endpoint.verb
-				params: (_.cloneDeep req.params) , headers: req.headers, req_uuid: req._id, auth_id: 0
-				conn_id: 0
-		ctx.log= @lamd.GetLog ctx
+				start: (new Date().getTime()), date: (new Date().toJSON()), # Timestamps
+				route: endpoint.route, verb: endpoint.verb, req_uuid: req._id, auth_id: 0 # Filters
+				params: (_.cloneDeep req.params) , headers: req.headers # Inputs
+				conn_id: 0 # Debugging
+		ctx.log= @lamd.GetLog ctx # Potentially overwrite Bunyan with lamd.debug logging
 		p= ctx.p
 		pre_loaded= {}
 		result= false
@@ -176,10 +177,11 @@ class Wrapper
 			files: req.files, req: req, res: res
 			spec: endpoint
 			lamd:
-				start: (new Date().getTime()), route: endpoint.route, verb: endpoint.verb
-				params: (_.cloneDeep req.params) , headers: req.headers, req_uuid: req._id, auth_id: 0
-				conn_id: 0
-		ctx.log= @lamd.GetLog ctx
+				start: (new Date().getTime()), date: (new Date().toJSON()), # Timestamps
+				route: endpoint.route, verb: endpoint.verb, req_uuid: req._id, auth_id: 0 # Filters
+				params: (_.cloneDeep req.params) , headers: req.headers # Inputs
+				conn_id: 0 # Debugging
+		ctx.log= @lamd.GetLog ctx # Potentially overwrite Bunyan with lamd.debug logging
 		p= ctx.p
 		pre_loaded= {}
 		result= false
