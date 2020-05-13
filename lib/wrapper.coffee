@@ -22,7 +22,11 @@ class Wrapper
 		@odb= 		kit.services.db.mongo
 		@sdb= 		kit.services.db.mysql
 		@router= 	kit.services.router
-		@lamd= 	    kit.services.lamd ? false # You would need to add this service in your start-up script
+		stubb_lamd=
+			GetLog: (ctx)->ctx.log
+			write: (lamd)-> console.log lamd
+			write_deep: (ctx)-> console.log 'stubb_lamd::write_deep'
+		@lamd= 	    kit.services.lamd ? stubb_lamd # You would need to add this service in your start-up script
 		@routes= 	kit.routes
 		@wraps= {}
 
@@ -83,6 +87,7 @@ class Wrapper
 				start: (new Date().getTime()), route: endpoint.route, verb: endpoint.verb
 				params: (_.cloneDeep req.params) , headers: req.headers, req_uuid: req._id, auth_id: 0
 				conn_id: 0
+		ctx.log= @lamd.GetLog ctx
 		p= ctx.p
 		pre_loaded= {}
 		result= false
@@ -174,8 +179,7 @@ class Wrapper
 				start: (new Date().getTime()), route: endpoint.route, verb: endpoint.verb
 				params: (_.cloneDeep req.params) , headers: req.headers, req_uuid: req._id, auth_id: 0
 				conn_id: 0
-		log_stdout= @lamd is false
-		ctx.log= @lamd.GetLog ctx if log_stdout is false # Upgrade to lamd
+		ctx.log= @lamd.GetLog ctx 
 		p= ctx.p
 		pre_loaded= {}
 		result= false
