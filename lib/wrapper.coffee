@@ -128,7 +128,7 @@ class Wrapper
 			# Release database conn; Respond to Client
 			@sdb.core.release ctx.conn if ctx.conn isnt null
 			result.send?.req_uuid= ctx.lamd.req_uuid # TODO ASSUMES RESULT.SEND IS AN OBJECT
-			# Not for /Auth - res.send result.send unless endpoint.is_websock
+			res.send result.send # Not for /Auth - unless endpoint.is_websock
 			ctx.lamd.statusCode= res.statusCode
 			end = (new Date().getTime())
 			ctx.lamd.duration = end - ctx.lamd.start
@@ -179,7 +179,7 @@ class Wrapper
 				start: (new Date().getTime()), route: endpoint.route, verb: endpoint.verb
 				params: (_.cloneDeep req.params) , headers: req.headers, req_uuid: req._id, auth_id: 0
 				conn_id: 0
-		ctx.log= @lamd.GetLog ctx 
+		ctx.log= @lamd.GetLog ctx
 		p= ctx.p
 		pre_loaded= {}
 		result= false
