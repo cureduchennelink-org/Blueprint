@@ -172,7 +172,8 @@ module.exports= {
 			},
 			modules: {
 				token: { class: 'SqlToken', file: 'node_modules/blueprint/lib/db/_postgresql/sql_token' },
-				auth: { class: 'SqlAuth', file: 'node_modules/blueprint/lib/db/_postgresql/sql_auth' }
+				auth: { class: 'SqlAuth', file: 'node_modules/blueprint/lib/db/_postgresql/sql_auth' },
+				runqueue: { class: 'PSqlRunQueue', file: 'node_modules/blueprint/lib/db/_postgresql/psql_runqueue' },
 			}
 		},
 		mysql: {
