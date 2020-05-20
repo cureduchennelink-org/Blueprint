@@ -37,7 +37,7 @@ class HealthCheck
 			getHealth:
 				verb: 'get', route: '/Health', lamd: false
 				use: on, wrap: 'default_wrap', version: any: @_ServiceHealth
-				sql_conn: off, auth_required: off
+				sql_conn: on, auth_required: off
 
 	server_init: ->
 		# ServiceHealth

@@ -157,7 +157,7 @@ class Wrapper
 			e= if err.body then err else new @E.ServerError err.name, err.message
 			e.body.req_uuid= ctx.lamd.req_uuid
 			# TODO CONFIRM / TEST THAT IT WORKS BETTER TO PASS THIS TO next() INSTEAD OF: res.send e
-			ctx.lamd.statusCode= res.statusCode
+			ctx.lamd.statusCode= err.statusCode ? 5550
 			end = (new Date().getTime())
 			ctx.lamd.duration = end - ctx.lamd.start
 			ctx.lamd.err= @_exposeErrorProperties err
@@ -294,7 +294,7 @@ class Wrapper
 			e= if err.body then err else new @E.ServerError err.name, err.message
 			e.body.req_uuid= ctx.lamd.req_uuid
 			# TODO CONFIRM / TEST THAT IT WORKS BETTER TO PASS THIS TO next() INSTEAD OF: res.send e
-			ctx.lamd.statusCode= res.statusCode
+			ctx.lamd.statusCode= err.statusCode ? 5550
 			end = (new Date().getTime())
 			ctx.lamd.duration = end - ctx.lamd.start
 			ctx.lamd.err= @_exposeErrorProperties err

@@ -82,7 +82,7 @@
           version: {
             any: this._ServiceHealth
           },
-          sql_conn: false,
+          sql_conn: true,
           auth_required: false
         }
       };
