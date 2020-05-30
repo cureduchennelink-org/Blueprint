@@ -63,7 +63,7 @@
         },
         getDebug: {
           verb: 'get',
-          route: '/Debug',
+          route: '/Debug/:req_uuid',
           lamd: false,
           use: true,
           wrap: 'default_wrap',
@@ -161,8 +161,7 @@
       var f, len, p, ref, send, use_doc;
       use_doc = {
         params: {
-          device: '{String}-FUTURE',
-          req_uuid: '{String}'
+          device: '{String}-FUTURE'
         },
         response: {
           success: '{Bool}',
@@ -179,8 +178,8 @@
         debug: []
       };
       len = (ref = p.req_uuid) != null ? ref.length : void 0;
-      if (len !== 'a27af922-b891-45e7-b422-b50192db1928'.length) {
-        throw new this.E.InvalidArg('req_uuid:' + len);
+      if (!(len > 35)) {
+        throw new this.E.InvalidArg('req_uuid:' + len + 'L');
       }
       return Promise.resolve().bind(this).then(function() {
         var hint, method, options, projection, query, sort;
@@ -205,7 +204,8 @@
       var f, hint, lamd_results, method, nm, options, p, projection, query, ref, ref1, ref2, ref3, ref4, sort, subject, success, type_map, use_doc;
       use_doc = {
         params: {
-          type: '{String}'
+          type: '{String}',
+          filt: '{String} - report specific filter value'
         },
         response: {
           success: '{Bool}'
@@ -235,7 +235,7 @@
           projection: {
             "_id": 0,
             "statusCode": 1,
-            "start": 1,
+            "date": 1,
             "route": 1,
             "verb": 1,
             "err": 1,
@@ -251,9 +251,28 @@
           projection: {
             "_id": 0,
             "statusCode": 1,
-            "start": 1,
+            "date": 1,
+            "job_name": 1,
+            "result.did_work": 1,
             "route": 1,
             "verb": 1,
+            "err": 1,
+            "req_uuid": 1
+          },
+          sort: {
+            $natural: -1
+          }
+        },
+        last100jobwork: {
+          subject: 'Last jobs with result.did_work true',
+          query: {
+            "result.did_work": true
+          },
+          projection: {
+            "_id": 0,
+            "result": 1,
+            "date": 1,
+            "job_name": 1,
             "err": 1,
             "req_uuid": 1
           },
@@ -332,6 +351,12 @@
       options = (ref2 = type_map[p.type].options) != null ? ref2 : options;
       hint = (ref3 = type_map[p.type].hint) != null ? ref3 : hint;
       sort = (ref4 = type_map[p.type].sort) != null ? ref4 : sort;
+      if (p.filt) {
+        switch (p.type) {
+          case 'last100jobwork':
+            query["result.filter.contest.id"] = Number(p.filt);
+        }
+      }
       return Promise.resolve().bind(this).then(function() {
         return this.lamd.read(ctx, method, query, projection, options, hint, sort);
       }).then(function(db_results) {
