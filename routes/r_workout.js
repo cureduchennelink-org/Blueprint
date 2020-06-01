@@ -1,74 +1,94 @@
-#
-# Workout Routes
-#
-# Author: Jamie Hollowell
-#
-Promise= require 'blueprint'
+/*
+ * decaffeinate suggestions:
+ * DS102: Remove unnecessary code created because of implicit returns
+ * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
+ */
+//
+// Workout Routes
+//
+// Author: Jamie Hollowell
+//
+const Promise= require('blueprint');
 
-class Workout
-	constructor: (kit)->
-		kit.services.logger.log.info 'Initializing Workout Routes...'
-		@E= kit.services.error
-		@odb= kit.services.db.mongo
+class Workout {
+	constructor(kit){
+		this._get = this._get.bind(this);
+		this._create = this._create.bind(this);
+		kit.services.logger.log.info('Initializing Workout Routes...');
+		this.E= kit.services.error;
+		this.odb= kit.services.db.mongo;
 
-		@endpoints=
-			get:
-				verb: 'get', route: '/Workout'
-				use: true, wrap: 'default_wrap', version: any: @_get
+		this.endpoints= {
+			get: {
+				verb: 'get', route: '/Workout',
+				use: true, wrap: 'default_wrap', version: { any: this._get
+			},
 				auth_required: true
-			create:
-				verb: 'post', route: '/Workout'
-				use: true, wrap: 'default_wrap', version: any: @_create
+			},
+			create: {
+				verb: 'post', route: '/Workout',
+				use: true, wrap: 'default_wrap', version: { any: this._create
+			},
 				auth_required: true
+			}
+		};
+	}
 
-	# Private Logic
-	_get: (ctx, pre_loaded)=>
-		use_docs= {}
-		return use_docs if ctx is 'use'
-		f= 'Workout:_get:'
-		p= 	  ctx.p
+	// Private Logic
+	_get(ctx, pre_loaded){
+		const use_docs= {};
+		if (ctx === 'use') { return use_docs; }
+		const f= 'Workout:_get:';
+		const {
+            p
+        } = ctx;
 
-		ctx.log.debug f, p
+		ctx.log.debug(f, p);
 
-		Promise.resolve().bind @
-		.then ->
+		return Promise.resolve().bind(this)
+		.then(function() {
 
-			@odb.core.find @odb.Workout, {}
-		.then (docs)->
-			send: workouts: docs
+			return this.odb.core.find(this.odb.Workout, {});})
+		.then(docs => ({
+            send: {workouts: docs}
+        }));
+	}
 
-	_create: (ctx, pre_loaded)=>
-		use_docs= description: 'rS', workout_name: 'rS', type: 'rE:good,bad'
-		return use_docs if ctx is 'use'
-		f= 'Workout:_create:'
-		p= 	  ctx.p
+	_create(ctx, pre_loaded){
+		const use_docs= {description: 'rS', workout_name: 'rS', type: 'rE:good,bad'};
+		if (ctx === 'use') { return use_docs; }
+		const f= 'Workout:_create:';
+		const {
+            p
+        } = ctx;
 
-		newWorkout= false
-		opts= name: p.workout_name, description: p.description, type: p.type
+		let newWorkout= false;
+		const opts= {name: p.workout_name, description: p.description, type: p.type};
 
-		throw new @E.MissingArg 'description' if not p.description
-		throw new @E.MissingArg 'workout_name' if not p.workout_name
-		throw new @E.MissingArg 'type' if not p.type
+		if (!p.description) { throw new this.E.MissingArg('description'); }
+		if (!p.workout_name) { throw new this.E.MissingArg('workout_name'); }
+		if (!p.type) { throw new this.E.MissingArg('type'); }
 
-		Promise.resolve().bind @
-		.then ->
+		return Promise.resolve().bind(this)
+		.then(function() {
 
-			# Search for an Existing Workout
-			@odb.Workout.FindByName p.workout_name
-		.then (docs)->
-			ctx.log.debug 'got docs:', docs
-			if docs.length > 0
-				throw new @E.AccessDenied 'Name already exists', name: p.workout_name
+			// Search for an Existing Workout
+			return this.odb.Workout.FindByName(p.workout_name);}).then(function(docs){
+			ctx.log.debug('got docs:', docs);
+			if (docs.length > 0) {
+				throw new this.E.AccessDenied('Name already exists', {name: p.workout_name});
+			}
 
-			newWorkout= new @odb.Workout opts
-			ctx.log.debug 'typeName:', newWorkout.typeName
-			newWorkout.FindSimilarTypes()
-		.then (docs)->
-			ctx.log.debug 'got similar Types:', docs
+			newWorkout= new this.odb.Workout(opts);
+			ctx.log.debug('typeName:', newWorkout.typeName);
+			return newWorkout.FindSimilarTypes();}).then(function(docs){
+			ctx.log.debug('got similar Types:', docs);
 
-			# Create new Workout
-			@odb.core.create @odb.Workout, opts
-		.then ->
-			send: success: true, message: 'Workout created with name:' + newWorkout.name
+			// Create new Workout
+			return this.odb.core.create(this.odb.Workout, opts);}).then(() => ({
+            send: {success: true, message: 'Workout created with name:' + newWorkout.name}
+        }));
+	}
+}
 
-exports.Workout= Workout
+exports.Workout= Workout;
