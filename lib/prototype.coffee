@@ -155,23 +155,23 @@ class PrototypeModule
 		result[resource]= []
 		q_result= Promise.resolve().bind @
 		for r0id in batch_ids
-			do (r0id)-> q_result= q_result.then ()->
-				before= {}
-				for nm of new_values
-					before[nm]= r.idx[r0id][nm]
+			do (r0id)-> 
+				q_result= q_result.then ()->
+					before= {}
+					for nm of new_values
+						before[nm]= r.idx[r0id][nm]
 
-				# Update record
-				r.idx[r0id]= _.merge r.idx[r0id], new_values
-				result[resource].push r.idx[r0id] # e.g. Item: [ {completed: 'yes', id: 1}, ... ]
+					# Update record
+					r.idx[r0id]= _.merge r.idx[r0id], new_values
+					result[resource].push r.idx[r0id] # e.g. Item: [ {completed: 'yes', id: 1}, ... ]
 
-				# Notify Push Set of Item Change
-				vals= _.clone new_values
-				vals= _.merge vals, id: r0id
-				@pset.ItemChange ctx, 0, 'update', before, vals, resource, r0id, null
-			.then -> # TODO: Have ItemChange return what the push service would
+					# Notify Push Set of Item Change
+					vals= _.clone new_values
+					vals= _.merge vals, id: r0id
+					# TODO: Have ItemChange return what the push service would
+					@pset.ItemChange ctx, 0, 'update', before, vals, resource, r0id, null
 		q_result
 		.then ->
-
 			# Respond to Client
 			result.success= true
 			send: result
@@ -204,7 +204,6 @@ class PrototypeModule
 
 				# Notify Push Set of Item Change
 				@pset.ItemChange ctx, 0, 'delete', before, {}, resource, r0id, null
-			.then ->
 		q_result
 		.then ->
 

@@ -30,3 +30,5 @@ git-version.txt
 
 .idea/
 .vscode/
+
+decaffeinate*
