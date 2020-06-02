@@ -18,7 +18,7 @@ const moment= require('moment');
 
 class AuthRoute {
 	static initClass() {
-		this.deps= {services: ['error','config','logger','ses','auth','tripMgr','tokenMgr','event'], mysql: ['auth','token']};
+		this.deps= {services: ['error','config','logger','ses','auth','tripMgr','tokenMgr'], mysql: ['auth','token']};
 		 // TODO 'event' is optional
 	}
 	constructor(kit){
