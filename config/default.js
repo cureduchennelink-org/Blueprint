@@ -23,6 +23,10 @@ module.exports= {
 			default: 'index.html'
 		}
 	},
+	slack: {
+		url: false,
+		on: false	
+	},
 	throttling: { // Wrapper uses this for rejecting requests when we are this far behind
 		max_connections: 1000
 	},
@@ -80,8 +84,8 @@ module.exports= {
 	},
 		elb_redirect: {   class: 'ELBRedirect',   file: 'node_modules/blueprint/lib/elb_redirect'
 	}, // Force HTTPS if enabled
-		server: {   		class: 'Server',   		file: 'node_modules/blueprint/lib/server'
-	}
+		server: {   		class: 'Server',   		file: 'node_modules/blueprint/lib/server' },
+		slack: { class: "Slack", file: "node_modules/blueprint/lib/slack"}
 	},
 
 	runqueue: {
@@ -172,7 +176,8 @@ module.exports= {
 			},
 			modules: {
 				token: { class: 'SqlToken', file: 'node_modules/blueprint/lib/db/_postgresql/sql_token' },
-				auth: { class: 'SqlAuth', file: 'node_modules/blueprint/lib/db/_postgresql/sql_auth' }
+				auth: { class: 'SqlAuth', file: 'node_modules/blueprint/lib/db/_postgresql/sql_auth' },
+				runqueue: { class: 'PSqlRunQueue', file: 'node_modules/blueprint/lib/db/_postgresql/psql_runqueue' },
 			}
 		},
 		mysql: {
