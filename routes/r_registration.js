@@ -3,7 +3,6 @@
 /*
  * decaffeinate suggestions:
  * DS102: Remove unnecessary code created because of implicit returns
- * DS206: Consider reworking classes to avoid initClass
  * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
  */
 //
@@ -14,8 +13,8 @@ const Promise = require("bluebird");
 const moment = require('moment');
 
 class Registration {
-  static initClass() {
-    this.deps = {
+  static deps() {
+    return {
       services: ["error", "config", "ses", "auth", "tripMgr", "template"],
       mysql: ["auth", "user"],
       config: "ses.options,api.ident_id"
@@ -330,6 +329,5 @@ class Registration {
       });
   }
 }
-Registration.initClass();
 
 exports.Registration = Registration;

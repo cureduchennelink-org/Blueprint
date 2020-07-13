@@ -13,8 +13,8 @@
 const Promise = require("bluebird");
 
 class Workout {
-  static initClass() {
-    this.deps = {
+  static deps() {
+    return {
       services: ["error", "config", "ses", "auth", "tripMgr", "template"],
       mysql: ["auth", "user"],
       config: "ses.options,api.ident_id"
@@ -130,6 +130,5 @@ class Workout {
   }
 }
 
-Workout.initClass();
 
 exports.Workout = Workout;

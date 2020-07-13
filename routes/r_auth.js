@@ -3,7 +3,6 @@
 /*
  * decaffeinate suggestions:
  * DS102: Remove unnecessary code created because of implicit returns
- * DS206: Consider reworking classes to avoid initClass
  * DS207: Consider shorter variations of null checks
  * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
  */
@@ -17,8 +16,8 @@ const crypto= require('crypto');
 const moment= require('moment');
 
 class AuthRoute {
-	static initClass() {
-		this.deps= {services: ['error','config','logger','ses','auth','tripMgr','tokenMgr','event'], mysql: ['auth','token']};
+	static deps() {
+		return {services: ['error','config','logger','ses','auth','tripMgr','tokenMgr','event'], mysql: ['auth','token']};
 		 // TODO 'event' is optional
 	}
 	constructor(kit){
@@ -463,6 +462,5 @@ class AuthRoute {
 			return ident= db_rows[0];});
 	}
 }
-AuthRoute.initClass();
 
 exports.AuthRoute= AuthRoute;

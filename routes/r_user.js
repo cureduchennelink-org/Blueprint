@@ -4,7 +4,6 @@
  * decaffeinate suggestions:
  * DS101: Remove unnecessary use of Array.from
  * DS102: Remove unnecessary code created because of implicit returns
- * DS206: Consider reworking classes to avoid initClass
  * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
  */
 //
@@ -13,8 +12,8 @@
 const Promise= require('bluebird');
 
 class User {
-	static initClass() {
-		this.deps= {services:[ 'error', ], mysql:[ 'user', ]};
+	static deps() {
+		return {services:[ 'error', ], mysql:[ 'user', ]};
 	}
 	constructor(kit){
 		this._view_profile = this._view_profile.bind(this);
@@ -117,6 +116,5 @@ class User {
 			return db_rows[0];});
 	}
 }
-User.initClass();
 
 exports.User= User;
