@@ -30,7 +30,7 @@ const fileExists= function(filepath){
 module.exports= function(){
 	let envPath;
 	const env= 		process.env.npm_config_env != null ? process.env.npm_config_env : 'container'; // Default to Kyrio's docker-container based env injection
-	const configDir= 	process.env.npm_config_config_dir != null ? process.env.npm_config_config_dir : 'src/config';
+	const configDir= 	process.env.npm_config_config_dir != null ? process.env.npm_config_config_dir : 'src';
 	const execDir= 	process.cwd();
 
 	_log('Environment specified:', env);
