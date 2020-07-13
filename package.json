@@ -12,14 +12,14 @@
     "bluebird": "^3.5.2",
     "bunyan": "^1.8.12",
     "is_js": "^0.9.0",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.19",
     "moment": "^2.22.2",
     "moment-timezone": "^0.5.21",
     "mongodb": "^3.5.7",
     "mongoose": "^5.9.15",
     "mysql": "^2.17.1",
     "pg": "^7.12.1",
-    "restify": "^7.2.1",
+    "restify": "^8.5.1",
     "restify-errors": "^6.1.1",
     "user-agent-parser": "^0.6.0"
   },
@@ -30,7 +30,7 @@
     "cross-env": "^5.2.0",
     "eslint": "^6.5.1",
     "eslint-config-google": "^0.14.0",
-    "mocha": "^4.1.0"
+    "mocha": "^8.0.1"
   },
   "scripts": {
     "test": "NODE_ENV=development mocha test/services/db/*ee test/services/*ee test/routes/*ee --bail",
