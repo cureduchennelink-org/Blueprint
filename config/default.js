@@ -163,7 +163,6 @@ module.exports= {
 	db: {
 		type: "psql",
 		psql: {
-			enable: true,
 			pool: {
 				host: "localhost",
 				port: 5432,
@@ -171,8 +170,7 @@ module.exports= {
 				password: "password",
 				database: "blueprint",
 				level2_debug: true,
-				waitForConnections: true,
-				connectionLimit: 60
+				max: 10
 			},
 			modules: {
 				token: { class: 'SqlToken', file: 'node_modules/blueprint/lib/db/_postgresql/sql_token' },
@@ -187,7 +185,7 @@ module.exports= {
 				user: 'root',
 				password: 'root',
 				database: 'blueprint',
-				multipleStatements: true,
+				multipleStatements: false,
 				supportBigNumbers: true,
 				bigNumberStrings: true,
 				waitForConnections: false,
