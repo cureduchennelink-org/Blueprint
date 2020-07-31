@@ -85,7 +85,8 @@ module.exports= {
 		elb_redirect: {   class: 'ELBRedirect',   file: 'node_modules/blueprint/lib/elb_redirect'
 	}, // Force HTTPS if enabled
 		server: {   		class: 'Server',   		file: 'node_modules/blueprint/lib/server' },
-		slack: { class: "Slack", file: "node_modules/blueprint/lib/slack"}
+		slack: { class: "Slack", file: "node_modules/blueprint/lib/slack"},
+		pdf: { class: "PDF", file: "node_modules/blueprint/lib/pdf"}
 	},
 
 	runqueue: {
