@@ -7,3 +7,5 @@ From 2018_Kyrio
  - On-board flow might be done where ident is created before a profile-type record - so returning to login flows to on-board again.
  - Local code would clone /User route, and update for its own profile-type purposes
  - Have not determined if we want a generic /User or a separate /Exectutive and /Vendor to get/create profiles.
+ - Deprecate mocha+chai in favor of jest
+ - Package management (is_js, lodash, etc.)
