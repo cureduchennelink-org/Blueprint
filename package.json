@@ -18,7 +18,7 @@
     "mongodb": "^3.5.7",
     "mongoose": "^5.9.15",
     "mysql": "^2.17.1",
-    "pg": "^7.12.1",
+    "pg": "^8.0.3",
     "restify": "^8.5.1",
     "restify-errors": "^6.1.1",
     "user-agent-parser": "^0.6.0"
