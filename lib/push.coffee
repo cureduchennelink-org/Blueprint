@@ -208,8 +208,8 @@ class PushSet
 		ctx.log.debug f, xref
 
 		sxref= (String xref)
-		item= @c_items[sxref] ? false
-		return item if item # Cached item
+		# item= @c_items[sxref] ? false
+		# return item if item # Cached item
 
 		Promise.resolve().bind @
 		.then ->
