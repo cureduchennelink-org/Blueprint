@@ -7,7 +7,7 @@ DVblueprint is an out of the box Node.js REST server.
 **Features**:
 
 * Easily Extensible REST Interface
-* Built-in support for MySql and MongoDb
+* Built-in support for MySql, MongoDb, & Postgres
 * OAuth 2.0 Authentication Protocol
 * User Signup / Registration
 * Forgot Password Flow
@@ -23,17 +23,9 @@ DVblueprint is an out of the box Node.js REST server.
 ## Install Environment Dependencies
 ##### Install Node
 The latest version of Node.js can be downloaded and isntalled from here: [download node](http://nodejs.org/download). To learn more, you can read the documentation here: [node.js docs](http://nodejs.org/documentation/)
+\
+##### Install MySql or Postgres
 
-##### Install CoffeeScript
-Most of the DVblueprint server is written in [CoffeeScript](http://coffeescript.org). It is syntactic sugar for JavaScript, and it is much easier to read and develop with. All of the examples below are going to be CoffeeScript. Node runs on JavaScript, so all Coffee files must be compiled before run time.
-
-	sudo npm install -g coffeescript@1.9.2
-
-Compile a .coffee file using the '-c' flag:
-
-	coffee -c my_file.coffee
-
-##### Install MySql
 Some of the features in DVblueprint require a MySql database, including Dynamic Push Data,
 and OAuth 2.0 Authentication. Access to a MySql server needs to be set up.
 
