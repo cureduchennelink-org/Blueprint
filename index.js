@@ -336,15 +336,14 @@ exports.init = function ({ listen, services, routes, mysql, mysql_mods, psql, ps
 				const d = new Date();
 				console.log(d.toUTCString() + " SIGINT");
 
-				return kit.services.RunQueue != null
-					? kit.services.RunQueue.Drain()
-					: undefined;
+				if (kit.services.RunQueue != null) kit.services.RunQueue.Drain()
 			});
 			console.log(process.version)
 
-			return console.log(
-				"Node.js in service on port: " + process.env.PORT
+			console.log(
+				"Node.js in service on port: " + kit.services.config.port
 			);
+			return kit;
 		});
 }
 
