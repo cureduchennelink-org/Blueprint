@@ -328,7 +328,7 @@ exports.init = function ({ listen, services, routes, mysql, mysql_mods, psql, ps
 	psql_mods = psql_mods || []
 	mysql = mysql || mysql_mods.length
 	psql = psql || psql_mods.length
-	start(listen, services, routes, (mysql_mods.length || mysql), mysql_mods, (psql_mods.length || psql), psql_mods, mongo, more_config, more_kit)
+	return start(listen, services, routes, (mysql_mods.length || mysql), mysql_mods, (psql_mods.length || psql), psql_mods, mongo, more_config, more_kit)
 		.then(function (kit) {
 			// JCS: Add HTTPS support
 			// JCS: SERIOUSLY CONSIDERING TO EMIT AN EVENT, SO ANY MODULE CAN DETECT THIS FOR DRAINING REASONS
