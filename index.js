@@ -15,7 +15,7 @@ let _ = require('lodash');
 const path = require('path');
 
 // TODO HAVE A 'init' METHOD TO LOAD FIRST kit, config, logger AND MAYBE error WHICH TAKES PARAMS SO YOU CAN CIRCUMVENT ENV FOR E.G. TEST HARNESS DOING ONE MODULE UNIT TEST
-exports.start = function (include_server, services_enabled, routes_enabled, mysql_enabled, mysql_mods_enabled, psql_enabled, psql_mods_enabled, mongo_enabled, more_config, more_kit) {
+const start = exports.start = function (include_server, services_enabled, routes_enabled, mysql_enabled, mysql_mods_enabled, psql_enabled, psql_mods_enabled, mongo_enabled, more_config, more_kit) {
 	let mod, nm, service;
 	if (mysql_enabled == null) { mysql_enabled = false; }
 	if (mysql_mods_enabled == null) { mysql_mods_enabled = []; }
@@ -328,8 +328,7 @@ exports.init = function ({ listen, services, routes, mysql, mysql_mods, psql, ps
 	psql_mods = psql_mods || []
 	mysql = mysql || mysql_mods.length
 	psql = psql || psql_mods.length
-	blueprint
-		.start(listen, services, routes, (mysql_mods.length || mysql), mysql_mods, (psql_mods.length || psql), psql_mods, mongo, more_config, more_kit)
+	start(listen, services, routes, (mysql_mods.length || mysql), mysql_mods, (psql_mods.length || psql), psql_mods, mongo, more_config, more_kit)
 		.then(function (kit) {
 			// JCS: Add HTTPS support
 			// JCS: SERIOUSLY CONSIDERING TO EMIT AN EVENT, SO ANY MODULE CAN DETECT THIS FOR DRAINING REASONS
