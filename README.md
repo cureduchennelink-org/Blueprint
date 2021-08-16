@@ -22,7 +22,7 @@ DVblueprint is an out of the box Node.js REST server.
 * 12Factor app support
 * RunQ - a distributed cron runner
 
-## Quick Start
+# Quick Start
 The main application is its own directory which can be a repository. DVblueprint is going to be a package.json dependency.
 Any subdirectories are your option. As the project grows you'll want routes and services and db mods in their own dir.
 The following commands will setup a simplified project directory to run an application that
@@ -73,9 +73,9 @@ To run the application:
 Vist the REST API Documentation: [http://localhost:9500/api/v1](http://localhost:9500/api/v1)
 (TODO) Vist the Example Todo Web-App: [http://localhost:9500/](http://localhost:9500/)
 
-# You did it!
+## You did it!
 
-## Add your own route logic
+# Add your own route logic
 Let's create a custom route module with two endpoints. You will need to create a file with a class in it, then tell DVblueprint where to find it, and finally update the main application to expose this route.
 
 ### Create a route module
@@ -179,10 +179,10 @@ to
 Restart the server.
 
 ### Updated documentation
- Notice the new documented route (click on the left side, 'FruitRoute') [http://localhost:9500/api/v1] (API documentation.)
+ Notice the new documented route (click on the left side, 'FruitRoute') [http://localhost:9500/api/v1](API documentation.)
  
 ### Access the 'get' endpoint
-Check on fruit inventory: [http://localhost:9500/api/v1/Fruit] - consider using JSON-view to see JSON results nicely formatted in your browser.
+Check on fruit inventory: [http://localhost:9500/api/v1/Fruit](Fruit inventory) - consider using JSON-view to see JSON results nicely formatted in your browser.
   
 ### Access the 'post'endpoint
 Use POSTMAN or Curl to eat some of that fruit:
@@ -193,8 +193,10 @@ Use POSTMAN or Curl to eat some of that fruit:
 
 Reload your browser tab to see the updated fruit inventory.
 
+## You Did it Again!
 
-## TODO
+
+# TODO
 
 Documentation:
 
