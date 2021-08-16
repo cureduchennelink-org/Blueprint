@@ -341,7 +341,7 @@ exports.init = function ({ listen, services, routes, mysql, mysql_mods, psql, ps
 			console.log(process.version)
 
 			console.log(
-				"Node.js in service on port: " + kit.services.config.port
+				"Node.js in service on port: " + kit.services.config.api.port
 			);
 			return kit;
 		});

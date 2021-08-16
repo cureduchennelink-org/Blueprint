@@ -49,16 +49,24 @@ Add the following to the main application file (src/app.js):
 	//
 	// app.js: Main launch point for the application
 	//
-	const blueprint= require( "blueprint")
+	const blueprint = require("blueprint")
 
 	// Lists of modules to include on start-up
-	const services= []
-	const routes= []
+	const services = []
+	const routes = []
 
-	const kit= await blueprint.init({ listen: true, services, routes})
-	const port= kit.services.config.api.port
+	blueprint.init({ listen: true, services, routes })
+		.then(kit => {
+			const port = kit.services.config.api.port
 
-	console.log( 'API server is ready.', ` http://localhost:${port}/api/v1`)
+			console.log('API server is ready.', ` http://localhost:${port}/api/v1`)
+		})
+
+#### Something to look at
+There is a static website built-in in case you want to create an application in a single server instance. Let's make a file that has a little text in it, so we know the server is running.
+
+	$ mkdir html_root
+	$ echo "Hello, my_app!" > html_root/index.html
 
 #### Global depedencies
 Logging is enhanced with bunyan, so using it to read the logs is preferable
@@ -70,8 +78,9 @@ To run the application:
 
 	$ node src/app.js | bunyan -o short
 
-Vist the REST API Documentation: [http://localhost:9500/api/v1](http://localhost:9500/api/v1)
-(TODO) Vist the Example Todo Web-App: [http://localhost:9500/](http://localhost:9500/)
+#### Verify things are going
+Vist the REST API Documentation: [http://localhost:9500/api/v1](http://localhost:9500/api/v1) - Oops, does not work, because we have no route modules exposed, so there is no service looking at that endpoint.
+Vist the example content: [http://localhost:9500/](http://localhost:9500/)
 
 ## You did it!
 
@@ -85,30 +94,33 @@ In this example, we will create a 'FruitRoute' class and module to expose 'get f
 	// Fruit route endpoints
 	//
 	class FruitRoute {
+		static deps() {
+			return { services: ['error'] }
+		}
 		constructor(kit) {
-			this.E= kit.services.error // Common error types
+			this.E = kit.services.error // Common error types
 
-			this.fruitBasket= {
+			this.fruitBasket = {
 				orange: 5,
 				banana: 2,
 				peach: 6,
 			}
 
 			// Fruit Endpoints
-			this.endpoints= {
+			this.endpoints = {
 				getFruit: {
 					verb: 'get',
 					route: '/Fruit',
 					use: true,
 					wrap: 'default_wrap',
-					version: { any: this.S_GetFruit.bind( this) }
-				}
+					version: { any: this.S_GetFruit.bind(this) }
+				},
 				eatFruit: {
 					verb: 'del',
 					route: '/Fruit/:frid/eat',
 					use: true,
 					wrap: 'default_wrap',
-					version: { any: this.S_EatFruit.bind( this) }
+					version: { any: this.S_EatFruit.bind(this) }
 				}
 			}
 		}
@@ -116,51 +128,51 @@ In this example, we will create a 'FruitRoute' class and module to expose 'get f
 		// GET /Fruit
 
 		S_GetFruit(ctx, preLoaded) {
-			const useDoc= {
-				params: {
-				}
-				response:{ success: 'bool', fruit: '{Object}'}
+			const useDoc = {
+				params: {},
+				response: { success: 'bool', fruit: '{Object}' }
 			}
-			if (ctx=== 'use') return useDoc
-			let dbRows
-			const send= { success: true, fruit: []}
+			if (ctx === 'use') return useDoc
+			const send = { success: true, fruit: [] }
 
 			// Grab all fruit from the "database"
-			send.fruit= Object.assign( {}, this.fruitBasket)
+			send.fruit = Object.assign({}, this.fruitBasket)
 
 			// Respond to the client
-			return {send}
+			return { send }
 		}
 
 		// POST /Fruit/:frid
 
 		S_EatFruit(ctx) {
-			const f= 'FruitRoute:S_EatFruit:'
-			use_doc= {
-				params: {}
-				response: {success: 'bool'}
+			const f = 'FruitRoute:S_EatFruit:'
+			const useDoc = {
+				params: {},
+				response: { success: 'bool' }
 			}
-			return use_doc if ctx is 'use'
-			const send= {success: true}
-			const {frid: fruitId}= ctx.p // Pull in the param
+			if (ctx === 'use') return useDoc
+			const send = { success: true }
+			const { frid: fruitId } = ctx.p // Pull in the param
 
 			// Dispose of the pre-loaded fruit (confirm we have/had fruit to eat)
-			if (this.fruitBasket[ fruitId] == null) throw new this.E.NotFound( `${f}fruitTable:dispose`)
-			if (--this.fruitBasket[ fruitId] === 0) delete this.fruitBasket[ fruitId]
+			if (this.fruitBasket[fruitId] == null) throw new this.E.NotFoundError(f, `${f}fruitTable:dispose`)
+			if (--this.fruitBasket[fruitId] === 0) delete this.fruitBasket[fruitId]
 
 			// Respond to the client
-			return {send}
+			return { send }
 		}
+	}
 
-	exports.FruitRoute= FruitRoute
+	exports.FruitRoute = FruitRoute
 
 ### Tell DVblueprint where to find the Route Module
 Add the following to the application's config file so DVblueprint can find the Route Module:
 
 	// container.js
-	module.exports= {
+	module.exports = {
 		route_modules: {
 			FruitRoute: {
+				class: 'FruitRoute',
 				file: 'src/r_fruit',
 			}
 		}
@@ -173,21 +185,25 @@ In src/app.js, change this line
 
 to
 
-	const routes= [ 'FruitRoute']
+	const routes = ['FruitRoute']
 
 ## See the results
 Restart the server.
 
 ### Updated documentation
- Notice the new documented route (click on the left side, 'FruitRoute') [http://localhost:9500/api/v1](API documentation.)
+ Notice the new documented route (click on the left side, 'FruitRoute') [http://localhost:9500/api/v1](http://localhost:9500/api/v1) API documentation.
  
 ### Access the 'get' endpoint
-Check on fruit inventory: [http://localhost:9500/api/v1/Fruit](Fruit inventory) - consider using JSON-view to see JSON results nicely formatted in your browser.
+Check on fruit inventory: [http://localhost:9500/api/v1/Fruit](http://localhost:9500/api/v1/Fruit) Fruit inventory - consider using JSON-view to see JSON results nicely formatted in your browser.
   
 ### Access the 'post'endpoint
 Use POSTMAN or Curl to eat some of that fruit:
 
-	curl http://localhost:9500/api/v1/Fruit/orange/eat
+	curl http://localhost:9500/api/v1/Fruit/orange/eat -X POST
+
+Or, notice if you eat something that does not in inventory:
+
+	curl http://localhost:9500/api/v1/Fruit/mango/eat -X POST
 
 ### Access the 'get' endpoint (again)
 
@@ -207,16 +223,16 @@ Documentation:
 Features:
 
 * Authenticate Long-Poll Handles
-* Server Analytics Endpoint
-* Testing Framework using Mocha + Chai
+* Server Analytics Endpoint (Some of this is now in the HealthCheck endpoints based on LAMD)
+* Testing Framework using Mocha + Chai (Some work has been started)
 * Integrate Grunt
-* Event Logging
+* Event Logging (This is mostly done now with LAMD)
 * Agnostic Database Interface
-* Agnostic Email Interface
-* SSL
+* Agnostic Email Interface (SES specific currently)
+* SSL (We have this now)
 * Param Validator
 * Cron Job Processor (Now exists as RunQ !!)
-* Re-design Role Manager (Roles, ACLS, Permits) (Started see lib/role_manager)
+* Re-design Role Manager (Roles, ACLS, Permits) (Started, see lib/role_manager)
 
 
 ## License
