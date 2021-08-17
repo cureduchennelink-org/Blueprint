@@ -74,6 +74,10 @@ Logging is enhanced with bunyan, so using it to read the logs is preferable
 	$ sudo npm install bunyan -g
 
 #### Running
+Pull in DVblueprint:
+
+	$ npm install
+
 To run the application:
 
 	$ node src/app.js | bunyan -o short
@@ -133,7 +137,7 @@ In this example, we will create a 'FruitRoute' class and module to expose 'get f
 				response: { success: 'bool', fruit: '{Object}' }
 			}
 			if (ctx === 'use') return useDoc
-			const send = { success: true, fruit: {}} }
+			const send = { success: true, fruit: {} }
 
 			// Grab all fruit from the "database"
 			send.fruit = Object.assign({}, this.fruitBasket)
@@ -205,7 +209,7 @@ Or, notice if you eat something that is not in inventory:
 
 	curl http://localhost:9500/api/v1/Fruit/mango/eat -X POST
 
-### Access the 'get' endpoint (again)
+### Check inventory
 
 Reload your browser tab to see the updated fruit inventory.
 
