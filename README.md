@@ -7,7 +7,7 @@ DVblueprint is an out of the box Node.js REST server.
 **Features**:
 
 * Easily Extensible REST Interface
-* Built-in support for PostgreSQL (Legacy: MySql and MongoDb)
+* Built-in support for PostgreSQL (Legacy: MySQL and MongoDB)
 * OAuth 2.0 Authentication Protocol
 * User Signup / Registration
 * Forgot Password Flow
@@ -24,8 +24,8 @@ DVblueprint is an out of the box Node.js REST server.
 
 # Quick Start
 The main application is its own directory which can be a repository. DVblueprint is going to be a package.json dependency.
-Any subdirectories are your option. As the project grows you'll want routes and services and db mods in their own dir.
-The following commands will setup a simplified project directory to run an application that
+Any subdirectories are your option. As the project grows you'll want routes and services and db mods in their own directory.
+The following commands will set up a simplified project directory to run an application that
 uses the DVblueprint server.
 
 	$ cd my/workspace/directory
@@ -68,7 +68,7 @@ There is a static website built-in in case you want to create an application in 
 	$ mkdir html_root
 	$ echo "Hello, my_app!" > html_root/index.html
 
-#### Global depedencies
+#### Global dependencies
 Logging is enhanced with bunyan, so using it to read the logs is preferable
 
 	$ sudo npm install bunyan -g
@@ -127,13 +127,13 @@ In this example, we will create a 'FruitRoute' class and module to expose 'get f
 
 		// GET /Fruit
 
-		S_GetFruit(ctx, preLoaded) {
+		S_GetFruit(ctx) {
 			const useDoc = {
 				params: {},
 				response: { success: 'bool', fruit: '{Object}' }
 			}
 			if (ctx === 'use') return useDoc
-			const send = { success: true, fruit: [] }
+			const send = { success: true, fruit: {}} }
 
 			// Grab all fruit from the "database"
 			send.fruit = Object.assign({}, this.fruitBasket)
@@ -194,14 +194,14 @@ Restart the server.
  Notice the new documented route (click on the left side, 'FruitRoute') [http://localhost:9500/api/v1](http://localhost:9500/api/v1) API documentation.
  
 ### Access the 'get' endpoint
-Check on fruit inventory: [http://localhost:9500/api/v1/Fruit](http://localhost:9500/api/v1/Fruit) Fruit inventory - consider using JSON-view to see JSON results nicely formatted in your browser.
+Check on fruit inventory: [http://localhost:9500/api/v1/Fruit](http://localhost:9500/api/v1/Fruit) (Consider using [JSONView](https://jsonview.com/) to see results nicely formatted in your browser.)
   
-### Access the 'post'endpoint
+### Access the 'post' endpoint
 Use POSTMAN or Curl to eat some of that fruit:
 
 	curl http://localhost:9500/api/v1/Fruit/orange/eat -X POST
 
-Or, notice if you eat something that does not in inventory:
+Or, notice if you eat something that is not in inventory:
 
 	curl http://localhost:9500/api/v1/Fruit/mango/eat -X POST
 
@@ -210,7 +210,7 @@ Or, notice if you eat something that does not in inventory:
 Reload your browser tab to see the updated fruit inventory.
 
 ## You Did it Again!
-
+(Next step planned for the documentation is to use the DB)
 
 # TODO
 
