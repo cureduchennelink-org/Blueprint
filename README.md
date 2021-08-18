@@ -68,6 +68,16 @@ There is a static website built-in in case you want to create an application in 
 	$ mkdir html_root
 	$ echo "Hello, my_app!" > html_root/index.html
 
+#### How are things looking?
+The structure you should now have would look like this:
+
+	├── html_root
+	│   └── index.html
+	├── src
+	│   ├── app.js
+	│   └── container.js
+	└── package.json
+
 #### Global dependencies
 Logging is enhanced with bunyan, so using it to read the logs is preferable
 
@@ -146,7 +156,7 @@ In this example, we will create a 'FruitRoute' class and module to expose 'get f
 			return { send }
 		}
 
-		// POST /Fruit/:frid
+		// POST /Fruit/:frid/eat
 
 		S_EatFruit(ctx) {
 			const f = 'FruitRoute:S_EatFruit:'
