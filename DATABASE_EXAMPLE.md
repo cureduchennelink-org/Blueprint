@@ -191,7 +191,7 @@ Mutation queries that do not have a RETURNING clause, will have an '.affectedRow
             const { id: junkId } = ctx.p // Pull in the param
 
             // Dispose of the pre-loaded Junk (confirm we have/had Junk to eat)
-            dbResults = await this.db.junk.removeItem(ctx, junkId)
+            dbResults = await this.db.junk.RemoveById(ctx, junkId)
 
             // We could choose to skip this check if we wanted to be idempotent
             // Or use E.DbError to alert devs of an unexpected condition (or E.ServerError)
