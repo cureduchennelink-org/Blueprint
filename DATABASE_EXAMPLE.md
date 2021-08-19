@@ -26,13 +26,13 @@ Postgres wants the superuser to have a database with the same name as the user. 
     createdb --user $SUPERUSER --host $HOST $SUPERUSER
 
 ### One time cluster set up for roles
-This is one way to manage permissions. Roles are global and and users are also global but require a password, so we set them up once here. For now we want to use the literal user names 'local_api' and 'flyway'. The password for your local_api user, should match the value placed later in db/container.js (i.e. local_api_1234)...
+This is one way to manage permissions. Roles are global and and users are also global but require a password, so we set them up once here. For now we want to use the literal user names 'local_api' and 'flyway' ...
 
     createuser --user $SUPERUSER --host $HOST --no-login readonly
     createuser --user $SUPERUSER --host $HOST --no-login readwrite
     createuser --user $SUPERUSER --host $HOST --no-login admin
 
-Run these two separately; they will prompt for a password. You'll want to use the passwords later in the API server and your pipeline. (In our examples we use 'local_api_1234' and 'flyway_1234' as passwods) 
+Run these two separately; they will prompt for a password. You'll want to use the passwords later in the API server and your pipeline. (In our examples we use 'local_api_1234' and 'flyway_1234' as passwords) 
 
     createuser --user $SUPERUSER --host $HOST -e -P local_api 
     createuser --user $SUPERUSER --host $HOST -e -P flyway
@@ -179,7 +179,7 @@ Mutation queries that do not have a RETURNING clause, will have an '.affectedRow
 
         // POST /Junk/:id/remove
 
-        S_RemoveJunk(ctx) {
+        async S_RemoveJunk(ctx) {
             const f = 'JunkRoute:S_RemoveJunk:'
             const useDoc = {
                 params: {},
