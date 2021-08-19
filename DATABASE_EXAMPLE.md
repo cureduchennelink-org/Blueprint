@@ -1,8 +1,35 @@
 # Simple example of using a database
-Building off of the example from the (README.md) we can add route modules that are backed by DB persistance. Additionally, use of a DB gives us the ability to utilize built-in services and capabilities such as LAMD logging with its HealthCheck endpoints, and OAuth 2.0 based authentication.
+Building off of the example from the (README.md) or [README.md] we can add route modules that are backed by DB persistance. Additionally, use of a DB gives us the ability to utilize built-in services and capabilities such as LAMD logging with its HealthCheck endpoints, and OAuth 2.0 based authentication.
 
 ## Prerequisites
-DVblueprint has built-in support for Postgres using standard SQL commands against the 'pg' npm package. You will need access to a working Postgres instance (either locally, or using RDS for example.) We will use basic scripts to initialize the schema, and we'll use the config file src/container.js from the (README.md) example to configure access to the DB for DVblueprint.
+DVblueprint has built-in support for Postgres using standard SQL commands against the 'pg' npm package. The API server connects to one database and uses the public schema. You will need access to a working Postgres instance (either locally, or using RDS for example.) We will use basic scripts to initialize the schema, and we'll use the config file src/container.js from the (README.md) example to configure access to the DB for DVblueprint.
+
+### Super user set up
+Eventually we'll create a reset script that can be run over and over, even while the API server is running. There are some one-time setups for the 'cluster' which are global to all databases on the 'cluster'. All these commands should be run as the cluster/database "super user." On a local machine, this is likely your local login (run whoami to see your name.) Alternatively the database may be set up and run as the username 'postgres'. We'll use  ENV vars to allow us to run this example in any enviroment. TODO MAYB MOVE THE EXPORT USER= LINE HERE.
+
+### First time DB set up
+Before we can use our db/reset.psql script repeatedly, we need to perform an initial few set up commands. We want db/reset.psql to run as super-user - akin to infrastructure set up. We also need these initial set up scripts run as a super-user. After this, we'll have roles and permissions established on our database objects that we can control in a fine grained manner. For your environment when running 'psql' in the shell, you may also need to place your password in PGPASSWORD or ~/.pgpass
+
+#### A few ENV vars to cut down on custom changes
+Change these values to match your ENV...
+
+    export HOST=localhost
+    export DBNAME=local_yourapp_yourname
+
+#### Establish yourself as a cmdline user
+Postgres wants the superuser to have a database with the same name as the user. The following works for a local shell environemnt, however, you may fine that RDS already has a superuser name that you would use instead (i.e. use postgres instead of \`whoami\`).
+
+    export USER=`whoami`
+    createdb --user $USER --host $HOST $USER
+
+#### One time cluster set up for roles
+This is one way to manage permissions. Roles are global and and users are also global but require a password, so we set them up once here. For now we want to use the literal user names 'local_api' and 'flyway'. The password for your local_api user, should match the value placed later in db/container.js (i.e. local_api_1234)...
+
+    createuser --user $USER --host $HOST --no-login readonly
+    createuser --user $USER --host $HOST --no-login readwrite
+    createuser --user $USER --host $HOST --no-login admin
+    createuser --user $USER --host $HOST -e -P local_api 
+    createuser --user $USER --host $HOST -e -P flyway
 
 ## Tell DVblueprint how to connect to your DB
 Update the file src/container.js to include this additional hash value (Note: make modifications to fit your enviroment):
@@ -12,11 +39,11 @@ Update the file src/container.js to include this additional hash value (Note: ma
 		db: {
 			psql: {
 				pool: {
-					host: 'localhost',
+					host: process.env.HOST,
 					port: 5432, 	// PSQL uses this port number
-					user: 'postgres',
-					password: 'yourpass',
-					database: 'local_yourapp_yourname',
+					user: 'local_api',
+					password: 'local_api_1234',
+					database: process.env.DBNAME,
 				},
                 modules: {
                     // Future psql_mods
@@ -183,58 +210,53 @@ Update the src/container.js route_modules section with this line
 Update src/app.js by adding 'JunkRoute' to the array of 'routes' to be exposed.
 
 ## Initialize the database
-You will want to create a base schema, edit it over time, reset the DB's data, allow for test data to support easier testing including automated testing, and put all of this into an automated pipeline. These examples are consitent with use of FlyWay for your DB migrations (DB schema as code.)
+As developers we want to create a base schema, edit it over time, reset the DB's data, allow for test data to support easier testing including automated testing, and put all of this into an automated pipeline. These examples are consitent with use of FlyWay for your DB migrations (DB schema as code.)
 
-## Populate some scripts
-Start with a directory for database scripts including a place to keep sample data, and start with files for a first schema release, the sample data, and a manual DB init script. This later script is typically used to initialize a DB to prepair it for FlyWay (permissions, etc.) and for local development and continuous integration environemnt creation.
+### Populate some scripts
+Start with a directory for database scripts including a place to keep sample data, and start with files for a first schema release, the sample data, and a manual DB init script. This later script is typically used to initialize a DB to prepare it for FlyWay (permissions, etc.) and for local development and continuous integration environemnt creation.
 
-### File structure
+#### File structure
 Here is the sample file structure we can work from, where 'src' already exists (shown for context):
 
 	├── db
-	│   ├── reset_psql
-	│   ├── sample_data_1.psql
-	│   └── scripts
-	│       └── V1__base.psql
+	│   ├── scripts
+	│   │   └── V1__base.psql
+	│   ├── permissions.psql
+	│   ├── reset.psql
+	│   └── sample_data_1.psql
 	└── src
 
-### Reset_db to establish the database, schema, and permissions
-This script can be used locally and in CI systems to bring up a DB from scratch w/sample_data. It also has some notes as a cheat sheet for those things we find hard to remember if we are used to working with MySQL.
+### Create reset.psql
+This script can be used locally and in CI systems to bring up a DB from scratch w/sample_data. It also has some notes as a cheat sheet for those things we find hard to remember if we are used to working with MySQL. Place this code into db/reset.psql:
 
     --
     -- Reset DB for PostgreSQL
     --
     -- From the cmdline you can use:
-    -- psql --no-password --user $USER --host $HOST --echo-all --variable=db=$DBNAME < db/reset_psql
-    -- Optional params: --variable=grant_user=Mark.The.Man
+    -- psql --no-password --user $USER --host $HOST --echo-all --variable=db=$DBNAME < db/reset.psql
     --
-    -- psql wants PGPASSWORD or ~/.pgpass (e.g. single line like: *:*:*:*:your_pwd)
+    -- psql may want PGPASSWORD or ~/.pgpass (e.g. single line like: *:*:*:*:your_pwd)
     --
-    -- Your user (i.e. postgres) should also exist as a DB using cli e.g. createdb --user postgres postgres
+    -- For additional notes and prerequisites to using thsi script, see DATABASE_EXAMPLE.md in DVblueprint
+    --
+    -- Your user (i.e. postgres) should also exist as a DB using cli:
+    --  createdb --user postgres postgres
     -- psql: FATAL: database “<user>” does not exist
     -- https://stackoverflow.com/questions/17633422/psql-fatal-database-user-does-not-exist
-    --
-    -- The DB must exist; try this:
-    -- createdb --user postgres $DBNAME
-    --   or
-    -- createdb --user $USER --host $HOST $DBNAME
     --
     --  Try to use all lower case for all names (db,table,columns), since the cli converts to lowercase unless you use double quotes
 
     \set ON_ERROR_STOP on
+    -- CREATE DATABASE IF NOT EXISTS :db;
+    SELECT CONCAT( 'CREATE DATABASE ', :'db')
+    WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = :'db')\gexec
+
     \c :db;
 
     -- Drop the namespace instead of the DB, so existing DB connections stay in tact
     DROP SCHEMA public CASCADE;
     CREATE SCHEMA public;
-
-    -- These next two lines are how you handle default values, vs. supplied on the command line
-    \set grant_user :grant_user
-    SELECT CASE WHEN :'grant_user'= ':grant_user' THEN 'postgres' ELSE :'grant_user' END AS "grant_user"  \gset
-
-    \echo Grant-user is :"grant_user"
-    GRANT ALL ON SCHEMA public TO :"grant_user";
-    GRANT ALL ON SCHEMA public TO public;
+    \i db/permissions.psql
 
     -- If you need the uuid field type, uncomment the next line
     -- CREATE EXTENSION IF NOT EXISTS "pgcrypto";
@@ -243,8 +265,38 @@ This script can be used locally and in CI systems to bring up a DB from scratch 
     \i db/scripts/V1__base.psql;
     \i db/sample_data_1.psql;
 
+### Create permissions.psql
+To keep our API server from making schema changes and allowing a FlyWay user to make schema changes but not act outside of our public schema, we establish some base permissions for them here. Put these lines into db/permissions.psql...
+
+    -- Revoke privileges from 'public' role
+    REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+    REVOKE ALL ON DATABASE :db FROM PUBLIC;
+
+    -- Read-only role
+    GRANT CONNECT ON DATABASE :db TO readonly;
+    GRANT USAGE ON SCHEMA public TO readonly;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO readonly;
+
+    -- Read/write role
+    GRANT CONNECT ON DATABASE :db TO readwrite;
+    GRANT USAGE ON SCHEMA public TO readwrite;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO readwrite;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE ON SEQUENCES TO readwrite;
+
+    -- Adin (read/write/schema-updates)  role
+    GRANT CONNECT ON DATABASE :db TO admin;
+    GRANT USAGE, CREATE ON SCHEMA public TO admin;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO admin;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE ON SEQUENCES TO admin;
+
+    -- Users' permissions
+    GRANT readwrite TO local_api;
+    GRANT admin TO flyway;
+
+## Populate the schema and sample data
+
 ### Make a place for our 'Junk'
- This is an example of how to establish a table. Note no use of 'DROP TABLE' because these scripts are never re-run over the top of themselves, niether by FlyWay nor are reset script. (Note: 'mo' field won't reflect modified time automatically until we add a trigger for that later.)
+ This is an example of how to establish a table. Do not use 'DROP TABLE' because these scripts are never re-run over the top of themselves, niether by FlyWay nor our reset script (db/reset.psql will drop the whole schema first.) Note: The 'mo' field won't reflect modified time automatically until we add a trigger for that later. Paste this code into db/scripts/V1__base.js...
 
     CREATE TABLE junk (
           id    SERIAL         PRIMARY KEY /* https://www.postgresqltutorial.com/postgresql-serial/ */
@@ -266,18 +318,37 @@ Put these lines into the db/sample_data_1.psql file, so we have some 'Junk' to r
         , ('dog bed')
     ;
 
-### Reset the DB
-Using your own method, or the cmdline to the equivilent:
 
-    $ export USER=postgres
-    $ export HOST=localhost
-    $ export DBNAME=local_yourapp_yourname
-    $ echo '*:*:*:*:your_pwd' >> ~/.pgpass
-    $ createdb --user $USER --host $HOST $DBNAME
-    $ psql --no-password --user $USER --host $HOST --echo-all --variable=db=$DBNAME < db/reset_psql
+### Reset the DB
+This script can be run over and over to reset the DB and start with fresh data and an updated schema...
+
+    psql --user $USER --host $HOST --echo-all --variable=db=$DBNAME < db/reset.psql
 
 ### Fire up the app now
 
     $ node src/app.js | bunyan -o short
+
+## Hit the API
+There should be updated documentation here [http://localhost:9500/api/v1](http://localhost:9500/api/v1) and the old Fruit stuff [http://localhost:9500/api/v1/Fruit](http://localhost:9500/api/v1/Fruit) and now the new Junk stuff [http://localhost:9500/api/v1/Junk](http://localhost:9500/api/v1/Junk)...
+
+    {
+        "success":true,
+        "junk":[
+            {"id":1,"item":"kitchen sink"},
+            {"id":2,"item":"kitchen sink"},
+            {"id":3,"item":"wheat thins"},
+            {"id":4,"item":"roof tile"},
+            {"id":5,"item":"dog bed"}
+        ],
+        "req_uuid":"33365ca7-0160-44bc-a5e0-3aa281f04a5c"
+    }
+
+
+#### Get rid of some of that junk...
+ If you want to get rid of some junk try...
+
+    curl http://localhost:9500/api/v1/Junk/3/remove -X POST
+
+Then reload the tab showing inventory.
 
 ### Nice.
