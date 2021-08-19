@@ -88,7 +88,7 @@ Update the src/container.js db.modules section like this
             }
 
 ### Add the psql mod to your main application script
-Change this section of code in src/app.js
+Change this section of code in src/app.js (to include 'db' in the services list, and 'junk' in a new psql_mods list)...
 
 	// Lists of modules to include on start-up
 	const services = []
@@ -99,7 +99,7 @@ Change this section of code in src/app.js
 to
 
 	// Lists of modules to include on start-up
-	const services = []
+	const services = ['db']
 	const routes = [ ... ]
 	const psql_mods = [ 'junk' ]
 
