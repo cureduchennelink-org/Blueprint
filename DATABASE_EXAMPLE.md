@@ -343,7 +343,7 @@ There should be updated documentation here [http://localhost:9500/api/v1](http:/
 
     curl http://localhost:9500/api/v1/Junk/4/remove -X POST
 
-Then reload the tab showing inventory.
+You might try this remove on the same ID a second time - expect a 404:NotFound. Now reload the tab showing inventory.
 
 ### Nice.
 For grins, let's reset the DB while the server is running, and check our inventory again...
