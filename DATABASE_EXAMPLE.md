@@ -17,25 +17,25 @@ Eventually we'll create a reset script that can be run over and over, even while
 ### A few ENV vars to cut down on custom changes
 Change these values to match your ENV...
 
-    export HOST=localhost
+    export DBHOST=localhost
     export DBNAME=local_yourapp_yourname
 
 ### Establish yourself as a cmdline user
 Postgres wants the superuser to have a database with the same name as the user. It is ok to run this  more than once and ignore the 'already created' error.
 
-    createdb --user $SUPERUSER --host $HOST $SUPERUSER
+    createdb --user $SUPERUSER --host $DBHOST $SUPERUSER
 
 ### One time cluster set up for roles
 This is one way to manage permissions. Roles are global and and users are also global but require a password, so we set them up once here. For now we want to use the literal user names 'local_api' and 'flyway' ...
 
-    createuser --user $SUPERUSER --host $HOST --no-login readonly
-    createuser --user $SUPERUSER --host $HOST --no-login readwrite
-    createuser --user $SUPERUSER --host $HOST --no-login admin
+    createuser --user $SUPERUSER --host $DBHOST --no-login readonly
+    createuser --user $SUPERUSER --host $DBHOST --no-login readwrite
+    createuser --user $SUPERUSER --host $DBHOST --no-login admin
 
 Run these two separately; they will prompt for a password. You'll want to use the passwords later in the API server and your pipeline. (In our examples we use 'local_api_1234' and 'flyway_1234' as passwords) 
 
-    createuser --user $SUPERUSER --host $HOST -e -P local_api 
-    createuser --user $SUPERUSER --host $HOST -e -P flyway
+    createuser --user $SUPERUSER --host $DBHOST -e -P local_api
+    createuser --user $SUPERUSER --host $DBHOST -e -P flyway
 
 ## Tell DVblueprint how to connect to your DB
 Update the file src/container.js to include this additional hash value: `db:` (Note: make modifications to password to fit your enviroment):
@@ -45,7 +45,7 @@ Update the file src/container.js to include this additional hash value: `db:` (N
 		db: {
 			psql: {
 				pool: {
-					host: process.env.HOST,
+					host: process.env.DBHOST,
 					port: 5432, 	// PSQL uses this port number
 					user: 'local_api',
 					password: 'local_api_1234',
@@ -87,7 +87,7 @@ By putting SQL into its own module, we 'encasulate' the implementation against t
     exports.PSqlJunk = PSqlJunk;
 
 ### Tell DVblueprint where to find this psql mod
-Update the src/container.js db.modules section like this
+Update the src/container.js `db.modules` section like this
 
             modules: {
                 junk: { class: 'PSqlJunk', file: 'src/psql_junk' },
@@ -96,20 +96,8 @@ Update the src/container.js db.modules section like this
 ### Add the psql mod to your main application script
 Change this section of code in src/app.js (to include 'db' in the services list, and 'junk' in a new psql_mods list)...
 
-	// Lists of modules to include on start-up
-	const services = []
-	const routes = [ ... ]
-
-	blueprint.init({ listen: true, services, routes })
-
-to
-
-	// Lists of modules to include on start-up
 	const services = ['db']
-	const routes = [ ... ]
-	const psql_mods = [ 'junk' ]
-
-	blueprint.init({ listen: true, services, routes, psql_mods })
+	const psql_mods = ['junk']
 
 
 ## Geting rid of 'Junk'
@@ -229,7 +217,7 @@ Here is the sample file structure we can work from, where 'src' already exists (
 	│   │   └── V1__base.psql
 	│   ├── permissions.psql
 	│   ├── reset.psql
-	│   └── sample_data_1.psql
+	│   └── sample_data_a.psql
 	└── src
 
 ### Create db/reset.psql
@@ -239,7 +227,7 @@ This script can be used locally and in CI systems to bring up a DB from scratch 
     -- Reset DB for PostgreSQL
     --
     -- From the cmdline you can use:
-    -- psql --no-password --user $SUPERUSER --host $HOST --echo-all --variable=db=$DBNAME < db/reset.psql
+    -- psql --no-password --user $SUPERUSER --host $DBHOST --echo-all --variable=db=$DBNAME < db/reset.psql
     --
     -- psql may want PGPASSWORD or ~/.pgpass (e.g. single line like: *:*:*:*:your_pwd)
     --
@@ -269,7 +257,7 @@ This script can be used locally and in CI systems to bring up a DB from scratch 
 
     -- Include the Vx__*.psql and sample_data_x.psql files, preserving order for migration testing
     \i db/scripts/V1__base.psql;
-    \i db/sample_data_1.psql;
+    \i db/sample_data_a.psql;
 
 ### Create permissions.psql
 To keep our API server from making schema changes and allowing a FlyWay user to make schema changes but not act outside of our public schema, we establish some base permissions for them here. Put these lines into db/permissions.psql...
@@ -314,7 +302,7 @@ To keep our API server from making schema changes and allowing a FlyWay user to 
     );
 
 ### Make some 'Junk'
-Put these lines into the db/sample_data_1.psql file, so we have some 'Junk' to remove later.
+Put these lines into the db/sample_data_a.psql file, so we have some 'Junk' to remove later.
 
     INSERT INTO junk (item) VALUES
           ('kitchen sink')
@@ -328,7 +316,7 @@ Put these lines into the db/sample_data_1.psql file, so we have some 'Junk' to r
 ### Reset the DB
 This script can be run over and over to reset the DB and start with fresh data and an updated schema...
 
-    psql --user $SUPERUSER --host $HOST --echo-all --variable=db=$DBNAME < db/reset.psql
+    psql --user $SUPERUSER --host $DBHOST --echo-all --variable=db=$DBNAME < db/reset.psql
 
 ### Fire up the app now
 
@@ -358,6 +346,14 @@ There should be updated documentation here [http://localhost:9500/api/v1](http:/
 Then reload the tab showing inventory.
 
 ### Nice.
+For grins, let's reset the DB while the server is running, and check our inventory again...
+
+    psql --user $SUPERUSER --host $DBHOST --echo-all --variable=db=$DBNAME < db/reset.psql
+
+Now reload that junk inventory tab: [http://localhost:9500/api/v1/Junk](http://localhost:9500/api/v1/Junk) (that roof tile is back!)
+
+## What's next?
+
 Prev: [README.md](README.md)
 
 Next: [OAUTH_EXAMPLE.md](OAUTH_EXAMPLE.md), then [LAMD_EXAMPLE.md](LAMD_EXAMPLE.md).

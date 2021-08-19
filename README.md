@@ -55,10 +55,11 @@ Add the following to the main application file (src/app.js):
 	const blueprint = require("blueprint")
 
 	// Lists of modules to include on start-up
-	const services = []
 	const routes = []
+	const services = []
+	const psql_mods = []
 
-	blueprint.init({ listen: true, services, routes })
+	blueprint.init({ listen: true, services, routes, psql_mods })
 		.then(kit => {
 			const port = kit.services.config.api.port
 
@@ -188,10 +189,7 @@ Add the following to the application's config file so DVblueprint can find the R
 	// container.js
 	module.exports = {
 		route_modules: {
-			FruitRoute: {
-				class: 'FruitRoute',
-				file: 'src/r_fruit',
-			}
+			FruitRoute: {class: 'FruitRoute', file: 'src/r_fruit'},
 		}
 	}
 
