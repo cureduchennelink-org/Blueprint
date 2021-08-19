@@ -31,9 +31,12 @@ uses the DVblueprint server.
 	$ cd my/workspace/directory
 	$ mkdir my_app
 	$ cd my_app
-	$ npm init
 	$ mkdir src
 	$ touch src/app.js src/container.js
+
+For `npm init` you will want to set the "entry point" prompt with `src/app.js` ...
+
+	$ npm init
 
 #### Reference DVblueprint in your package.json
 Add a "dependencies" section of package.json, with this git url.
@@ -224,7 +227,7 @@ Or, notice if you eat something that is not in inventory:
 Reload your browser tab to see the updated fruit inventory.
 
 ## You Did it Again!
-(Next step planned for the documentation is to use the DB)
+(Next try [DATABASE_EXAMPLE.md](DATABASE_EXAMPLE.md).)
 
 # TODO
 

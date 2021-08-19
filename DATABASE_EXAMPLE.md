@@ -2,7 +2,7 @@
 Building off of the example from the [README.md](README.md) we can add route modules that are backed by DB persistance. Additionally, use of a DB means we can now expose built-in services and capabilities such as LAMD logging with its HealthCheck endpoints, and OAuth 2.0 based authentication.
 
 ## Prerequisites
-DVblueprint has built-in support for Postgres using standard SQL commands against the 'pg' npm package. The API server connects to one database and uses the public schema. You will need access to a working Postgres instance (either locally, or using RDS for example.) We will use basic scripts to initialize the schema, and we'll use the config file src/container.js from the (README.md) example to configure access to the DB for DVblueprint.
+DVblueprint has built-in support for Postgres using standard SQL commands against the 'pg' npm package. The API server connects to one database and uses the public schema. You will need access to a working Postgres instance (either locally, or using RDS for example.) We will use basic scripts to initialize the schema, and we'll use the config file src/container.js from the [README.md](README.md) example to configure access to the DB for DVblueprint.
 
 ### Super user set up
 Eventually we'll create a reset script that can be run over and over, even while the API server is running. There are some one-time setups for the 'cluster' which are global to all databases on the 'cluster'. All these psql and create* commands should be run as the cluster/database "super user." On a local machine, this is likely your local login (run whoami to see your name.) Alternatively the database may be set up and run as the username 'postgres'. We'll use  ENV vars to allow us to run this example in any enviroment. You may also need to place your password in PGPASSWORD or ~/.pgpass. Set this ENV var for your situation...
@@ -358,3 +358,6 @@ There should be updated documentation here [http://localhost:9500/api/v1](http:/
 Then reload the tab showing inventory.
 
 ### Nice.
+Prev: [README.md](README.md)
+
+Next: [OAUTH_EXAMPLE.md](OAUTH_EXAMPLE.md), then [LAMD_EXAMPLE.md](LAMD_EXAMPLE.md).
