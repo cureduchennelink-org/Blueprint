@@ -100,7 +100,7 @@ Change this section of code in src/app.js (to include 'db' in the services list,
 	const psql_mods = ['junk']
 
 
-## Geting rid of 'Junk'
+## Getting rid of 'Junk'
 Previoulsy we created an in-memory backed Fruit route module; this time we will create a DB backed Junk route module with 'get junk' and 'remove junk' endpoints. This module src/r_junk.js should look familiar but includes some interesting additional DVblueprint references. Some things to note regarding the source close shown below:
 ##### static deps()
 This method declares our dependencies to DVblueprint (services, database modules, and configuration values.) We will be building a DB layer SQL module called 'junk' so we add that to this method.
