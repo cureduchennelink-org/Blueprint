@@ -23,7 +23,7 @@ Building off of the previous [DATABASE_EXAMPLE.md](DATABASE_EXAMPLE.md) module d
             }
         }
 
-If we now start the server, and attempt to access the GET endpoint here (http://localhost:9500/api/v1/Junk)[http://localhost:9500/api/v1/Junk] we get no response in the browser (this misconfiguration is fatal) we find that we have hit logic in our wrapper (because our endpoint has auth_required: true) that is missing some required modules. Check your server standard output to see this error:
+If we now start the server, and attempt to access the GET endpoint here [http://localhost:9500/api/v1/Junk](http://localhost:9500/api/v1/Junk) we get no response in the browser (this misconfiguration is fatal) we find that we have hit logic in our wrapper (because our endpoint has auth_required: true) that is missing some required modules. Check your server standard output to see this error:
 
     unhandledRejection: {
     reason: TypeError: Cannot read property 'authorize' of undefined
@@ -81,7 +81,7 @@ We are getting closer. Tokens are signed by the server and contain a timestamp f
 
     const routes = ['FruitRoute', 'JunkRoute', 'Auth']
 
-Restart. Let's now look at our API documentation to see these new endpoints and how we might use them (http://localhost:9500/api/v1)[http://localhost:9500/api/v1] - click on 'Auth' on the left side, and click on any specific endpoint that looks interesting (maybe POST /Auth ??)...
+Restart. Let's now look at our API documentation to see these new endpoints and how we might use them [http://localhost:9500/api/v1](http://localhost:9500/api/v1) - click on 'Auth' on the left side, and click on any specific endpoint that looks interesting (maybe POST /Auth ??)...
 
     Auth Routes
 
