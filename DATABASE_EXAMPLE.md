@@ -38,7 +38,7 @@ Run these two separately; they will prompt for a password. You'll want to use th
     createuser --user $SUPERUSER --host $DBHOST -e -P flyway
 
 ## Tell DVblueprint how to connect to your DB
-Update the file src/container.js to include this additional hash value: `db:` (Note: make modifications to password to fit your enviroment):
+Update the file `src/container.js` to include this additional hash value: `db:` (Note: make modifications to password to fit your enviroment):
 
 	module.exports= {
         route_modules: { ... }
@@ -48,7 +48,7 @@ Update the file src/container.js to include this additional hash value: `db:` (N
 					host: process.env.DBHOST,
 					port: 5432, 	// PSQL uses this port number
 					user: 'local_api',
-					password: 'local_api_1234',
+					password: 'local_api_1234' // TODO rework example to make this process.env.PASSWORD,
 					database: process.env.DBNAME,
 				},
                 modules: {
@@ -59,7 +59,7 @@ Update the file src/container.js to include this additional hash value: `db:` (N
 	}
 
 ## The PSQL module
-By putting SQL into its own module, we 'encasulate' the implementation against the database, making it easier to refactor the table's schema without affecting the route/services layers. Additionally, we can add some javascript logic if needed or combine several SQL commands and give these a logical name within the module. Let's create the file src/psql_junk.js, then we'll tell DVblueprint where to find it, and finally we explicitly include this module in our main application's start-up script.
+By putting SQL into its own module, we 'encapsulate' the implementation against the database, making it easier to refactor the table's schema without affecting the route/services layers. Additionally, we can add some javascript logic if needed or combine several SQL commands and give these a logical name within the module. Let's create the file src/psql_junk.js, then we'll tell DVblueprint where to find it, and finally we explicitly include this module in our main application's start-up script.
 
     //
     //	Junk Database Functions
@@ -79,7 +79,7 @@ By putting SQL into its own module, we 'encasulate' the implementation against t
         }
 
         async RemoveById(ctx, id) {
-            return this.DeleteById(ctx, id);
+            return this.DeleteById(ctx, id); // DeleteByID is a provided by method factory. See [lib/db/CommonCore.js](lib/db/CommonCore.js)
             // Alternatively: return this.DisposeByIds(ctx, [id])
         }
     }
@@ -107,13 +107,13 @@ This method declares our dependencies to DVblueprint (services, database modules
 ##### this.db
 We need a reference to the db service's core postgres module. This is how we do it. The result is a core service that will also be populated with psql_mods that we will be referencing in our route logic
 ##### this.endpoints.*.sql_conn
-We use sql_conn: true on both endpoints because both require a DB connection to get/remove information. This is how we request the 'wrapper' to acquire a database handle from the pool, before calling our endpoint logic.
+We use `sql_conn: true` on both endpoints because both require a DB connection to get/remove information. This is how we request the 'wrapper' to acquire a database handle from the pool, before calling our endpoint logic.
 ##### this.endpoints.*.sql_tx
-We use sql_tx: true to start a transaction, only on the 'remove junk' endpoint, since it will mutate the database. The current logic is trivial and only has one DB call, so it might not make sense in this case for a transaction. However, when we or someone else goes back into this logic, and adds a getById() to check first for existence, then we'll need a read consistent transaction context, so doing this by rote, until we have a specific use case to avoid it, is best practice.
+We use `sql_tx: true` to start a transaction, only on the 'remove junk' endpoint, since it will mutate the database. The current logic is trivial and only has one DB call, so it might not make sense in this case for a transaction. However, when we or someone else goes back into this logic, and adds a `getById()` to check first for existence, then we'll need a read consistent transaction context, so doing this by rote, until we have a specific use case to avoid it, is best practice. This will automatically commit or rollback if there is an error when the route is called.
 ##### this.db.MODULE.METHOD( ctx, ...)
-Using the database layer modules from inside our endpoint logic is done this way (referencing the psql module via this.db and then a method, and passing ctx first). We will be creating a 'junk' psql module. All methods in the psql modules will take a ctx as their first paramter. This is how that downstream module/method gets reference to the DB handle form the pool, and will ensure all DB calls during this endpoint request are wrapped in the same transaction.
+Using the database layer modules from inside our endpoint logic is done this way (referencing the psql module via this.db and then a method, and passing `ctx` first). We will be creating a 'junk' psql module. All methods in the psql modules will take a `ctx` as their first paramter. This is how that downstream module/method gets reference to the DB handle form the pool, and will ensure all DB calls during this endpoint request are wrapped in the same transaction.
 ##### dbResults.affectedRows
-Mutation queries that do not have a RETURNING clause, will have an '.affectedRows' value. This is not strickly how postgres pg module works, however, this is done by DVblueprint so that your route logic can switch easily to using MySQL responses.
+Mutation queries that do not have a RETURNING clause, will have an '.affectedRows' value. This is not strickly how postgres pg module works; however, this is done by DVblueprint so that your route logic can switch easily to using MySQL responses.
 
     //
     // Junk route endpoints
@@ -159,7 +159,7 @@ Mutation queries that do not have a RETURNING clause, will have an '.affectedRow
             const send = { success: true, junk: [] }
 
             // Grab all Junk from the "database" (empty results are ok)
-            send.junk = await this.db.junk.GetCollection(ctx)
+            send.junk = await this.db.junk.GetCollection(ctx) // Notice your calling the service in the PSQL module above.
 
             // Respond to the client
             return { send }
@@ -204,7 +204,7 @@ Update the src/container.js route_modules section with this line
 Update src/app.js by adding 'JunkRoute' to the array of 'routes' to be exposed.
 
 ## Initialize the database
-As developers we want to create a base schema, edit it over time, reset the DB's data, allow for test data to support easier testing including automated testing, and put all of this into an automated pipeline. These examples are consitent with use of FlyWay for your DB migrations (DB schema as code.)
+As developers, we want to create a base schema, edit it over time, reset the DB's data, allow for test data to support easier testing including automated testing, and put all of this into an automated pipeline. These examples are consitent with use of FlyWay for your DB migrations (DB schema as code.)
 
 ### Populate some scripts
 Start with a directory for database scripts including a place to keep sample data, and start with files for a first schema release, the sample data, permissions, and a manual DB init script. This latter script is typically used to initialize a DB to prepare it for FlyWay (permissions, etc.) and for local development and continuous integration environemnt creation.
