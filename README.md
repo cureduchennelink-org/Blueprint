@@ -66,8 +66,8 @@ Add the following to the main application file (src/app.js):
 			console.log('API server is ready.', ` http://localhost:${port}/api/v1`)
 		})
 
-#### Something to look at
-There is a static website built-in in case you want to create an application in a single server instance. Let's make a file that has a little text in it, so we know the server is running.
+#### Static Web Server
+There is a static website built-in, if you want to create an application in a single server instance. Let's make a file that has a little text in it, so we know the server is running.
 
 	$ mkdir html_root
 	$ echo "Hello, my_app!" > html_root/index.html
