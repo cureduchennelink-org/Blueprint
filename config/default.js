@@ -40,7 +40,7 @@ module.exports= {
 		loud: false,
 	},
 	route_modules: {
-		Health: { class: "HealthCheck", file: "src/r_health"
+		Health: {		class: 'HealthCheck',	file: 'node_modules/blueprint/routes/r_health'
 	},
 		Auth: {			class: 'AuthRoute', 	file: 'node_modules/blueprint/routes/r_auth'
 	},
