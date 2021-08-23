@@ -7,7 +7,7 @@ AAA stands for Authentication (who is this), Authorization (who can do what), an
 One big advantage of OAuth 2.0 is the use of a token to protect endpoints. This method allows us to quickly validate a user without consuming resources (such as a DB connection.) It also defines a method to validate a password without having to store that password in plain text, or easily allow someone who compromises the DB to discover those passwords. It also addresses replay attacks and session hijacking by using the access-token + refresh-token method while avoiding use of cookies and avoiding placing credentials into the URL. Blueprint.Node has token signing and expiration, one-time refresh token logic, and one-way salted hash storage of passwords. Addtionally, the access-token contains both identity information (unique user id) as well as placeholders for tenant-id and role-list to support multitenancy and RBAC (role based access control) when needed.
 
 ## Let's break something
-Building off of the previous [DATABASE_EXAMPLE.md](DATABASE_EXAMPLE.md) module db/r_junk.js, let's add a single annotation value (auth_required: true) to each endpoint  specifcation (this.endpoints) in our constructor ...
+Building off of the previous [DATABASE_EXAMPLE.md](DATABASE_EXAMPLE.md) module db/r_junk.js, let's add a single annotation value `auth_required: true` to each endpoint  specifcation (this.endpoints) in our constructor ...
 
         // Junk Endpoints
         this.endpoints = {
@@ -34,7 +34,7 @@ and that line in Blueprint.Node's lib/wrapper.js looks like...
     // Authorize calls res.send so don't put this logic inside promise change where we try to 'send' on error
     const auth = await req.auth.authorize(ctx)
 
-With JavaScript this `property of undefined` error is super common. It means that `req.auth` is null. How is this populated? The OAuth logic in Blueprint.Node is not laid out as straight forward as other parts of the system. As it turns out, this object is attached to a `req` by a `server.use` middleware strategy which is common for Restify and Express servers. For now, suffice to say that the 'auth' service supplies this object, so we need to add that service to what we load in our main application start up. Update src/app.js with this service reference...
+With JavaScript this `property of undefined` error is super common. It means that `req.auth` is `null`. How is this populated? The OAuth logic in Blueprint.Node is not laid out as straight forward as other parts of the system. As it turns out, this object is attached to a `req` by a `server.use` middleware strategy which is common for Restify and Express servers. For now, suffice to say that the 'auth' service supplies this object, so we need to add that service to what we load in our main application start up. Update `src/app.js` with this service reference...
 
     const services = ['db', 'auth']
 
@@ -122,7 +122,7 @@ The error we are looking for is this one...
 
     {"code":"error","message":"relation \"ident\" does not exist","req_uuid":"..."}
 
-... and this is reasonable, since we did not yet add that table to our schema files. This schema definition is in [db/schema_auth.sql](db/schema_auth.sql) (TODO convert from mysql to psql) - add this to db/scripts/V1__base.psql ...
+... and this is reasonable, since we did not yet add that table to our schema files. This schema definition is in [db/schema_auth.sql](db/schema_auth.sql) (TODO convert from mysql to psql) - add this to db/scripts/V1__base.psql ... /// this is a flyaway db script, observe the filename format, and be sure to use two underscores.
 
     /* Schema for Authentication Tables
     DB Schema:
@@ -175,7 +175,6 @@ With this change we'll need to reset our DB ...
     psql --user $SUPERUSER --host $DBHOST --echo-all --variable=db=$DBNAME < db/reset.psql
 
 ... and try that curl again.
-TODO FIX psql_auth.js BY REMOVING "org" COL REFERENCE
 
     {"code":"invalid_client","req_uuid":"..."} - This is the generic error for all things OAuth finds invalid
 
