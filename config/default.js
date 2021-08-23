@@ -33,7 +33,15 @@ module.exports= {
 	lamd: {
 		connect_url: 'mongodb://localhost/lamd?w=0&journal=false'
 	},
+	plamd: {
+		poll_ms: 100,
+		conn_age_secs: 300,
+		to_debug: true,
+		loud: false,
+	},
 	route_modules: {
+		Health: { class: "HealthCheck", file: "src/r_health"
+	},
 		Auth: {			class: 'AuthRoute', 	file: 'node_modules/blueprint/routes/r_auth'
 	},
 		Poll: {			class: 'LongPoll', 		file: 'node_modules/blueprint/routes/r_poll'
@@ -76,7 +84,7 @@ module.exports= {
 	},
 		tripMgr: {		class: 'TripManager', 	file: 'node_modules/blueprint/lib/trip_manager'
 	},
-		lamd: {			class:  'Lamd',			file: 'node_modules/blueprint/lib/lamd'
+		lamd: {			class:  'PLamd',		file: 'node_modules/blueprint/lib/PLamd'
 	},
 		AgentHeader: {	class: 'AgentHeader',	file: 'node_modules/blueprint/lib/agent_header'
 	},
@@ -173,6 +181,7 @@ module.exports= {
 				max: 10
 			},
 			modules: {
+				lamd: { class: 'PSqlLamd', file: 'node_modules/blueprint/lib/db/_postgresql/psql_lamd' },
 				token: { class: 'SqlToken', file: 'node_modules/blueprint/lib/db/_postgresql/sql_token' },
 				auth: { class: 'SqlAuth', file: 'node_modules/blueprint/lib/db/_postgresql/sql_auth' },
 				runqueue: { class: 'PSqlRunQueue', file: 'node_modules/blueprint/lib/db/_postgresql/psql_runqueue' },
