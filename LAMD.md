@@ -168,11 +168,11 @@ There is also a need to configure the health check service since it requires som
 
 Reset the DB and restart the server (to pick up the new route, service, and psql_mod.) You should see a new module in the API docs [http://localhost:9500/api/v1](http://localhost:9500/api/v1). Let's look at the new 'Health' endpoints. `/Ping` should work out-of-the-box, it requires no auth and no DB etc. To access the LAMD objects that tell us what has been happening with our API server endpoints, let's first create a request with a DB call. Check inventory on Junk: [http://localhost:9500/api/v1/Junk](http://localhost:9500/api/v1/Junk). Next, attempt to list the last 100 endpoint requests: [http://localhost:9500/api/v1/Logs?type=last100](http://localhost:9500/api/v1/Logs?typ=last100).
 
-You get an authorization error, because this endpoint is protected. To allow tokens to be created on our API server, you need to have followed the [OAUTH_EXAMPLE.md](OAUTH_EXAMPLE.md). It will also require that your user has either 'dev' or 'admin' role. Let's upgrade our ident user with a 'dev' role, and then reset the DB and then use our cURL login request endpoint to acquire a token.
+You get an authorization error, because this endpoint is protected. To allow tokens to be created on our API server, you need to have followed the [OAUTH_EXAMPLE.md](OAUTH_EXAMPLE.md). It will also require that your user has either 'Dev' or 'DevOps' role. Let's upgrade our ident user with a 'Dev' role, and then reset the DB and then use our cURL login request endpoint to acquire a token.
 
-Upgrade 'dude' to be a 'dev' person also:
+Upgrade 'dude' to be a 'Dev' person also:
 
-      ('dude@deviq.io', 'ACqX5b7oFXZHOozGZo809A==.wXrhYtmmqLFL8Hvr6LIo0XF+Xq1RMAhEoKF54Pw+5RA=', 'reader,dev')
+      ('dude@deviq.io', 'ACqX5b7oFXZHOozGZo809A==.wXrhYtmmqLFL8Hvr6LIo0XF+Xq1RMAhEoKF54Pw+5RA=', 'reader,Dev')
 
 Reset the DB. Next curl to get a access-token (I'm escaping chars for a shell)...
 
