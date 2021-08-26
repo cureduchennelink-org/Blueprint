@@ -1,5 +1,5 @@
 # Observability
-LAMD (Logging, Auditing, Monitoring, Debugging) is primarily a tool to allow developers to 'observe' the running software. In our case the primary use case is a request to an endpoint, which likely calls the DB and possibly an HTTP service. LAMD is primarily an endpoint logger, and secondly it captures and groups debug log lines for a given request.
+LAMD (Logging, Auditing, Monitoring, Debugging) is primarily a tool to allow developers to 'observe' the running software. The common use case is a request to an endpoint, which likely calls the DB and possibly an HTTP service. LAMD is firstly an endpoint logger, and secondly it captures and groups debug log lines for a given request.
 
 ## Endpoint log object
 Each time an endpoint request is completed, LAMD persists an object of details to a jsonb field in the DB. There is a variety of information in the object for sorting, filtering, metrics, error detection, alarming, timing and correlation. Here are a list of the attributes to expect:
@@ -85,21 +85,22 @@ To get more details on this object, or to add to it, see the wrapper service for
 ## Log lines
 In addition to the LAMD object per endpoint request, there is also a table holding individual log lines recorded during the endpoint request processing of the business logic. In your own modules / methods / functions you are typically going to have a `ctx` value passed. This object contains what is needed to tie all our log lines together to the same req_uuid value. It has a log function in it, with a specific signature of (string, object) - normally the string is the name of your method possibly augmented with an additional string value when you have a deeper log line to identify. The concept of this first parameter is to make it easy to work backwards into the code to know where this log line was called. Here is a simple pattern:
 
-class Interesting {
-    whatever( ctx, paramA, paramB) {
-        const f= 'Interesting:whatever:'
+    class Interesting {
+        whatever( ctx, paramA, paramB) {
+            const f= 'Interesting:whatever:' // e.g. class + method
 
-        ctx.log.debug( f, {paramA, paramB}
-        )
-        ...
-        // About to do some involved logic based on 3 vars a, b, c
-        ctx.log.debug( f+ 'involved', {a, b, c})
-        ...
-        var returnValue= 0
-        ctx.log.debug( f+ 'final', {returnValue})
-        return returnValue;
-    }    
-}
+            ctx.log.debug( f, {paramA, paramB})
+            ...
+            // About to do some involved logic based on 3 vars a, b, c
+            ctx.log.debug( f+ 'involved', {a, b, c})
+            ...
+            var returnValue= 0
+            ctx.log.debug( f+ 'final', {returnValue})
+            return returnValue;
+        }
+    }
+
+Just a note on where to put log lines: In this example, a method is logging its inputs and an important intermediate step, and then the final result. If this is done in a function, then you will always have the log lines regardless of when and where it is called. If instead you expect the caller to do this logging, and there are several places that this function is called, the caller may not reliably log inputs/outputs and cannot log the intermediate portion. So, logging inside a function what that function does, is much easier and more consitant than making the caller responsible.
 
 ### Bulit-in log lines
 There are several places where logging is built into a lower layer module - think of this before you log, to avoid redundancy and duplicated work.
@@ -130,10 +131,17 @@ If you use the Axios wrapper [lib/axios_wrap.js](lib/axios_wrap.js), it will add
 If you use the wrapper for the runqueue service, it will also create a LAMD object for each job that is run (just as the router wrapper creates a LAMD object for each endpoint request.) More on this is mentioned in the health endpoints.
 
 #### Summary
-Even if you added no log lines to your endpoint logic, and you make one or more DB calls, you will see both a LAMD object, and details of the SQL call(s.) Placing log lines in strategic places, and passing the `ctx` object to your callers, give you the best chance of knowing what is going on in your code. Leaving these lines in for production, gives us the best chance of solving production issues. Observability is key.
+Even if you added no log lines to your endpoint logic, and you make one or more DB calls, you will see both a LAMD object, and details of the SQL call(s.) Placing log lines in strategic places, and passing the `ctx` object to your callers, gives you the best chance of knowing what is going on in your code. Leaving these lines in for production, gives us the best chance of solving production issues. Observability is key.
 
 # Enabling LAMD and Health checks
-If nothing goes wrong, this step is pretty easy (assuming you have set up DB access with [DATASE_EXAMPLE.md](DATASE_EXAMPLE.md).) In `src/app.js` add 'lamd' to your services, 'Health' to your routes, and 'lamd' to your psql_mods. Then add the DB schema to your `db/scripts/V1__base.js` file...
+If nothing goes wrong, this step is pretty easy (assuming you have set up DB access with [DATASE_EXAMPLE.md](DATASE_EXAMPLE.md).) In `src/app.js` add 'lamd' to your services, 'Health' to your routes, and 'lamd' to your psql_mods ...
+
+    // Lists of modules to include on start-up
+    const services = ['db', 'auth', 'lamd', ]
+    const routes = ['FruitRoute', 'JunkRoute', 'Auth', 'Health', ]
+    const psql_mods = ['junk', 'auth', 'token', 'lamd', ]
+
+Then add the DB schema to your `db/scripts/V1__base.js` file...
 
     /*
     * LAMD Database Schema
@@ -161,26 +169,29 @@ If nothing goes wrong, this step is pretty easy (assuming you have set up DB acc
     CREATE INDEX ix_lamd_deep__req_uuid ON lamd_deep USING HASH ((log->>'req_uuid'));
 
 There is also a need to configure the health check service since it requires some alternate authentication to support automated monitoring products. As a top-level hash-key (i.e. above route_modules and as a peer of it), add this to `src/container.js` ...
+
         health: {
             security_keys: (process.env.HEALTH_SECURITY_KEYS || "").split(","),
         },
         route_modules: { ... }
 
-Reset the DB and restart the server (to pick up the new route, service, and psql_mod.) You should see a new module in the API docs [http://localhost:9500/api/v1](http://localhost:9500/api/v1). Let's look at the new 'Health' endpoints. `/Ping` should work out-of-the-box, it requires no auth and no DB etc. To access the LAMD objects that tell us what has been happening with our API server endpoints, let's first create a request with a DB call. Check inventory on Junk: [http://localhost:9500/api/v1/Junk](http://localhost:9500/api/v1/Junk). Next, attempt to list the last 100 endpoint requests: [http://localhost:9500/api/v1/Logs?type=last100](http://localhost:9500/api/v1/Logs?typ=last100).
+Reset the DB and restart the server (to pick up the new route, service, and psql_mod.) You should see a new module in the API docs [http://localhost:9500/api/v1](http://localhost:9500/api/v1). Let's look at the new 'Health' endpoints. `/Ping` should work out-of-the-box, it requires no auth and no DB etc. To access the LAMD objects that tell us what has been happening with our API server endpoints, let's first create a request with a DB call. Check inventory on Junk: [http://localhost:9500/api/v1/Junk](http://localhost:9500/api/v1/Junk). You likley get the auth error, and will need a valid token and role to get a positive result, see the [OAUTH_EXAMPLE.md](OAUTH_EXAMPLE.md) More on this below.
+
+Next, attempt to list the last 100 endpoint requests: [http://localhost:9500/api/v1/Logs?type=last100](http://localhost:9500/api/v1/Logs?typ=last100).
 
 You get an authorization error, because this endpoint is protected. To allow tokens to be created on our API server, you need to have followed the [OAUTH_EXAMPLE.md](OAUTH_EXAMPLE.md). It will also require that your user has either 'Dev' or 'DevOps' role. Let's upgrade our ident user with a 'Dev' role, and then reset the DB and then use our cURL login request endpoint to acquire a token.
 
-Upgrade 'dude' to be a 'Dev' person also:
+Upgrade 'dude' to be a 'Dev' person also in `db/sample_data_1.psql` ...
 
       ('dude@deviq.io', 'ACqX5b7oFXZHOozGZo809A==.wXrhYtmmqLFL8Hvr6LIo0XF+Xq1RMAhEoKF54Pw+5RA=', 'reader,Dev')
 
-Reset the DB. Next curl to get a access-token (I'm escaping chars for a shell)...
+Reset the DB. Next curl to get an access-token (I'm escaping chars for a shell)...
 
     curl http://localhost:9500/api/v1/Auth\?client_id=whatever\&username=dude\@deviq.io\&password=password\&grant_type=password
 
 Grab that access_token value, and go back to your browser for last100, and add &auth_token=YOUR-TOKEN - this uses the wrapper feature of an alternate way to provide a token without using the 'Authorization' header.
 
-The results you see have limited values in the LAMD object showing. This is partly due to attempting to protect data by not showing everything here. On any of these objects, you can take the req_uuid and get all the details of that object and all the debug lines that go with it. Copy the req_uuid value from the /Junk endpoint and open a tab using:
+The results you see have limited values in the LAMD objects showing. This is partly due to attempting to protect data by not showing everything here. On any of these objects, you can take the req_uuid and get all the details of that object and all the debug lines that go with it. Copy the req_uuid value from the /Junk endpoint and open a tab using:
 
     http://localhost:9500/api/v1/Debug/THE-REQ-UUID?auth_token=YOUR-TOKEN
 
@@ -188,7 +199,7 @@ The results you see have limited values in the LAMD object showing. This is part
 To support the need for an outside SaaS to monitor the health of our API server instances and alerts when endpoints return unexpected errors to our clients, we have the endpoint [http://localhost:9500/api/v1/Logs/pingComprehenseive](http://localhost:9500/api/v1/Logs/pingComprehenseive). When you go to this endpoint, you get a response with an 's' (which is an obscure reference to the need for a security failure.)
 
 ### Security
-You will need to add to this URL a `?secret=` to allow access to this endpoint. This is a security check method that is directly built into the endpoint logic. It allows us to use SaaS products without paying extra money for OAuth or other header based authentication. You will notice earlier we added a `health:` key to our `src/container.js` and there is a reference to process.env.HEALTH_SECURITY_KEYS. If we leave it empty, then the above secret= with no value should work. To protect this endpoint, add to your environment a comma separated list of keys (or even just one string key without a comma) to require one of these values on this url.
+You will need to add to this URL a `?secret=` to allow access to this endpoint. This is a security check method that is directly built into the endpoint logic. It allows us to use SaaS products without paying extra money for OAuth or other header based authentication. You will notice earlier we added a `health:` key to our `src/container.js` and there is a reference to process.env.HEALTH_SECURITY_KEYS. If we leave it empty, then the above secret= with no value should work. To protect this endpoint, add to your environment a comma separated list of keys as a string (i.e. `HEALTH_SECURITY_KEYS=secret-1,s2,s3`) (or even just one string key without a comma) to require one of these values on this url.  Try this [http://localhost:9500/api/v1/Logs/pingComprehenseive?secret=](http://localhost:9500/api/v1/Logs/pingComprehenseive?secret=).
 
 ### Attributes
 Ping-comprehensive combines several health check endpoint type requests together, and determines an alert level of r, y, or g (red, yellow, or green.) It also attempts to check the Runqueue service health. The various parameters that can be used on this endpoint are documented in the route module `r_health`. An example of an endpoint that is being used to check our DevIQ Connect service, is ...
@@ -245,6 +256,6 @@ Ping-comprehensive combines several health check endpoint type requests together
         "req_uuid": "4c4f1d18-2533-49a1-9bf4-64747182f6f1"
     }
 
-Again, a lot of details will be missing, including req_uuid values on objects because this is an aggregate (or group by) query that counts exception types. The `subject` indicates the type of query. `final_disposition` is the overall monitoring result status. 
+Again, a lot of details will be missing, including req_uuid values on objects because this is an aggregate (or group by) query that counts exception types. The `subject` indicates the type of query. `final_disposition` is the overall monitoring result status. See the [routes/r_health.js](routes/r_health.js) source for details on input paramater values. 
 
 
