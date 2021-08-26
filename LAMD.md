@@ -205,7 +205,7 @@ You should see a new module in the API docs [http://localhost:9500/api/v1](http:
 See the [OAUTH_EXAMPLE.md](OAUTH_EXAMPLE.md) for more on this. Add to your /Junk URL the `?auth_token=TOKEN_VALUE` to create the authenticated log entry.
 
 ### Last100
-Next, attempt to list the last 100 endpoint requests: [http://localhost:9500/api/v1/Logs?type=last100](http://localhost:9500/api/v1/Logs?typ=last100).
+Next, attempt to list the last 100 endpoint requests: [http://localhost:9500/api/v1/Logs?type=last100](http://localhost:9500/api/v1/Logs?type=last100).
 
 You get another authorization error, because this endpoint is protected. It will also require that your user has either 'Dev' or 'DevOps' role. Let's upgrade our ident user with a 'Dev' role, and then reset the DB and then use our cURL login request endpoint to acquire a token.
 
@@ -223,9 +223,91 @@ Next curl to get an access-token (I'm escaping chars for a shell)...
 
 Grab that access_token value, and go back to your browser for last100, and add &auth_token=YOUR-TOKEN - this uses the wrapper feature of an alternate way to provide a token without using the 'Authorization' header.
 
+Unfortunatly, you only see the `/Auth` POST request you made, because the DB was reset. Reload the tabs for `/Junk` with and without a token, to get more examples, and come back to this `/Logs?type=last100` tab and reload for the results. - Wait! the auth errors on that endpoint are not showing, what's up? As mentioned in the OAuth docs, our goal is to avoid consuming resources when users are not authorized. This error type is not recorded, to avoid consuming DB resources.
+
 The results you see have limited attributes in the LAMD objects showing. This is partly due to attempting to protect data by not showing everything here. On any of these objects, you can take the req_uuid and get all the details of that object and all the debug lines that go with it. Copy the req_uuid value from the /Junk endpoint and open a tab using:
 
     http://localhost:9500/api/v1/Debug/THE-REQ-UUID?auth_token=YOUR-TOKEN
+
+You should get something like this. Notice the `token` value and auth_id since this is an authenticated endpoint. Notice also the nested `debug: []` array (near the bottom) is filled with each `ctx.log.debug(f,obj)` call, showing the log level, the `f` value, and the object.
+
+    {
+    "success": true,
+    "debug": [{
+        "id": 3,
+        "log": {
+            "lamd": {
+                "date": "2021-08-26T21:21:42.702Z",
+                "role": [
+                    "reader"
+                ],
+                "verb": "get",
+                "route": "/Junk",
+                "start": 1630012902702,
+                "token": {
+                    "exp": 1630013068,
+                    "iid": 100,
+                    "irole": "reader"
+                },
+                "params": {
+                    "Version": "v1",
+                    "auth_token": "TOKEN-VALUE.SIG"
+                },
+                "auth_id": 100,
+                "conn_id": 109,
+                "headers": {
+                    "host": "localhost:9500",
+                    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,ima,...",
+                    "cookie": "G_AUTHUSER_H=0",
+                    "connection": "keep-alive",
+                    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleW...",
+                    "cache-control": "max-age=0",
+                    "accept-encoding": "gzip, deflate, br",
+                    "accept-language": "en-US,en;q=0.9",
+                    "upgrade-insecure-requests": "1"
+                },
+                "duration": 2,
+                "req_uuid": "821ae10f-a40c-411e-96b0-b63d21be07c7",
+                "statusCode": 200,
+                "request_count": 1,
+                "request_count_high": 1
+            },
+            "debug": [
+                {
+                    "f": "DB:PSqlJunk:get_collection:",
+                    "method": "debug"
+                },
+                {
+                    "f": "PostgreSqlCore:sqlQuery:-109-:PSQL:0",
+                    "data": "SELECT id,item\nFROM junk\nWHERE di= 0",
+                    "method": "debug"
+                },
+                {
+                    "f": "PostgreSqlCore:sqlQuery:-109-:",
+                    "data": {
+                        "rows": [
+                            {
+                                "id": 1,
+                                "item": "kitchen sink"
+                            },
+                            {
+                                "id": 2,
+                                "item": "kitchen sink"
+                            }
+                        ],
+                        "command": "SELECT",
+                        "time_ms": 1,
+                        "rowCount": 5
+                    },
+                    "method": "debug"
+                }
+            ],
+            "req_uuid": "821ae10f-a40c-411e-96b0-b63d21be07c7"
+        }
+    }],
+    "req_uuid": "0f5bb7b6-b581-43af-9d79-5f5160c21459"
+    }
+
 
 # Auotmated health check monitoring
 To support the need for an outside SaaS to monitor the health of our API server instances and alerts when endpoints return unexpected errors to our clients, we have the endpoint [http://localhost:9500/api/v1/Logs/pingComprehensive](http://localhost:9500/api/v1/Logs/pingComprehensive). When you go to this endpoint, you get ...
@@ -368,3 +450,17 @@ Again, a lot of details will be missing, including req_uuid values on objects be
 ## Custom service health checks
 Anyone who implements a `service` can also add a method called `Healthcheck` which then is exposed at this endpoint: [http://localhost:9500/api/v1/ServiceHealth](http://localhost:9500/api/v1/ServiceHealth)
 
+    {
+    "success": true,
+    "service_name": "blueprint",
+    "params": {
+        "Version": "v1",
+        "service": "Runqueue",
+        "auth_token": "TOKEN-VALUE.SIG"
+    },
+    "service": false,
+    "services": [ ],
+    "req_uuid": "5cc08eeb-f422-4add-8b62-958e0eb904e7"
+    }
+
+If you had such a service, the name would show up in the `services: []` list, and you can target it with `?service=` to check th health of that service. (More on this in [SERVICES.md](SERVICES.md))
