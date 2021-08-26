@@ -141,7 +141,7 @@ If you use the wrapper for the runqueue service, it will also create a LAMD obje
 Even if you added no log lines to your endpoint logic, and you make one or more DB calls, you will see both a LAMD object, and details of the SQL call(s.) Placing log lines in strategic places, and passing the `ctx` object to your callers, gives you the best chance of knowing what is going on in your code. Leaving these lines in for production, gives us the best chance of solving production issues. Observability is key.
 
 # Enabling LAMD and Health checks
-If nothing goes wrong, this step is pretty easy (assuming you have set up DB access with [DATASE_EXAMPLE.md](DATASE_EXAMPLE.md).) In `src/app.js` add 'lamd' to your services, 'Health' to your routes, and 'lamd' to your psql_mods ...
+If nothing goes wrong, this step is pretty easy (assuming you have set up DB access with [DATABASE_EXAMPLE.md](DATABASE_EXAMPLE.md).) In `src/app.js` add 'lamd' to your services, 'Health' to your routes, and 'lamd' to your psql_mods ...
 
     // Lists of modules to include on start-up
     const services = ['db', 'auth', 'lamd', ]
@@ -182,27 +182,52 @@ There is also a need to configure the health check service since it requires som
         },
         route_modules: { ... }
 
-Reset the DB and restart the server (to pick up the new route, service, and psql_mod.) You should see a new module in the API docs [http://localhost:9500/api/v1](http://localhost:9500/api/v1). Let's look at the new 'Health' endpoints. `/Ping` should work out-of-the-box, it requires no auth and no DB etc. To access the LAMD objects that tell us what has been happening with our API server endpoints, let's first create a request with a DB call. Check inventory on Junk: [http://localhost:9500/api/v1/Junk](http://localhost:9500/api/v1/Junk). You likley get the auth error, and will need a valid token and role to get a positive result, see the [OAUTH_EXAMPLE.md](OAUTH_EXAMPLE.md) More on this below.
+Reset the DB to add the two LAMD tables (as a reminder from the DB examples) ...
 
+    export SUPERUSER=`whoami`
+    export DBHOST=localhost
+    export DBNAME=local_yourapp_yourname
+    psql --user $SUPERUSER --host $DBHOST --echo-all --variable=db=$DBNAME < db/reset.psql
+
+... and restart the server (to pick up the new route, service, and psql_mod.)
+
+    node src/app.js | bunyan -o short
+
+## Looking at endpoint requests
+You should see a new module in the API docs [http://localhost:9500/api/v1](http://localhost:9500/api/v1). Let's look at the new 'Health' endpoints. `/Ping` should work out-of-the-box, it requires no auth and no DB etc. To access the LAMD objects that tell us what has been happening with our API server endpoints, let's first create a request with a DB call. Check inventory on Junk (without a token): [http://localhost:9500/api/v1/Junk](http://localhost:9500/api/v1/Junk). You likley get the auth error ...
+
+    {"code":"invalid_token","message":"Missing or invalid authorization header"}
+
+... which is good, because we also want to see what LAMD gives in this case. For a valid authenticated example you will need a valid token and role to get a positive result (I'm escaping chars for a shell) ...
+
+    curl http://localhost:9500/api/v1/Auth\?client_id=whatever\&username=dude\@deviq.io\&password=password\&grant_type=password -X POST
+
+See the [OAUTH_EXAMPLE.md](OAUTH_EXAMPLE.md) for more on this. Add to your /Junk URL the `?auth_token=TOKEN_VALUE` to create the authenticated log entry.
+
+### Last100
 Next, attempt to list the last 100 endpoint requests: [http://localhost:9500/api/v1/Logs?type=last100](http://localhost:9500/api/v1/Logs?typ=last100).
 
-You get an authorization error, because this endpoint is protected. To allow tokens to be created on our API server, you need to have followed the [OAUTH_EXAMPLE.md](OAUTH_EXAMPLE.md). It will also require that your user has either 'Dev' or 'DevOps' role. Let's upgrade our ident user with a 'Dev' role, and then reset the DB and then use our cURL login request endpoint to acquire a token.
+You get another authorization error, because this endpoint is protected. It will also require that your user has either 'Dev' or 'DevOps' role. Let's upgrade our ident user with a 'Dev' role, and then reset the DB and then use our cURL login request endpoint to acquire a token.
 
 Upgrade 'dude' to be a 'Dev' person also in `db/sample_data_1.psql` ...
 
       ('dude@deviq.io', 'ACqX5b7oFXZHOozGZo809A==.wXrhYtmmqLFL8Hvr6LIo0XF+Xq1RMAhEoKF54Pw+5RA=', 'reader,Dev')
 
-Reset the DB. Next curl to get an access-token (I'm escaping chars for a shell)...
+Reset the DB ...
 
-    curl http://localhost:9500/api/v1/Auth\?client_id=whatever\&username=dude\@deviq.io\&password=password\&grant_type=password
+    psql --user $SUPERUSER --host $DBHOST --echo-all --variable=db=$DBNAME < db/reset.psql
+
+Next curl to get an access-token (I'm escaping chars for a shell)...
+
+    curl http://localhost:9500/api/v1/Auth\?client_id=whatever\&username=dude\@deviq.io\&password=password\&grant_type=password -X POST
 
 Grab that access_token value, and go back to your browser for last100, and add &auth_token=YOUR-TOKEN - this uses the wrapper feature of an alternate way to provide a token without using the 'Authorization' header.
 
-The results you see have limited values in the LAMD objects showing. This is partly due to attempting to protect data by not showing everything here. On any of these objects, you can take the req_uuid and get all the details of that object and all the debug lines that go with it. Copy the req_uuid value from the /Junk endpoint and open a tab using:
+The results you see have limited attributes in the LAMD objects showing. This is partly due to attempting to protect data by not showing everything here. On any of these objects, you can take the req_uuid and get all the details of that object and all the debug lines that go with it. Copy the req_uuid value from the /Junk endpoint and open a tab using:
 
     http://localhost:9500/api/v1/Debug/THE-REQ-UUID?auth_token=YOUR-TOKEN
 
-## Auotmated health check monitoring
+# Auotmated health check monitoring
 To support the need for an outside SaaS to monitor the health of our API server instances and alerts when endpoints return unexpected errors to our clients, we have the endpoint [http://localhost:9500/api/v1/Logs/pingComprehenseive](http://localhost:9500/api/v1/Logs/pingComprehenseive). When you go to this endpoint, you get a response with an 's' (which is an obscure reference to the need for a security failure.)
 
 ### Security
