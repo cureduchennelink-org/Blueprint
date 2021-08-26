@@ -228,10 +228,85 @@ The results you see have limited attributes in the LAMD objects showing. This is
     http://localhost:9500/api/v1/Debug/THE-REQ-UUID?auth_token=YOUR-TOKEN
 
 # Auotmated health check monitoring
-To support the need for an outside SaaS to monitor the health of our API server instances and alerts when endpoints return unexpected errors to our clients, we have the endpoint [http://localhost:9500/api/v1/Logs/pingComprehenseive](http://localhost:9500/api/v1/Logs/pingComprehenseive). When you go to this endpoint, you get a response with an 's' (which is an obscure reference to the need for a security failure.)
+To support the need for an outside SaaS to monitor the health of our API server instances and alerts when endpoints return unexpected errors to our clients, we have the endpoint [http://localhost:9500/api/v1/Logs/pingComprehensive](http://localhost:9500/api/v1/Logs/pingComprehensive). When you go to this endpoint, you get ...
+
+    {
+    "success": true,
+    "final_disposition": "s",
+    "req_uuid": "496b5142-c1fa-413c-a4ff-5b12116b6883"
+    }
+
+This response with a `final_disposition: "s"` is an obscure reference to a security failure. We don't want to give clues on how to hack this endpoint.
 
 ### Security
-You will need to add to this URL a `?secret=` to allow access to this endpoint. This is a security check method that is directly built into the endpoint logic. It allows us to use SaaS products without paying extra money for OAuth or other header based authentication. You will notice earlier we added a `health:` key to our `src/container.js` and there is a reference to process.env.HEALTH_SECURITY_KEYS. If we leave it empty, then the above secret= with no value should work. To protect this endpoint, add to your environment a comma separated list of keys as a string (i.e. `HEALTH_SECURITY_KEYS=secret-1,s2,s3`) (or even just one string key without a comma) to require one of these values on this url.  Try this [http://localhost:9500/api/v1/Logs/pingComprehenseive?secret=](http://localhost:9500/api/v1/Logs/pingComprehenseive?secret=).
+You will need to add to this URL a `?secret=` to allow access to this endpoint. This is a security check method that is directly built into the endpoint logic. It allows us to use SaaS products without paying extra money for OAuth or other header based authentication. You will notice earlier we added a `health:` key to our `src/container.js` and there is a reference to process.env.HEALTH_SECURITY_KEYS. If we leave it empty, then the above secret= with no value should work.
+
+To protect this endpoint, add to your environment a comma separated list of keys as a string (i.e. `HEALTH_SECURITY_KEYS=secret-1,s2,s3`) (or even just one string key without a comma) to require one of these values on this url.  Try this [http://localhost:9500/api/v1/Logs/pingComprehensive?secret=](http://localhost:9500/api/v1/Logs/pingComprehensive?secret=)
+
+    {
+    "subject": "Ping Comprehensive (Errors, perf, deadlocks, services) Aggregations of API",
+    "final_disposition": "r",
+    "date": "2021-08-26 13:09:22",
+    "now": "2021-08-26 13:09:22",
+    "time_ms": 18,
+    "results": [
+        {
+            "success": true,
+            "note": "no-note",
+            "subject": "Errors (unexpected) Aggregations of API",
+            "date": "2021-08-26T19:09:22.594Z",
+            "num_results": 0,
+            "results": [ ],
+            "time_ms": 10,
+            "do_email": false
+        },
+        {
+            "success": true,
+            "note": "duration > 500ms",
+            "subject": "Hourly Performance Aggregations of API",
+            "date": "2021-08-26T19:09:22.597Z",
+            "num_results": 0,
+            "results": [ ],
+            "time_ms": 3,
+            "do_email": false
+        },
+        {
+            "success": true,
+            "note": "no-note",
+            "subject": "API Deadlocks",
+            "date": "2021-08-26T19:09:22.599Z",
+            "num_results": 0,
+            "results": [ ],
+            "time_ms": 2,
+            "do_email": false
+        },
+        {
+            "success": true,
+            "note": "no-note",
+            "subject": "Service health: RunQueue",
+            "date": "2021-08-26T19:09:22.600Z",
+            "results": {
+                "error": "Service is not loaded: RunQueue"
+            },
+            "time_ms": 0,
+            "do_email": false
+        }
+    ],
+    "req_uuid": "29a42891-0cd4-4cdf-933a-316a4ce18fb0"
+    }
+
+## Results explaination
+This result is 'comprehensive' in that several endpoint requests are being to cover the several kinds of concerns that can be important and then consolocated into one result JSON. The 'outer' 'results' array are the 4 different calls made. The other 'outer' attributes are the consolodated results. the final_disposition value is 'r' meaning 'Red' alert level. Looking inside each sub-request, we see the last entry has an error so the overall result is 'r'.
+
+In our case, we have not loaded up the Runqueue service, so it has this error. On systems that do not use Runqueue, this part of the 'pingComprehensive
+ endpoint can be commented out (see the document [ROUTES.md](ROUTES.md) for how to customize existing Blueprint.Node route modules.)
+
+The four "comprehensive" checks being made here are:
+
+* Unexpected endpoint errors based on statusCode
+* Performance concerns based on `duration`
+* DB deadlocks that may have occurred
+* Runqueue service health
 
 ### Attributes
 Ping-comprehensive combines several health check endpoint type requests together, and determines an alert level of r, y, or g (red, yellow, or green.) It also attempts to check the Runqueue service health. The various parameters that can be used on this endpoint are documented in the route module `r_health`. An example of an endpoint that is being used to check our DevIQ Connect service, is ...
@@ -290,4 +365,6 @@ Ping-comprehensive combines several health check endpoint type requests together
 
 Again, a lot of details will be missing, including req_uuid values on objects because this is an aggregate (or group by) query that counts exception types. The `subject` indicates the type of query. `final_disposition` is the overall monitoring result status. See the [routes/r_health.js](routes/r_health.js) source for details on input paramater values. 
 
+## Custom service health checks
+Anyone who implements a `service` can also add a method called `Healthcheck` which then is exposed at this endpoint: [http://localhost:9500/api/v1/ServiceHealth](http://localhost:9500/api/v1/ServiceHealth)
 
