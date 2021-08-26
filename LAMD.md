@@ -31,19 +31,19 @@ Each time an endpoint request is completed, LAMD persists an object of details t
 
 A few of these fields are obvious: date, statusCode, route, verb, params, headers. If the statusCode was not 200, you might also see an error object with the details about the reason for the exception. A few less obvious fields:
 
-#### start
+##### start
     Timestamp in ms of the start of this request. Request ended at start+duration. Sort for granular ordering.
-#### req_uuid
+##### req_uuid
     Global unique value assigned by Restify to each endpoint request; Ties log lines together.
-#### auth_id
+##### auth_id
     0 means not authenticated, otherwise it is the ident_id of the authenticated user
-#### conn_id
+##### conn_id
     A unique value on the DB connection handle (if requested); used to correlate issues with other endpoints.
-#### request_count
+##### request_count
     How many accepted but not completed endpoint requests are being handled, including this one.
-#### request_count_high
+##### request_count_high
     All time high water mark for request_count since the server was started.
-#### duration
+##### duration
     Number of ms this request took from when it first was seen by the wrapper, until the response was ready to send.
 
 Here is a example of a LAMD object that contains an error result:
