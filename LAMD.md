@@ -90,7 +90,7 @@ The statusCode 5550 is a special value from the wrapper to indicate an uncaught 
 To get more details on this object, or to add to it, see the wrapper service for your project.
 
 ## Log lines
-In addition to the LAMD object per endpoint request, there is also a table holding individual log lines recorded during the endpoint request processing of the business logic. In your own modules / methods / functions you are typically going to have a `ctx` value passed. This object contains what is needed to tie all our log lines together to the same req_uuid value. It has a log function in it, with a specific signature of (string, object) - normally the string is the name of your method possibly augmented with an additional string value when you have a deeper log line to identify. The concept of this first parameter is to make it easy to work backwards into the code to know where this log line was called. Here is a simple pattern:
+In addition to the LAMD object per endpoint request, there is also a table holding individual log lines recorded during the endpoint request processing of the business logic. In your own modules / methods / functions you are typically going to have a `ctx` value passed. This object contains what is needed to tie all our log lines together to the same req_uuid value. It has a log function in it, with a specific signature of (string, object) - normally the string is the name of your method, possibly augmented with an additional string value when you have a deeper log line to identify. The concept of this first parameter is to make it easy to work backwards into the code to know where this log line was called. Here is a simple pattern:
 
     class Interesting {
         whatever( ctx, paramA, paramB) {
@@ -107,9 +107,9 @@ In addition to the LAMD object per endpoint request, there is also a table holdi
         }
     }
 
-Just a note on where to put log lines: In this example, a method is logging its inputs and an important intermediate step, and then the final result. If this is done in a function, then you will always have the log lines regardless of when and where it is called. If instead you expect the caller to do this logging, and there are several places that this function is called, the caller may not reliably log inputs/outputs and cannot log the intermediate portion. So, logging inside a function what that function does, is much easier and more consitant than making the caller responsible.
+Just a note on where to put log lines: In this example, a method is logging its inputs and an important intermediate step, and then the final result. If this is done in a function, then you will always have the log lines regardless of when and where it is called. If instead you expect the caller to do this logging, and there are several places that this function is called, the caller may not reliably log inputs/outputs and cannot log the intermediate portion. So, logging inside a function what that function does, is much easier and more consistent than making the caller responsible.
 
-### Bulit-in log lines
+### Built-in log lines
 There are several places where logging is built into a lower layer module - think of this before you log, to avoid redundancy and duplicated work.
 #### SQL calls
 The sql function will log the query string, the arguments, and a sampling of the response object from the DB.
@@ -194,7 +194,7 @@ Reset the DB to add the two LAMD tables (as a reminder from the DB examples) ...
     node src/app.js | bunyan -o short
 
 ## Looking at endpoint requests
-You should see a new module in the API docs [http://localhost:9500/api/v1](http://localhost:9500/api/v1). Let's look at the new 'Health' endpoints. `/Ping` should work out-of-the-box, it requires no auth and no DB etc. To access the LAMD objects that tell us what has been happening with our API server endpoints, let's first create a request with a DB call. Check inventory on Junk (without a token): [http://localhost:9500/api/v1/Junk](http://localhost:9500/api/v1/Junk). You likley get the auth error ...
+You should see a new module in the API docs [http://localhost:9500/api/v1](http://localhost:9500/api/v1). Let's look at the new 'Health' endpoints. `/Ping` should work out-of-the-box, it requires no auth and no DB etc. To access the LAMD objects that tell us what has been happening with our API server endpoints, let's first create a request with a DB call. Check inventory on Junk (without a token): [http://localhost:9500/api/v1/Junk](http://localhost:9500/api/v1/Junk). You likely get the auth error ...
 
     {"code":"invalid_token","message":"Missing or invalid authorization header"}
 
@@ -223,7 +223,7 @@ Next curl to get an access-token (I'm escaping chars for a shell)...
 
 Grab that access_token value, and go back to your browser for last100, and add &auth_token=YOUR-TOKEN - this uses the wrapper feature of an alternate way to provide a token without using the 'Authorization' header.
 
-Unfortunatly, you only see the `/Auth` POST request you made, because the DB was reset. Reload the tabs for `/Junk` with and without a token, to get more examples, and come back to this `/Logs?type=last100` tab and reload for the results. - Wait! the auth errors on that endpoint are not showing, what's up? As mentioned in the OAuth docs, our goal is to avoid consuming resources when users are not authorized. This error type is not recorded, to avoid consuming DB resources.
+Unfortunately, you only see the `/Auth` POST request you made, because the DB was reset. Reload the tabs for `/Junk` with and without a token, to get more examples, and come back to this `/Logs?type=last100` tab and reload for the results. - Wait! the auth errors on that endpoint are not showing, what's up? As mentioned in the OAuth docs, our goal is to avoid consuming resources when users are not authorized. This error type is not recorded, to avoid consuming DB resources.
 
 The results you see have limited attributes in the LAMD objects showing. This is partly due to attempting to protect data by not showing everything here. On any of these objects, you can take the req_uuid and get all the details of that object and all the debug lines that go with it. Copy the req_uuid value from the /Junk endpoint and open a tab using:
 
@@ -309,7 +309,7 @@ You should get something like this. Notice the `token` value and auth_id since t
     }
 
 
-# Auotmated health check monitoring
+# Automated health check monitoring
 To support the need for an outside SaaS to monitor the health of our API server instances and alerts when endpoints return unexpected errors to our clients, we have the endpoint [http://localhost:9500/api/v1/Logs/pingComprehensive](http://localhost:9500/api/v1/Logs/pingComprehensive). When you go to this endpoint, you get ...
 
     {
@@ -377,10 +377,11 @@ To protect this endpoint, add to your environment a comma separated list of keys
     "req_uuid": "29a42891-0cd4-4cdf-933a-316a4ce18fb0"
     }
 
-## Results explaination
-This result is 'comprehensive' in that several endpoint requests are being to cover the several kinds of concerns that can be important and then consolocated into one result JSON. The 'outer' 'results' array are the 4 different calls made. The other 'outer' attributes are the consolodated results. the final_disposition value is 'r' meaning 'Red' alert level. Looking inside each sub-request, we see the last entry has an error so the overall result is 'r'.
+## Results explanation
+This result is 'comprehensive' in that the logic for several endpoint requests are being executed in this one call to cover the several kinds of concerns that can be important, and then consolidated into one result JSON. The 'outer' 'results' array are the 4 different calls made. The other 'outer' attributes are the consolidated results. The final_disposition value is 'r' meaning 'Red' alert level. Looking inside each sub-request, we see the last entry has an error so the overall result is 'r'.
 
-In our case, we have not loaded up the Runqueue service, so it has this error. On systems that do not use Runqueue, this part of the 'pingComprehensive
+In our case, we have not loaded up the Runqueue service, so it has this error.
+On systems that do not use Runqueue, this part of the 'pingComprehensive
  endpoint can be commented out (see the document [ROUTES.md](ROUTES.md) for how to customize existing Blueprint.Node route modules.)
 
 The four "comprehensive" checks being made here are:
@@ -445,10 +446,29 @@ Ping-comprehensive combines several health check endpoint type requests together
         "req_uuid": "4c4f1d18-2533-49a1-9bf4-64747182f6f1"
     }
 
-Again, a lot of details will be missing, including req_uuid values on objects because this is an aggregate (or group by) query that counts exception types. The `subject` indicates the type of query. `final_disposition` is the overall monitoring result status. See the [routes/r_health.js](routes/r_health.js) source for details on input paramater values. 
+Again, a lot of details will be missing, including req_uuid values on objects because this is an aggregate (or group by) query that counts exception types. The `subject` indicates the type of query. `final_disposition` is the overall monitoring result status. See the [routes/r_health.js](routes/r_health.js) source for details on input parameter values. 
 
-## Custom service health checks
-Anyone who implements a `service` can also add a method called `Healthcheck` which then is exposed at this endpoint: [http://localhost:9500/api/v1/ServiceHealth](http://localhost:9500/api/v1/ServiceHealth)
+### Tuning
+A few suggestions on setting the attributes that control this endpoint
+##### epoch_secs
+When you choose to check every minute (i.e. each 60 seconds) you will want to look at the log in a 'frame' of 120 seconds, to ensure that the health check does not miss a log entry that indicates an alert. If you check every 5 mins, the recommenation is to choose 600 seconds for a 'frame'. 
+##### endpoint_baselines
+Typically you leave this empty, until you discover that performance alarms are occuring on specific endpoints. If you investigate and find there are reasons for this longer `duration` then you can add that endpoint here to avoid the alarms. A typcial case is using of SES by this endpoint, which can take several seconds to complete. Firebase is similar - really any SaaS can cause delays, so add a "duration" value to the log line to help diagnose these issues. It might not take as much time in production, so it might be best to start with this value as empty on each enviroment, and only update it for the one environment's issues.
+
+### Troubleshooting
+Sadly, these 'ping' type services such as FreshPing, do not give you back the results of the endpoint requests. They typically only track good/bad from the status code (some will also track response times of the healthcheck endpoint itself.) Because of this, and because the health check endpoint gives out details that you need to understand what has happend, it is desirable to "replay" the original request to inspect the output. If you simply re-run the same endpoint request, but not the wall clock as moved ahead, you will not get the old response.
+
+There are two ways to approach this issue. The quick way is to click on the link (shown in Slack alert channel or FreshPing app) to load a browser tab with the full URL. Next edit the `epoch_secs` to a value that spans when the error was detected. For example, if the error occured 6 mins ago, try the value 6* 60* 2. Trying larger values does not always work, because the computed range is a "frame" - meaning it is a fixed block (an epoch), not a sliding window (using e.g. epoch_secs=300 means 5 min frames, starting on Jan 1 1970 and you get the same results until the wall clock moves to the next 5 min frame.)
+
+The other method is much more reliable but a bit more work. Click on the link again to load up the browser tab and this time add to the end of the URL `&now=2021-08-30+08:00:03` but using the exact time (and a UTC) that the failure occured. This value is usually 2 mins earlier than the Slack message you recieve. To be sure you can look at the FreshPing app log.
+
+In the FreshPing app log you also may see response codes of 599 or 598. This reflects the settings of the `red=` and `yellow=` settings - we are asking the endpoint to use these values so we can distinguish between a yellow and a red alert. For FreshPing, this is recorded in the log, but not reported in Slack.
+
+Another consideration - these 'tricks' to get back to the orinal log issue only works on the 3 endpoints-logic-blocks (Unexpected errors, Performance issues, and DB Deadlocks.) However, the service alert results are not reading strickly historical log information, so it may not be possible to know what was previously reported.
+
+
+## Adding a health check to your own services
+Anyone who implements a `service` can also add a method called `HealthCheck(ctx)` which then is exposed at this endpoint: [http://localhost:9500/api/v1/ServiceHealth](http://localhost:9500/api/v1/ServiceHealth)
 
     {
     "success": true,
@@ -459,8 +479,9 @@ Anyone who implements a `service` can also add a method called `Healthcheck` whi
         "auth_token": "TOKEN-VALUE.SIG"
     },
     "service": false,
-    "services": [ ],
+    "services": [ 'YOUR-SERVICE-NAME-HERE'],
     "req_uuid": "5cc08eeb-f422-4add-8b62-958e0eb904e7"
     }
 
-If you had such a service, the name would show up in the `services: []` list, and you can target it with `?service=` to check th health of that service. (More on this in [SERVICES.md](SERVICES.md))
+If you had such a service, the name would show up in the `services: []` list, and you can target it with `?service=` to check the health of that service. (More on this in [SERVICES.md](SERVICES.md)). You take a `ctx` and return at a minimum a {status: 'g'} (or 'y' or 'r'.) You may also wish to include `details: {}` to indicate what parts of the service are at issue. You can look closer at the method in [lib/runqueue.js](lib/runqueue.js) to see one way to accomplish this. It contains 3 separate hash objects for 3 areas to alert on (delays, retries, and failures.)
+
