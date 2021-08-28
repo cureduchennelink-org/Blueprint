@@ -1,27 +1,25 @@
 
-DROP   TABLE IF EXISTS runqueue;
-CREATE SEQUENCE runqueue_seq;
+CREATE TABLE runqueue
+(
+      id SERIAL     PRIMARY KEY
+    , di SMALLINT   DEFAULT 0 NOT NULL /* disposal - 0:none,1:disabled,2:purge*/
+    , cr TIMESTAMP  DEFAULT NOW()
+    , mo TIMESTAMP  DEFAULT NOW()
 
-CREATE TABLE runqueue (
-	 id		INT			NOT NULL DEFAULT NEXTVAL ('runqueue_seq') PRIMARY KEY
-	,di		SMALLINT    		DEFAULT 0 NOT NULL /* 'disposal' - 0:none,1:disabled,2:purge*/
-	,cr		TIMESTAMP(0)		DEFAULT 0 /* 'created' Must be first TIMESTAMP colum */
-	,mo		TIMESTAMP(0)		DEFAULT CURRENT_TIMESTAMP /* 'modified' */
+    , unique_key    VARCHAR(255) DEFAULT NULL       /* Arbitrary; for job uniqueness/lookup.  Must be unique across topics/jobs or null */
 
-    ,unique_key          VARCHAR(255)   DEFAULT NULL /* An arbitrary ID used for job uniqueness and lookup.  Must be unique across topics/jobs or null*/
+    , topic         VARCHAR( 128) DEFAULT NULL      /* Which topic to inform to process this job */
+    , group_ref     VARCHAR( 128) DEFAULT NULL      /* Which group for connection-limit counts */
 
-	,topic				VARCHAR( 128)	DEFAULT NULL /* Which topic to inform to process this job */
-	,group_ref			VARCHAR( 128)	DEFAULT NULL /* Which group for connection-limit counts */
+    , in_process    SMALLINT DEFAULT 0 NOT NULL      /* 0:not-running,1:running*/
+    , priority      INT DEFAULT 1000 NOT NULL        /* */
+    , run_at        TIMESTAMP(0) DEFAULT NULL
 
-	,in_process			SMALLINT			DEFAULT 0		NOT NULL /* 0:not-running,1:running*/
-	,priority			INT			DEFAULT 1000	NOT NULL /* */
-	,run_at				TIMESTAMP(0)		DEFAULT 0
+    , retries       INT DEFAULT 0 NOT NULL
+    , fail_at       TIMESTAMP(0) NULL DEFAULT NULL   /* When will we conclude caller has crashed */
+    , last_reason   TEXT DEFAULT NULL                /* On app error, reason string for next run if needed */
 
-	,retries			INT			DEFAULT 0		NOT NULL
-	,fail_at			TIMESTAMP(0)	NULL DEFAULT NULL		/* When will we conclude caller has crashed */
-	,last_reason		TEXT			DEFAULT NULL	/* On app error, reason string for next run if needed */
-
-	,json			    TEXT			DEFAULT NULL	/* Caller's info, such as text-message, email-data */
+    , json TEXT     DEFAULT NULL                     /* Caller's info, such as text-message, email-data */
 ) ;
 
 CREATE INDEX ix_runqueue__next_job ON runqueue(in_process,priority,run_at); /* Can be used to select just the one next job to do */

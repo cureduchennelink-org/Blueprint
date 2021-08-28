@@ -100,7 +100,8 @@ module.exports= {
 		// Notes: the *_at takes a 'moment().add' spec [number,string]; string should be one of:
 		// (months or M) (weeks or w) (days or d) (hours or h) (minutes or m) (seconds or s)
 		settings: {
-			poll_interval_ms: false, jobs: 100, read_depth: 20
+			poll_interval_ms: false, jobs: 100, read_depth: 20,
+			pollLogDelay: {quantity: 5, measurement: 'm'} // Chasen added this feature
 		},
 		topic_defaults: {
 			back_off: 'standard', last_fail: false, // No special handling
