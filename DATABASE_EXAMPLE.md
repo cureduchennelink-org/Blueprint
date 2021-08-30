@@ -2,10 +2,10 @@
 Building off of the example from the [README.md](README.md) we can add route modules that are backed by DB persistance. Additionally, use of a DB means we can now expose built-in services and capabilities such as LAMD logging with its HealthCheck endpoints, and OAuth 2.0 based authentication.
 
 ## Prerequisites
-DVblueprint has built-in support for Postgres using standard SQL commands against the 'pg' npm package. The API server connects to one database and uses the public schema. You will need access to a working Postgres instance (either locally, or using RDS for example.) We will use basic scripts to initialize the schema, and we'll use the config file src/container.js from the [README.md](README.md) example to configure access to the DB for DVblueprint.
+Blueprint.Node has built-in support for Postgres using standard SQL commands against the 'pg' npm package. The API server connects to one database and uses the public schema. You will need access to a working Postgres instance (either locally, or using RDS for example.) We will use basic scripts to initialize the schema, and we'll use the config file src/container.js from the [README.md](README.md) example to configure access to the DB for Blueprint.Node.
 
 ### Super user set up
-Eventually we'll create a reset script that can be run over and over, even while the API server is running. There are some one-time setups for the 'cluster' which are global to all databases on the 'cluster'. All these psql and create* commands should be run as the cluster/database "super user." On a local machine, this is likely your local login (run whoami to see your name.) Alternatively the database may be set up and run as the username 'postgres'. We'll use  ENV vars to allow us to run this example in any enviroment. You may also need to place your password in PGPASSWORD or ~/.pgpass. Set this ENV var for your situation...
+Eventually we'll create a reset script that can be run over and over, even while the API server is running. There are some one-time setups for the 'cluster' which are global to all databases on the 'cluster'. All these psql and create* commands should be run as the cluster/database "super user." On a local machine, this is likely your local login (run whoami to see your name.) Alternatively the database may be set up and run as the username 'postgres'. We'll use  ENV vars to allow us to run this example in any environment. You may also need to place your password in PGPASSWORD or ~/.pgpass. Set this ENV var for your situation...
 
     export SUPERUSER=`whoami`
 
@@ -37,8 +37,8 @@ Run these two separately; they will prompt for a password. You'll want to use th
     createuser --user $SUPERUSER --host $DBHOST -e -P local_api
     createuser --user $SUPERUSER --host $DBHOST -e -P flyway
 
-## Tell DVblueprint how to connect to your DB
-Update the file `src/container.js` to include this additional hash value: `db:` (Note: make modifications to password to fit your enviroment):
+## Tell Blueprint.Node how to connect to your DB
+Update the file `src/container.js` to include this additional hash value: `db:` (Note: make modifications to password to fit your environment):
 
 	module.exports= {
         route_modules: { ... }
@@ -59,7 +59,7 @@ Update the file `src/container.js` to include this additional hash value: `db:` 
 	}
 
 ## The PSQL module
-By putting SQL into its own module, we 'encapsulate' the implementation against the database, making it easier to refactor the table's schema without affecting the route/services layers. Additionally, we can add some javascript logic if needed or combine several SQL commands and give these a logical name within the module. Let's create the file src/psql_junk.js, then we'll tell DVblueprint where to find it, and finally we explicitly include this module in our main application's start-up script.
+By putting SQL into its own module, we 'encapsulate' the implementation against the database, making it easier to refactor the table's schema without affecting the route/services layers. Additionally, we can add some javascript logic if needed or combine several SQL commands and give these a logical name within the module. Let's create the file src/psql_junk.js, then we'll tell Blueprint.Node where to find it, and finally we explicitly include this module in our main application's start-up script.
 
     //
     //	Junk Database Functions
@@ -86,7 +86,7 @@ By putting SQL into its own module, we 'encapsulate' the implementation against 
 
     exports.PSqlJunk = PSqlJunk;
 
-### Tell DVblueprint where to find this psql mod
+### Tell Blueprint.Node where to find this psql mod
 Update the src/container.js `db.modules` section like this
 
             modules: {
@@ -101,9 +101,9 @@ Change this section of code in src/app.js (to include 'db' in the services list,
 
 
 ## Getting rid of 'Junk'
-Previoulsy we created an in-memory backed Fruit route module; this time we will create a DB backed Junk route module with 'get junk' and 'remove junk' endpoints. This module src/r_junk.js should look familiar but includes some interesting additional DVblueprint references. Some things to note regarding the source close shown below:
+Previously we created an in-memory backed Fruit route module; this time we will create a DB backed Junk route module with 'get junk' and 'remove junk' endpoints. This module src/r_junk.js should look familiar but includes some interesting additional Blueprint.Node references. Some things to note regarding the source close shown below:
 ##### static deps()
-This method declares our dependencies to DVblueprint (services, database modules, and configuration values.) We will be building a DB layer SQL module called 'junk' so we add that to this method.
+This method declares our dependencies to Blueprint.Node (services, database modules, and configuration values.) We will be building a DB layer SQL module called 'junk' so we add that to this method.
 ##### this.db
 We need a reference to the db service's core postgres module. This is how we do it. The result is a core service that will also be populated with psql_mods that we will be referencing in our route logic
 ##### this.endpoints.*.sql_conn
@@ -111,9 +111,9 @@ We use `sql_conn: true` on both endpoints because both require a DB connection t
 ##### this.endpoints.*.sql_tx
 We use `sql_tx: true` to start a transaction, only on the 'remove junk' endpoint, since it will mutate the database. The current logic is trivial and only has one DB call, so it might not make sense in this case for a transaction. However, when we or someone else goes back into this logic, and adds a `getById()` to check first for existence, then we'll need a read consistent transaction context, so doing this by rote, until we have a specific use case to avoid it, is best practice. This will automatically commit or rollback if there is an error when the route is called.
 ##### this.db.MODULE.METHOD( ctx, ...)
-Using the database layer modules from inside our endpoint logic is done this way (referencing the psql module via this.db and then a method, and passing `ctx` first). We will be creating a 'junk' psql module. All methods in the psql modules will take a `ctx` as their first paramter. This is how that downstream module/method gets reference to the DB handle form the pool, and will ensure all DB calls during this endpoint request are wrapped in the same transaction.
+Using the database layer modules from inside our endpoint logic is done this way (referencing the psql module via this.db and then a method, and passing `ctx` first). We will be creating a 'junk' psql module. All methods in the psql modules will take a `ctx` as their first parameter. This is how that downstream module/method gets reference to the DB handle form the pool, and will ensure all DB calls during this endpoint request are wrapped in the same transaction.
 ##### dbResults.affectedRows
-Mutation queries that do not have a RETURNING clause, will have an '.affectedRows' value. This is not strickly how postgres pg module works; however, this is done by DVblueprint so that your route logic can switch easily to using MySQL responses.
+Mutation queries that do not have a RETURNING clause, will have an '.affectedRows' value. This is not strictly how postgres pg module works; however, this is done by Blueprint.Node so that your route logic can switch easily to using MySQL responses.
 
     //
     // Junk route endpoints
@@ -192,7 +192,7 @@ Mutation queries that do not have a RETURNING clause, will have an '.affectedRow
 
     exports.JunkRoute = JunkRoute
 
-### Tell DVblueprint where to find this route module
+### Tell Blueprint.Node where to find this route module
 Update the src/container.js route_modules section with this line
 
             route_modules: {
@@ -204,10 +204,10 @@ Update the src/container.js route_modules section with this line
 Update src/app.js by adding 'JunkRoute' to the array of 'routes' to be exposed.
 
 ## Initialize the database
-As developers, we want to create a base schema, edit it over time, reset the DB's data, allow for test data to support easier testing including automated testing, and put all of this into an automated pipeline. These examples are consitent with use of FlyWay for your DB migrations (DB schema as code.)
+As developers, we want to create a base schema, edit it over time, reset the DB's data, allow for test data to support easier testing including automated testing, and put all of this into an automated pipeline. These examples are consistent with use of FlyWay for your DB migrations (DB schema as code.)
 
 ### Populate some scripts
-Start with a directory for database scripts including a place to keep sample data, and start with files for a first schema release, the sample data, permissions, and a manual DB init script. This latter script is typically used to initialize a DB to prepare it for FlyWay (permissions, etc.) and for local development and continuous integration environemnt creation.
+Start with a directory for database scripts including a place to keep sample data, and start with files for a first schema release, the sample data, permissions, and a manual DB init script. This latter script is typically used to initialize a DB to prepare it for FlyWay (permissions, etc.) and for local development and continuous integration environment creation.
 
 #### File structure
 Here is the sample file structure we can work from, where 'src' already exists (shown for context.) Establish these directories and files (empty for now) in your project:
@@ -231,7 +231,7 @@ This script can be used locally and in CI systems to bring up a DB from scratch 
     --
     -- psql may want PGPASSWORD or ~/.pgpass (e.g. single line like: *:*:*:*:your_pwd)
     --
-    -- For additional notes and prerequisites to using this script, see DATABASE_EXAMPLE.md in DVblueprint
+    -- For additional notes and prerequisites to using this script, see DATABASE_EXAMPLE.md in Blueprint.Node
     --
     -- Your DB super user (i.e. postgres) should also exist as a DB when using the cli:
     --  createdb --user $SUPERUSER $SUPERUSER
@@ -290,7 +290,7 @@ To keep our API server from making schema changes and allowing a FlyWay user to 
 ## Populate the schema and sample data
 
 ### Make a place for our 'Junk'
- This is an example of how to establish a table. Do not use 'DROP TABLE' because these scripts are never re-run over the top of themselves, niether by FlyWay nor our reset script (db/reset.psql will drop the whole schema first.) Note: The 'mo' field won't reflect modified time automatically until we add a trigger for that later. Paste this code into db/scripts/V1__base.js...
+ This is an example of how to establish a table. Do not use 'DROP TABLE' because these scripts are never re-run over the top of themselves, neither by FlyWay nor our reset script (db/reset.psql will drop the whole schema first.) Note: The 'mo' field won't reflect modified time automatically until we add a trigger for that later. Paste this code into db/scripts/V1__base.js...
 
     CREATE TABLE junk (
           id    SERIAL         PRIMARY KEY /* https://www.postgresqltutorial.com/postgresql-serial/ */
