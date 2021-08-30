@@ -1,8 +1,8 @@
-# DVblueprint
+# Blueprint.Node
 
 ## About
 
-DVblueprint is an out of the box Node.js REST server.
+Blueprint.Node is an out of the box Node.js REST server.
 
 **Features**:
 
@@ -23,10 +23,10 @@ DVblueprint is an out of the box Node.js REST server.
 * RunQ - a distributed cron runner
 
 # Quick Start
-The main application is its own directory which can be a repository. DVblueprint is going to be a package.json dependency.
+The main application is its own directory which can be a repository. Blueprint.Node is going to be a package.json dependency.
 Any subdirectories are your option. As the project grows you'll want routes and services and db mods in their own directory.
 The following commands will set up a simplified project directory to run an application that
-uses the DVblueprint server.
+uses the Blueprint.Node server.
 
 	$ cd my/workspace/directory
 	$ mkdir my_app
@@ -38,9 +38,9 @@ For `npm init` you will want to set the "entry point" prompt with `src/app.js` .
 
 	$ npm init
 
-#### Reference DVblueprint in your package.json
+#### Reference Blueprint.Node in your package.json
 Add a "dependencies" section of package.json, with this git url.
-Note: DVblueprint is a publicly available bitbucket repo.
+Note: Blueprint.Node is a publicly available bitbucket repo.
 
 	 "dependencies": {
 		"blueprint": "git+https://git@bitbucket.org/dv-mobile/blueprint.git#latest"
@@ -88,7 +88,7 @@ Logging is enhanced with bunyan, so using it to read the logs is preferable
 	$ sudo npm install bunyan -g
 
 #### Running
-Pull in DVblueprint:
+Pull in Blueprint.Node:
 
 	$ npm install
 
@@ -97,13 +97,13 @@ To run the application:
 	$ node src/app.js | bunyan -o short
 
 #### Verify things are going
-Vist the REST API Documentation: [http://localhost:9500/api/v1](http://localhost:9500/api/v1) - Oops, does not work, because we have no route modules exposed, so there is no service looking at that endpoint.
-Vist the example content: [http://localhost:9500/](http://localhost:9500/)
+Visit the REST API Documentation: [http://localhost:9500/api/v1](http://localhost:9500/api/v1) - Oops, does not work, because we have no route modules exposed, so there is no service looking at that endpoint.
+Visit the example content: [http://localhost:9500/](http://localhost:9500/)
 
 ## You did it!
 
 # Add your own route logic
-Let's create a custom route module with two endpoints. You will need to create a file with a class in it, then tell DVblueprint where to find it, and finally update the main application to expose this route.
+Let's create a custom route module with two endpoints. You will need to create a file with a class in it, then tell Blueprint.Node where to find it, and finally update the main application to expose this route.
 
 ### Create a route module
 In this example, we will create a 'FruitRoute' class and module to expose 'get fruit' and 'eat fruit' endpoints. Edit a file called src/r_fruit.js
@@ -183,8 +183,8 @@ In this example, we will create a 'FruitRoute' class and module to expose 'get f
 
 	exports.FruitRoute = FruitRoute
 
-### Tell DVblueprint where to find the Route Module
-Add the following to the application's config file so DVblueprint can find the Route Module:
+### Tell Blueprint.Node where to find the Route Module
+Add the following to the application's config file so Blueprint.Node can find the Route Module:
 
 	// container.js
 	module.exports = {
