@@ -1,8 +1,11 @@
 # Runqueue - Scalable Job Scheduler and Runner
 Work that is (or can be) done by our API servers but is not work caused by an endpoint request, falls into the category of "jobs." A job is implemented as a method of a service module. It can be reoccuring or run just once. If there is an error, it can be retried several times. When mulitple API instances are running, the Runqueue service will ensure that a job does not get scheduled to run more than once at a time. The service also will typically spread work out across servers, and can group jobs for the purpose of limiting the number of in-flight jobs in a group.
 
+### Pre-requisites
+This tutorial assumes you have set up the DB (from [DATABASE_EXAMPLE.md](DATABASE_EXAMPLE.md)) and optionally LAMD (from [LAMD.md](LAMD.md)).
+
 ## Use cases
-For re-occurring jobs, this system is designed for scheduling a job that run at most every few seconds; it is not much granular than about every second. It also is designed to support many thousands of scheduled jobs in the queue, most of which run once, and many run each min or hour or longer apart. For example, if you can just onboarded a user, but they have not yet finished some part of their profile, and you wish to send them an email an hour from now if they have not yet completed it - you can add a job during onboarding to run one hour in the future. Then, you can either have that job check that it is still valid to send the email, and either send it or not, but then exit - or you can assign a unique_key to the job when you create it, and when they finish the profile task, you can just delete this job before it runs. For this job to know which user it was create for, you would set the `json` state value when you create this job.
+For re-occurring jobs, this system is designed for scheduling a job that runs at most every few seconds; it is not much granular than about every second. It also is designed to support many thousands of scheduled jobs in the queue, most of which run once, and many run each min or hour or longer apart. For example, if you have just onboarded a user, but they have not yet finished some part of their profile, and you wish to send them an email an hour from now if they have not yet completed it - you can add a job during onboarding to run one hour in the future. Then, you can either have that job check that it is still valid to send the email, and either send it or not, but then exit - or you can assign a unique_key to the job when you create it, and when they finish the profile task, you can just delete this job before it runs. For this job to know which user it was created for, you would set the `json` state value when you create this job.
 
 ## AddJob
 To add a job to the queue, you call Runqueue.AddJob( ctx, details) - `ctx.conn` must be a usable DB handle; a transaction is not required. `Details` must have at least a `topic` which appears in the config file, and a `json` string for any state information being held for this job. Many jobs can be added under the same topic. More on topics is shown below - it is basically a set of attributes to help the Runqueue service know how to schedule, run, retry, fail, limit, etc. this job.
@@ -120,7 +123,7 @@ Place this code into a  new source module `src/myjob_service.js` ...
     // Sample config for this job:
     //  myjob: {
     //    service: 'MyJobService.myJobMethod', type: 'whatever you like here: do once and quit',
-    //    unique_key: 'myjob', priority: 1000, run_at: [5,'s'], group_ref: 'mygroup'
+    //    unique_key: 'myjob', priority: 1000, run_at: [5,'s']
     //  }
 
     class MyJobService {
@@ -157,10 +160,10 @@ Place this code into a  new source module `src/myjob_service.js` ...
             // Do some legitimate work, and track how far along we are in the 'json' state
             state.counter = ++this.counter
 
-            // When we have done eerything...
+            // When we have done everything...
             if (this.counter > 103) return { success: true } // We finished, don't call this job again
 
-            // Record state for next round, choose a run_at that reschedule ourselves immeadiately, to finish the work
+            // Record state for next round, choose a run_at that reschedules ourselves immeadiately, to finish the work
             const replace = { run_at: [0, 's'], json: JSON.stringify(state) }
 
             return { success: true, replace }
@@ -236,3 +239,279 @@ Runqueue service needs a table defined as well. Add this psql (from [db/schema_r
 #### Run it ...
 
     psql --user $SUPERUSER --host $DBHOST --echo-all --variable=db=$DBNAME < db/reset.psql
+
+### Look for results
+Looking at the MyJobService module code, the myJobMethod has a console.log line. Each time this job runs, we should get a line of output with the preceding string of equal signs `'============>> MyJobService:myJobMethod:`, and the `job` object. Here is what you should see ...
+
+##### RunQueue service starting
+The RunQueue service, on start up, looks for 'topics' and merges defaults in to each one, to create a list of working topcis that Jobs can be created for. In our case, we have just he one topic with a 'nm' of 'myjob'. Notice that by default (if not changed when adding the job) it will wait 5 seconds from when the job is added, before scheduling the job to run ...
+
+    [2021-08-30T14:25:17.221Z] DEBUG: server/25546 on deviq-james.local:
+        RunQueue::server_start: {
+            topic: {
+                nm: 'myjob',
+                back_off: 'standard',
+                last_fail: false,
+                priority: 1000,
+                group_ref: 'NONE',
+                limit: 1000000,
+                alarm_cnt: 8,
+                warn_cnt: 3,
+                warn_delay: [ 3, 'm' ],
+                alarm_delay: [ 10, 'm' ],
+                fail_at: [ 5, 'm' ],
+                service: 'MyJobService.myJobMethod',
+                type: 'whatever you like here: do once and quit',
+                unique_key: 'myjob',
+                run_at: [ 5, 's' ]
+            }
+        }
+
+##### AddJob called
+When our MyJobService starts up, it adds a job using RunQueue.AddJob( ctx, details) and the RunQueue service writes this to the DB as an actual job to be run when the `run_at` timestamp expires ... 
+
+    [2021-08-30T14:25:17.231Z] DEBUG: server/25546 on deviq-james.local: PostgreSqlCore:sqlQuery:-101-:PSQL:10
+     INSERT INTO runqueue
+      ( in_process,retries,fail_at,last_reason,priority,unique_key,topic,json,run_at,group_ref )
+       VALUES ( $1,$2,$3,$4,$5,$6,$7,$8,$9,$10 )
+    
+    [2021-08-30T14:25:17.231Z] DEBUG: server/25546 on deviq-james.local:
+        PostgreSqlCore:sqlQuery:-101-:ARGS [
+        0,
+        0,
+        null,
+        null,
+        1000,
+        'myjob',
+        'myjob',
+        '{"some":"value","counter":100}',
+        '2021-08-30 08:25:22',
+        'NONE'
+        ]
+    
+    [2021-08-30T14:25:17.234Z] DEBUG: server/25546 on deviq-james.local: PostgreSqlCore:sqlQuery:-101-:
+     { command: 'INSERT', rowCount: 1, rows: [], time_ms: 3 }
+
+##### RunQueue poller eventually finds a job
+The RunQueue service has a polling process that checks the DB for jobs that are ready to run (run_at < current-time). Initially this will return  nothing until the 5 seconds have passed. Then we see below how the job is found and read from the DB. Many such jobs may be read from the DB at one time. Each API server instance then attempts to get a 'lock' on this job, to be the instance that runs the job (using optomistic locking) ...
+
+    [2021-08-30T14:25:27.241Z] DEBUG: server/25546 on deviq-james.local:
+        PostgreSqlCore:sqlQuery:-101-:PSQL:3 
+                    SELECT *
+                    FROM runqueue
+                    WHERE run_at < $1
+                    AND retries < $2
+                    AND in_process = 0
+                    AND di= 0
+                    ORDER BY priority, run_at
+                    LIMIT $3
+                
+    [2021-08-30T14:25:27.242Z] DEBUG: server/25546 on deviq-james.local:
+     PostgreSqlCore:sqlQuery:-101-:ARGS [ '2021-08-30 08:25:27', 8, 20 ]
+    
+    [2021-08-30T14:25:27.243Z] DEBUG: server/25546 on deviq-james.local:
+        PostgreSqlCore:sqlQuery:-101-: {
+        command: 'SELECT',
+        rowCount: 1,
+        rows: [
+            {
+            id: 1,
+            di: 0,
+            cr: 2021-08-30T14:25:17.232Z,
+            mo: 2021-08-30T14:25:17.232Z,
+            unique_key: 'myjob',
+            topic: 'myjob',
+            group_ref: 'NONE',
+            in_process: 0,
+            priority: 1000,
+            run_at: 2021-08-30T14:25:22.000Z,
+            retries: 0,
+            fail_at: null,
+            last_reason: null,
+            json: '{"some":"value","counter":100}'
+            }
+        ],
+        time_ms: 1
+        }
+    [2021-08-30T14:25:27.243Z] DEBUG: server/25546 on deviq-james.local:
+     RunQueue::_Poll :>> 1 JOB FOUND.
+
+
+
+##### First run / log line
+On the first attempt to run this job, we see that our initial counter value is indeed 100. We then return an object with `success: true` to avoid the error-retry-logic, and then, because we want to run this job again with an updated counter value we return (a) `replace: {}` object to signal the request to reschedule ourselves, and (b) an updated `json: string` value with our new state, and (c) an override run_at to request that we immeadiately be scheduled to run again ...
+
+    ============>> MyJobService:myJobMethod: {
+        id: 1,
+        di: 0,
+        cr: 2021-08-30T14:25:17.232Z,
+        mo: 2021-08-30T14:25:17.232Z,
+        unique_key: 'myjob',
+        topic: 'myjob',
+        group_ref: 'NONE',
+        in_process: 0,
+        priority: 1000,
+        run_at: 2021-08-30T14:25:22.000Z,
+        retries: 0,
+        fail_at: null,
+        last_reason: null,
+        json: '{"some":"value","counter":100}'
+    }
+    
+    [2021-08-30T14:25:27.248Z] DEBUG: server/25546 on deviq-james.local:
+        RunQueue::_ProcessTopicResult::TOPIC RESULT FOR myjob :>> {
+            topic_result: {
+                success: true,
+                replace: { run_at: [Array], json: '{"some":"value","counter":101}' }
+            }
+        }
+
+##### Second run / log line
+We get our upated counter of 101. On this run we have planned to throw an error to see how the RunQueue handles it. The expectation is that the error is recorded, the run_at set using the 'standard' backoff strategy, and we should expect to run again later ...
+
+    ============>> MyJobService:myJobMethod: {
+        id: 1,
+        di: 0,
+        cr: 2021-08-30T14:25:17.232Z,
+        mo: 2021-08-30T14:25:17.232Z,
+        unique_key: 'myjob',
+        topic: 'myjob',
+        group_ref: 'NONE',
+        in_process: 0,
+        priority: 1000,
+        run_at: 2021-08-30T14:25:27.000Z,
+        retries: 0,
+        fail_at: null,
+        last_reason: null,
+        json: '{"some":"value","counter":101}'
+    }
+    
+    [2021-08-30T14:25:32.258Z] DEBUG: server/25546 on deviq-james.local:
+        RunQueue::_ProcessTopicResult::TOPIC RESULT FOR myjob :>> {
+            topic_result: {
+                success: false,
+                reason: 'Error: I failed hard, pick again\n' +
+                '    at MyJobService.myJobMethod (/Users/james.shelby/Clients/SampleProjects/my_app5/src/myjob_service.js:39:69)\n' +
+                '    at Promise.map.concurrency (/Users/james.shelby/Clients/SampleProjects/my_app5/node_modules/blueprint/lib/runqueue.js:435:48)\n' +
+                '    at processTicksAndRejections (node:internal/process/task_queues:96:5)'
+            }
+        }
+
+##### Third run / log line
+It appears we have run 5 seconds later. Our counter is still 101, and we see a `last_reason` failure value. This time we will return a `sucesss: true` and the updated counter.
+
+    ============>> MyJobService:myJobMethod: {
+        id: 1,
+        di: 0,
+        cr: 2021-08-30T14:25:17.232Z,
+        mo: 2021-08-30T14:25:17.232Z,
+        unique_key: 'myjob',
+        topic: 'myjob',
+        group_ref: 'NONE',
+        in_process: 0,
+        priority: 1000,
+        run_at: 2021-08-30T14:25:45.000Z,
+        retries: 1,
+        fail_at: null,
+        last_reason: 'Error: I failed hard, pick again\n' +
+            '    at MyJobService.myJobMethod (/Users/james.shelby/Clients/SampleProjects/my_app5/src/myjob_service.js:39:69)\n' +
+            '    at Promise.map.concurrency (/Users/james.shelby/Clients/SampleProjects/my_app5/node_modules/blueprint/lib/runqueue.js:435:48)\n' +
+            '    at processTicksAndRejections (node:internal/process/task_queues:96:5)',
+        json: '{"some":"value","counter":101}'
+    }
+    
+    [2021-08-30T14:25:47.281Z] DEBUG: server/25546 on deviq-james.local:
+        RunQueue::_ProcessTopicResult::TOPIC RESULT FOR myjob :>> {
+            topic_result: {
+                success: true,
+                replace: { run_at: [Array], json: '{"some":"value","counter":102}' }
+            }
+        }
+
+##### Fourth run / log line
+Here we get the updated 102 counter value, and we see the last_reason failure text is now empty. We return an updated counter value and reschedule ...
+
+    ============>> MyJobService:myJobMethod: {
+        id: 1,
+        di: 0,
+        cr: 2021-08-30T14:25:17.232Z,
+        mo: 2021-08-30T14:25:17.232Z,
+        unique_key: 'myjob',
+        topic: 'myjob',
+        group_ref: 'NONE',
+        in_process: 0,
+        priority: 1000,
+        run_at: 2021-08-30T14:25:47.000Z,
+        retries: 0,
+        fail_at: null,
+        last_reason: null,
+        json: '{"some":"value","counter":102}'
+    }
+    
+    [2021-08-30T14:25:52.289Z] DEBUG: server/25546 on deviq-james.local:
+        RunQueue::_ProcessTopicResult::TOPIC RESULT FOR myjob :>> {
+            topic_result: {
+                success: true,
+                replace: { run_at: [Array], json: '{"some":"value","counter":103}' }
+            }
+        }
+
+##### Fifth and final run
+Here we get the 103 counter value, and return just `sucess: true` without a `replace: {}` and therefor the job is marked by the RunQueue service as 'done' (i.e. `di` flat set to 1) ...
+
+    ============>> MyJobService:myJobMethod: {
+        id: 1,
+        di: 0,
+        cr: 2021-08-30T14:25:17.232Z,
+        mo: 2021-08-30T14:25:17.232Z,
+        unique_key: 'myjob',
+        topic: 'myjob',
+        group_ref: 'NONE',
+        in_process: 0,
+        priority: 1000,
+        run_at: 2021-08-30T14:25:52.000Z,
+        retries: 0,
+        fail_at: null,
+        last_reason: null,
+        json: '{"some":"value","counter":103}'
+    }
+    
+    [2021-08-30T14:25:57.301Z] DEBUG: server/25546 on deviq-james.local:
+     RunQueue::_ProcessTopicResult::TOPIC RESULT FOR myjob :>> { topic_result: { success: true } }
+
+
+### Starting the API server a second time
+This job has a unique key equal to the topic name `myjob`. When the job is added the first time all is good. When we restart the API server (or if another instance of the API server is started against the same DB), there is a duplicate key violation trying to add the job again. Why does this happen, if the job has run to completion successfuly? Jobs are left in the DB and marked done using the `di` (disposition) column flag. This is done to allow for viewing the final results of all jobs. If you trully wish to create and run more than one of this type of job on each start-up, you would want to either not set the unique_key, or use a unique_key value that is different each time. For example, for a job of this type (topic) that is unique for a given user, you could use the unique_key of `topic + ident_id`. A typical use-case is to set the unique_key to the value of the topic, when you want a re-occuring job that is never done (i.e. always reschedules itself.) This is how a typical `cron` entry would be implemented.
+
+Here is the output in the console, which in our service was caught and logged, but not re-thrown (so not a fatal server error) If we wanted the API server to fail to start, we would re-throw (or not have caught) this error. (Note: If you wish to run this job again with the same unique_key, try restting the DB and re-start the server) ...
+
+    ================ >>  error: duplicate key value violates unique constraint "ix_runqueue__unique_key"
+        at Parser.parseErrorMessage (/Users/james.shelby/Clients/SampleProjects/my_app5/node_modules/pg-protocol/dist/parser.js:287:98)
+        at Parser.handlePacket (/Users/james.shelby/Clients/SampleProjects/my_app5/node_modules/pg-protocol/dist/parser.js:126:29)
+        at Parser.parse (/Users/james.shelby/Clients/SampleProjects/my_app5/node_modules/pg-protocol/dist/parser.js:39:38)
+        at Socket.<anonymous> (/Users/james.shelby/Clients/SampleProjects/my_app5/node_modules/pg-protocol/dist/index.js:11:42)
+        at Socket.emit (node:events:394:28)
+        at Socket.emit (node:domain:475:12)
+        at addChunk (node:internal/streams/readable:315:12)
+        at readableAddChunk (node:internal/streams/readable:289:9)
+        at Socket.Readable.push (node:internal/streams/readable:228:10)
+        at TCP.onStreamRead (node:internal/stream_base_commons:199:23)
+        at TCP.callbackTrampoline (node:internal/async_hooks:130:17) {    
+            length: 221,
+            severity: 'ERROR',
+            code: '23505',
+            detail: 'Key (unique_key)=(myjob) already exists.',
+            hint: undefined,
+            position: undefined,
+            internalPosition: undefined,
+            internalQuery: undefined,
+            where: undefined,
+            schema: 'public',
+            table: 'runqueue',
+            column: undefined,
+            dataType: undefined,
+            constraint: 'ix_runqueue__unique_key',
+            file: 'nbtinsert.c',
+            line: '656',
+            routine: '_bt_check_unique'
+        }
