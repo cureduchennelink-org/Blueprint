@@ -6,147 +6,147 @@ Technically a 'module' is a single source file on disk. A `Service` is a class d
 ## Service Example
 Let's look at a fully populated `Service module` containing multiple `Services` with dependencies on other services, and with all the possible lifecycle methods. Create a single source module for these two service classes `src/my_service.js` ...
 
-//
-// Service module description goes here
-//
-// (Optional, if you have config entries you expect, put a cut-n-paste-able version here)
-// myServiceOne: { one: 'string-whatever', two: 'string-whatever'}
-//
+    //
+    // Service module description goes here
+    //
+    // (Optional, if you have config entries you expect, put a cut-n-paste-able version here)
+    // myServiceOne: { one: 'string-whatever', two: 'string-whatever'}
+    //
 
-// Add any common module requirements (i.e. you can still use the require method for npm modules and library code)
-const Promise = require('bluebird') // You may have to add to package.json, your dependencies
-const _ = require('lodash')
-const { Util } = require('../node_modules/blueprint/lib/Util') // Load a utility from blueprint
-//const localCode = require('./some_local_lib') // Relative to the current module location
+    // Add any common module requirements (i.e. you can still use the require method for npm modules and library code)
+    const Promise = require('bluebird') // You may have to add to package.json, your dependencies
+    const _ = require('lodash')
+    const { Util } = require('../node_modules/blueprint/lib/Util') // Load a utility from blueprint
+    //const localCode = require('./some_local_lib') // Relative to the current module location
 
-class MyServiceOne {
+    class MyServiceOne {
 
-    static deps() {
-        return {
+        static deps() {
+            return {
 
-            // These services will be loaded and their lifecycle methods called before yours
-            // You reference them as kit.services.NAME
-            services: ['error', 'logger', 'config', 'RunQueue'],
+                // These services will be loaded and their lifecycle methods called before yours
+                // You reference them as kit.services.NAME
+                services: ['error', 'logger', 'config', 'RunQueue'],
 
-            // If you populate this array, you automatically get 'db' service as a dependency
-            // You must put these mods into src/app.js also
-            psql_mods: ['mypsql'],
+                // If you populate this array, you automatically get 'db' service as a dependency
+                // You must put these mods into src/app.js also
+                psql_mods: ['mypsql'],
 
-            // This is mostly for human consumption currently (future feature: validation)
-            // Document for users which config variables you are expecting in the config file
-            config: 'myServiceOne{one,two}'
+                // This is mostly for human consumption currently (future feature: validation)
+                // Document for users which config variables you are expecting in the config file
+                config: 'myServiceOne{one,two}'
+            }
+        }
+
+        // All services are instantiated (based on which service depends on which)
+        // Next, see below server_use, server_init, server_start for order of operations
+        constructor(kit, extraConfig) { // Extra config comes from the config file, see next section
+            const f = 'MyServiceOne:constructor:'
+
+            // Load kit services; you can safely grab references here of services you depend on
+            // Try not to call their methods yet, or invoke much logic here in the constructor
+            this.E = kit.services.error
+            this.log = kit.services.logger.log // Used to log outside of a "ctx" context (i.e. not in an endpoint request context)
+            this.config = kit.services.config.myServiceOne
+            this.runqueue = kit.services.RunQueue
+            this.sdb = kit.services.db.psql // The database service which gives us access to 'core' and our psql_mods
+
+            this.log.debug(f, { extraConfig })
+            // Process the config entries that may even be environment specific
+            this.one = extraConfig.one || this.config.one || 'whatever'
+
+        }
+
+        // Order is server.add_restify_handlers, (all services server_use method), then server.parse_json, server.strip_html
+        // Installed using server.use(this-function) - you will be called by Restify for each endpoint request inbound, before route logic
+        server_use(req, res, next) {
+            const f = 'MyServiceOne:server_use:'
+            this.log.debug(f, { req_params: req.params }) // Logging outside of a "ctx" context
+            if (req.params.Version !== 'v1') res.send(new Error('I do not like this api version request'))
+            return next();
+        }
+
+        // Order for _init/_init_promise: (All service server_init(kit) and/or server_init_promise)(kit,promiseChain) in order of service dependency
+        async server_init(kit) {
+            // Access services that I depend on, but other services are only instantiated at this point.
+            const f = 'MyServiceOne:server_init:'
+            this.log.debug(f, { kitServices: Object.keys(kit.services) }) // Logging outside of a "ctx" context
+        }
+        server_init_promise(kit, promiseChain) {
+            return promiseChain.then(() => {
+                // Do something inside a promise chain
+                const f = 'MyServiceOne:server_init_promise:'
+                this.log.debug(f, { kitServices: Object.keys(kit.services) }) // Logging outside of a "ctx" context
+            })
+        }
+
+        // Next (after *_init) all routes are instantiated, then all routes.server_init(kit) called, then each services server_start(kit)
+        async server_start(kit) {
+            // All services I depend on are 'start'ed and all services are at least 'init'ed. Also, all routes are instantiated and 'init'ed
+            const f = 'MyServiceOne:server_start:'
+            this.log.debug(f, { kitServices: Object.keys(kit.services) }) // Logging outside of a "ctx" context
+            this.longHeldHandle = await this.sdb.core.Acquire(); // Could get a DB handle at this point
+        }
+
+        jobMethod(job) {
+            // Services can expose methods that implement jobs from the RunQueue (referenced in the 'topic' config as '<service-alias>.jobMethod')
+            const f = 'MyServiceOne:jobMethod:'
+            this.log.debug(f, { kitServices: Object.keys(kit.services) }) // Logging outside of a "ctx" context
+        }
+
+        // Other services and any routes can call any method in any order, but most will do so only after your server_init() is called.
+        async anyMethod(ctx, some, params) {
+            // Best practice is to pass down a 'ctx' value, especially from route logic, which holds a DB handle and logging context
+            const f = 'MyServiceOne:anyMethod:'
+            ctx.log.debug(f, { some, params }) // Logging your inbound params makes it easier to figure out what when wrong where
+
+            var dbRows, dbResult // If you reuse these names for all DB related staging vars prior to parity checks on results, you code is more cut-n-paste-able
+            const returnObject = {}
+
+            dbRows = await this.sdb.mypsql.reader(ctx, params)
+            if (dbRows.length === 0) throw new this.E.NotFoundError(f + 'mypsql.reader')
+            returnObject.things = dbRows
+
+            // Alternatively, if you expect exactly one row, enforce that here, to detect misconfigured DB tables
+            if (dbRows.length !== 1) throw new this.E.NotFoundError(f + 'mypsql.reader.' + dbRows.length)
+            returnObject.thing = dbRows[0]
+
+            return returnObject
         }
     }
+    exports.MyServiceOne = MyServiceOne
 
-    // All services are instantiated (based on which service depends on which)
-    // Next, see below server_use, server_init, server_start for order of operations
-    constructor(kit, extraConfig) { // Extra config comes from the config file, see next section
-        const f = 'MyServiceOne:constructor:'
+    // Minimal service, exposes a simple method that multiple routes use, as an example
+    class MyServiceTwo {
 
-        // Load kit services; you can safely grab references here of services you depend on
-        // Try not to call their methods yet, or invoke much logic here in the constructor
-        this.E = kit.services.error
-        this.log = kit.services.logger.log // Used to log outside of a "ctx" context (i.e. not in an endpoint request context)
-        this.config = kit.services.config.myServiceOne
-        this.runqueue = kit.services.RunQueue
-        this.sdb = kit.services.db.psql // The database service which gives us access to 'core' and our psql_mods
+        static deps() {
+            return { services: ['MyServiceOneAlias'], psql_mods: [], config: '' }
+        }
 
-        this.log.debug(f, { extraConfig })
-        // Process the config entries that may even be environment specific
-        this.one = extraConfig.one || this.config.one || 'whatever'
+        // Order is, all services are instantiated (based on which service depends on which), next (see below server_use, server_init, server_start)
+        constructor(kit, extraConfig) {
+            this.cache = extraConfig || {} // Optionally can set an initial cache from the config file
+        }
 
+        get(name) {
+            return this.cache[name]
+        }
+
+        put(name, value) {
+            this.cache[name] = value;
+        }
     }
-
-    // Order is server.add_restify_handlers, (all services server_use method), then server.parse_json, server.strip_html
-    // Installed using server.use(this-function) - you will be called by Restify for each endpoint request inbound, before route logic
-    server_use(req, res, next) {
-        const f = 'MyServiceOne:server_use:'
-        this.log.debug(f, { req_params: req.params }) // Logging outside of a "ctx" context
-        if (req.params.Version !== 'v1') res.send(new Error('I do not like this api version request'))
-        return next();
-    }
-
-    // Order for _init/_init_promise: (All services' server_init(kit) and/or server_init_promise)(kit,promiseChain) in order of service dependency
-    async server_init(kit) {
-        // Access services that I depend on, but other services are only instantiated at this point.
-        const f = 'MyServiceOne:server_init:'
-        this.log.debug(f, { kitServices: Object.keys(kit.services) }) // Logging outside of a "ctx" context
-    }
-    server_init_promise(kit, promiseChain) {
-        return promiseChain.then(() => {
-            // Do something inside a promise chain
-            const f = 'MyServiceOne:server_init_promise:'
-            this.log.debug(f, { kitServices: Object.keys(kit.services) }) // Logging outside of a "ctx" context
-        })
-    }
-
-    // Next (after *_init) all routes are instantiated, then all routes.server_init(kit) called, then each services' server_start(kit)
-    async server_start(kit) {
-        // All services I depend on are 'start'ed and all services are at least 'init'ed. Also, all routes are instantiated and 'init'ed
-        const f = 'MyServiceOne:server_start:'
-        this.log.debug(f, { kitServices: Object.keys(kit.services) }) // Logging outside of a "ctx" context
-        this.longHeldHandle = await this.sdb.core.Acquire(); // Could get a DB handle at this point
-    }
-
-    jobMethod(job) {
-        // Services can expose methods that implement jobs from the RunQueue (referenced in the 'topic' config as '<service-alias>.jobMethod')
-        const f = 'MyServiceOne:jobMethod:'
-        this.log.debug(f, { kitServices: Object.keys(kit.services) }) // Logging outside of a "ctx" context
-    }
-
-    // Other services and any routes can call any method in any order, but most will do so only after your server_init() is called.
-    async anyMethod(ctx, some, params) {
-        // Best practice is to pass down a 'ctx' value, especially from route logic, which holds a DB handle and logging context
-        const f = 'MyServiceOne:anyMethod:'
-        ctx.log.debug(f, { some, params }) // Logging your inbound params makes it easier to figure out what when wrong where
-
-        var dbRows, dbResult // If you reuse these names for all DB related staging vars prior to parity checks on results, you code is more cut-n-paste-able
-        const returnObject = {}
-
-        dbRows = await this.sdb.mypsql.reader(ctx, params)
-        if (dbRows.length === 0) throw new this.E.NotFoundError(f + 'mypsql.reader')
-        returnObject.things = dbRows
-
-        // Alternatively, if you expect exactly one row, enforce that here, to detect misconfigured DB tables
-        if (dbRows.length !== 1) throw new this.E.NotFoundError(f + 'mypsql.reader.' + dbRows.length)
-        returnObject.thing = dbRows[0]
-
-        return returnObject
-    }
-}
-exports.MyServiceOne = MyServiceOne
-
-// Minimal service, exposes a simple method that multiple routes use, as an example
-class MyServiceTwo {
-
-    static deps() {
-        return { services: ['MyServiceOneAlias'], psql_mods: [], config: '' }
-    }
-
-    // Order is, all services are instantiated (based on which service depends on which), next (see below server_use, server_init, server_start)
-    constructor(kit, extraConfig) {
-        this.cache = extraConfig || {} // Optionally can set an initial cache from the config file
-    }
-
-    get(name) {
-        return this.cache[name]
-    }
-
-    put(name, value) {
-        this.cache[name] = value;
-    }
-}
-exports.MyServiceTwo = MyServiceTwo
+    exports.MyServiceTwo = MyServiceTwo
 
 ## Config example
 Imagine we want one instance of `MyServiceOne` and two instances of `MyServiceTwo` with separately configured caches. You might do it like this ...
 
+    myServiceOne: {one: 1, two: 2}, // Configuration for MyServiceOne service
     service_modules: {
         MyServiceOneAlias: { class: 'MyServiceOne', file: 'src/my_service', instConfig: {one: 3}},
         MyServiceTwoA: { class: 'MyServiceTwo', file: 'src/my_service', instConfig: {item1: 'x', item2: 'y'}},
         MyServiceTwoB: { class: 'MyServiceTwo', file: 'src/my_service', instConfig: {item1: 'a', item2: 'b'}},
     },
-    myServiceOne: {one: 1, two: 2}, // Configuration for MyServiceOne service
 
 ## Pulling in services
 Let's update `src/app.js` with just the `MyServiceTwo` aliases (A and B) and we expect `MyServiceOne` to load automatically because of the dependency we put into `static deps()` for the service class `MyServiceTwo` ...
@@ -370,7 +370,7 @@ If there is a failure due to a misspelling in your config, it should fail with a
         }
     19:37:41.141Z  INFO server: Initializing MyJobService Service...
     19:37:41.141Z DEBUG server: Kit::new_service:  { name: 'MyJobService', constructor: [class MyJobService] }
-##### Here is out MyServiceOne class loading with the name MyServiceOneAlias (before any MyServiceTwo? services load)
+##### Here is our MyServiceOne class loading with the name MyServiceOneAlias (before any MyServiceTwo? services load)
     19:37:41.141Z  INFO server: Initializing MyServiceOne Service...
     19:37:41.141Z DEBUG server: Kit::new_service:  { name: 'MyServiceOneAlias', constructor: [class MyServiceOne] }
 ##### This is our constructor log message, showing the extraConfig info
