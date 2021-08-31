@@ -98,7 +98,7 @@ Let's look at a fully populated `Service module` containing multiple `Services` 
         async anyMethod(ctx, some, params) {
             // Best practice is to pass down a 'ctx' value, especially from route logic, which holds a DB handle and logging context
             const f = 'MyServiceOne:anyMethod:'
-            ctx.log.debug(f, { some, params }) // Logging your inbound params makes it easier to figure out what when wrong where
+            ctx.log.debug(f, { some, params }) // Logging your inbound params makes it easier to figure out what went wrong where
 
             var dbRows, dbResult // If you reuse these names for all DB related staging vars prior to parity checks on results, you code is more cut-n-paste-able
             const returnObject = {}
@@ -123,7 +123,6 @@ Let's look at a fully populated `Service module` containing multiple `Services` 
             return { services: ['MyServiceOneAlias'], psql_mods: [], config: '' }
         }
 
-        // Order is, all services are instantiated (based on which service depends on which), next (see below server_use, server_init, server_start)
         constructor(kit, extraConfig) {
             this.cache = extraConfig || {} // Optionally can set an initial cache from the config file
         }
@@ -467,75 +466,75 @@ This method is not called yet, hence no log lines from our logging - this happen
 ##### Next server_init and server_init_promise on each service is being called. This is our log line showing
     19:37:41.182Z DEBUG server:
         MyServiceOne:server_init: {
-        kitServices: [
-            'config',            'logger',
-            'error',             'restify_logger',
-            'server',            'tokenMgr',
-            'db',                'auth',
-            'lamd',              'slack',
-            'RunQueue',          'MyJobService',
-            'MyServiceOneAlias', 'MyServiceTwoA',
-            'MyServiceTwoB',     'template_use',
-            'router',            'wrapper',
-            'template',          'ses',
-            'tripMgr',           'event'
-        ]
+            kitServices: [
+                'config',            'logger',
+                'error',             'restify_logger',
+                'server',            'tokenMgr',
+                'db',                'auth',
+                'lamd',              'slack',
+                'RunQueue',          'MyJobService',
+                'MyServiceOneAlias', 'MyServiceTwoA',
+                'MyServiceTwoB',     'template_use',
+                'router',            'wrapper',
+                'template',          'ses',
+                'tripMgr',           'event'
+            ]
         }
     19:37:41.182Z DEBUG server:
         MyServiceOne:server_init_promise: {
-        kitServices: [
-            'config',            'logger',
-            'error',             'restify_logger',
-            'server',            'tokenMgr',
-            'db',                'auth',
-            'lamd',              'slack',
-            'RunQueue',          'MyJobService',
-            'MyServiceOneAlias', 'MyServiceTwoA',
-            'MyServiceTwoB',     'template_use',
-            'router',            'wrapper',
-            'template',          'ses',
-            'tripMgr',           'event'
-        ]
+            kitServices: [
+                'config',            'logger',
+                'error',             'restify_logger',
+                'server',            'tokenMgr',
+                'db',                'auth',
+                'lamd',              'slack',
+                'RunQueue',          'MyJobService',
+                'MyServiceOneAlias', 'MyServiceTwoA',
+                'MyServiceTwoB',     'template_use',
+                'router',            'wrapper',
+                'template',          'ses',
+                'tripMgr',           'event'
+            ]
         }
 ##### Next server_start on each service is called
     19:37:41.183Z DEBUG server:
         RunQueue::server_start: {
-        topic: {
-            nm: 'myjob',
-            back_off: 'standard',
-            last_fail: false,
-            priority: 1000,
-            group_ref: 'NONE',
-            limit: 1000000,
-            alarm_cnt: 8,
-            warn_cnt: 3,
-            warn_delay: [ 3, 'm' ],
-            alarm_delay: [ 10, 'm' ],
-            fail_at: [ 5, 'm' ],
-            service: 'MyJobService.myJobMethod',
-            type: 'whatever you like here: do once and quit',
-            unique_key: 'myjob',
-            run_at: [ 5, 's' ]
-        }
+            topic: {
+                nm: 'myjob',
+                back_off: 'standard',
+                last_fail: false,
+                priority: 1000,
+                group_ref: 'NONE',
+                limit: 1000000,
+                alarm_cnt: 8,
+                warn_cnt: 3,
+                warn_delay: [ 3, 'm' ],
+                alarm_delay: [ 10, 'm' ],
+                fail_at: [ 5, 'm' ],
+                service: 'MyJobService.myJobMethod',
+                type: 'whatever you like here: do once and quit',
+                unique_key: 'myjob',
+                run_at: [ 5, 's' ]
+            }
         }
 ##### Services are starting to process things - here the RunQueue is beginning to poll the DB
     19:37:41.185Z DEBUG server: RunQueue::_PollWrapper::USING DEFAULT INTERVAL :>> 5000
     RUNQUEUE { interval: 5000 }
     RUNQUEUE:BEFORE { interval: 5000 }
-##### Our old MyJobService is running service_start to add the on job to the queue; it already exists and catches and logs the error
+##### Our old MyJobService is running service_start to add the one job to the queue; it already exists and catches and logs the error
     19:37:41.195Z DEBUG server: PostgreSqlCore:sqlQuery:-101-:PSQL:10 INSERT INTO runqueue ( in_process,retries,fail_at,last_reason,priority,unique_key,topic,json,run_at,group_ref ) VALUES ( $1,$2,$3,$4,$5,$6,$7,$8,$9,$10 )
     19:37:41.196Z DEBUG server:
         PostgreSqlCore:sqlQuery:-101-:ARGS [
-        0,
-        0,
-        null,
-        null,
-        1000,
-        'myjob',
-        'myjob',
-        '{"some":"value","counter":100}',
-        '2021-08-31 13:37:46',
-        'NONE'
+            0,
+            0,
+            null,
+            null,
+            1000,
+            'myjob',
+            'myjob',
+            '{"some":"value","counter":100}',
+            '2021-08-31 13:37:46',
+            'NONE'
         ]
     ================ >>  error: duplicate key value violates unique constraint "ix_runqueue__unique_key"
         at Parser.parseErrorMessage (/Users/james.shelby/Clients/SampleProjects/my_app7/node_modules/pg-protocol/dist/parser.js:287:98)
@@ -548,46 +547,46 @@ This method is not called yet, hence no log lines from our logging - this happen
         at readableAddChunk (node:internal/streams/readable:289:9)
         at Socket.Readable.push (node:internal/streams/readable:228:10)
         at TCP.onStreamRead (node:internal/stream_base_commons:199:23) {
-    length: 221,
-    severity: 'ERROR',
-    code: '23505',
-    detail: 'Key (unique_key)=(myjob) already exists.',
-    hint: undefined,
-    position: undefined,
-    internalPosition: undefined,
-    internalQuery: undefined,
-    where: undefined,
-    schema: 'public',
-    table: 'runqueue',
-    column: undefined,
-    dataType: undefined,
-    constraint: 'ix_runqueue__unique_key',
-    file: 'nbtinsert.c',
-    line: '656',
-    routine: '_bt_check_unique'
-    }
+            length: 221,
+            severity: 'ERROR',
+            code: '23505',
+            detail: 'Key (unique_key)=(myjob) already exists.',
+            hint: undefined,
+            position: undefined,
+            internalPosition: undefined,
+            internalQuery: undefined,
+            where: undefined,
+            schema: 'public',
+            table: 'runqueue',
+            column: undefined,
+            dataType: undefined,
+            constraint: 'ix_runqueue__unique_key',
+            file: 'nbtinsert.c',
+            line: '656',
+            routine: '_bt_check_unique'
+        }
 ##### Our MyServiceOne is having server_start called now
     19:37:41.230Z DEBUG server:
         MyServiceOne:server_start: {
-        kitServices: [
-            'config',            'logger',
-            'error',             'restify_logger',
-            'server',            'tokenMgr',
-            'db',                'auth',
-            'lamd',              'slack',
-            'RunQueue',          'MyJobService',
-            'MyServiceOneAlias', 'MyServiceTwoA',
-            'MyServiceTwoB',     'template_use',
-            'router',            'wrapper',
-            'template',          'ses',
-            'tripMgr',           'event'
-        ]
+            kitServices: [
+                'config',            'logger',
+                'error',             'restify_logger',
+                'server',            'tokenMgr',
+                'db',                'auth',
+                'lamd',              'slack',
+                'RunQueue',          'MyJobService',
+                'MyServiceOneAlias', 'MyServiceTwoA',
+                'MyServiceTwoB',     'template_use',
+                'router',            'wrapper',
+                'template',          'ses',
+                'tripMgr',           'event'
+            ]
         }
 ##### All services have been 'started' so we now add the static file server and start the Restify listener to start taking endpoint requests
     19:37:41.231Z DEBUG server:
         (restify) serveStatic {
-        path: '/*',
-        '@config.api.static_file_server': { directory: './html_root', default: 'index.html' }
+            path: '/*',
+            '@config.api.static_file_server': { directory: './html_root', default: 'index.html' }
         }
 ##### A few built-in success lines (port we are listening on, node server version running, etc.)
     19:37:41.234Z  INFO server: Server listening at http://[::]:9500
