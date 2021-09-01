@@ -1,7 +1,7 @@
 # Building APIs with Route modules
-The REST model typically involves endpoints that are grouped around the concept of a `Resource`. Generally speaking, a route module can be used to encapsulate a Resource and its endpoints.
+The REST model typically involves endpoints that are grouped around the concept of a `Resource`. Generally speaking, a route module can be used to encapsulate a Resource and its endpoints. Whether and when to include a service module is discussed below. In the generated API document web page, this route module's name appears on the left panel, and to the right all of its endpoints are listed.
 
-### Examples of API/endpoint naming
+### Examples of API endpoint naming
 The endpoints for a Resource are typically designated by different verbs:
 
 * GET /ResourceName - to get a list of the resource records
@@ -10,20 +10,86 @@ The endpoints for a Resource are typically designated by different verbs:
 * PUT /ResourceName/:id - to update one specific record
 * DEL /ResourceName/:id - to remove (or mark as such) one specific record
 
-This can cause some issues. Blueprint.Node development over time has found that mobile client networking libraries and frameworks prefer to have unique endpoint paths (also they prefer 200 for all success responses in some libs). The use of a single PUT endpoint on a resource to update any attribute is an anti-pattern - it does not indicate intent, and make business invariants hard to implement. You might be in better place with the idea of 'commands' which replaces the generic path for PUT to contain more specific paths that indicate intent. Going this route allows you to restrict each intent with different roles, gives better granularity in LAMD logs and metrics, and will allow you to code specific invariant logic per intent. This is also a best practice for domain driven design.
+This can cause some issues. Blueprint.Node development over time has found that mobile client networking libraries and frameworks prefer to have unique endpoint paths (also they prefer 200 for all success responses in some libs). The use of a single PUT endpoint on a resource to update any attribute is an anti-pattern - it does not indicate intent, and makes business invariants hard to implement. You might be in a better place with the idea of 'commands' which replaces the generic path for PUT to contain more specific paths that indicate intent. Going this route allows you to restrict each intent with different roles, gives better granularity in LAMD logs and metrics, and will allow you to code specific invariant logic per intent. This is also a best practice for domain driven design.
 
 * PUT /ResourceName/:id/_done - Mark the record as 'done'
+* DEL /ResourceName/:id/_remove - to remove (or mark as such) one specific record
 
 Note also that the `Route` service that loads route modules will always add a POST verb to any PUT or DEL verb, so it is important to make your endpoint paths unique with respect to other PUT, DEL and POST endpoints.
 
 ## Route level topics
-The following topics are not specific to endpoint logic, but apply either outside endpoint logic, or is generic to all endpoints
+The following topics are not specific to endpoint logic, but apply either outside endpoint logic, or is generic to all endpoint logic
 
 ### Static deps()
-TBD
+Typically modules depend on each other and Blueprint.Node has a place to declare these, to ensure you needs are met and modules load first for those you depend on. In your class you declare a static method that returns the 3 kinds of dependencies. Note, a route module is never a dependency, therefor it must be loaded in your `src/app.js` `route_modules` list. Notice below the 'S' 'P' and 'myRoute' references ...
+
+class YOUR-ROUTE-NAME {
+    static deps() {
+        return {
+            services: [ 'S'],
+            psql_mods: [ 'P'],
+            config: 'myRoute{a,b}',
+        }
+    }
+    constructor(kit){
+        this.S= kit.services.S
+        this.sdb= kit.services.db.psql
+        this.config= this.services.config.myRoute
+
+        this.endpoints={
+            ...
+        }
+    }
+    service_init(kit){
+        this.S.serviceMethod()
+    }
+    getEndpoint(ctx,preLoad){
+        dbRows= await this.sdb.P.read(ctx, ctx.p.id)
+    }
+}
+
+More details on this structure is given in [SERVICE_MODULES.md](SERVICE_MODULES.md).
+
 ### How to leverage the wrapper with annotations
-### General annotations discussion and all possible values
-TBD
+In your constructor you define `this.endpoints` for the wrapper service to know how to prepare for you endpoint logic. This structure has a number of attributes as described below.
+#### verb: 'get'
+Should be all lower case. Can be 'get', 'put', 'del', or 'post'. When 'del' or 'put' are given, a 'post' will also be added, so you need to make the `route:` value unique for 'post', 'put' and 'del'.
+#### route: '/User/:usid'
+This is the string used to match the inbound URL with your route. This is the same in Restify as in Express and many other servers. The wrapper will perpend this string with "/api/:Version" to that clients will need to send '/api/v1/User/204` to match your '/User/:usid' endpoint.
+#### use: true
+Used to create the API Documentation web page. When users navigate to /api/v1 the API server generates a web page of the `route modules` and specific information on each `endpoint`. When this attribute is an object, it is used as the documentation information, when it is `false` the endpoint remains hidden, and when `true` it means your endpoint logic will return the documentation object when it is called with the string value 'use' in the `ctx` parameter. See below on what this object looks like. The value of setting this attribute to `true` and putting the documentation object into your endpoint, is that it places your documentation closer to your implementation, to help keep it in sync.
+#### wrap: 'default_wrap'
+There are 3 primary wrapper methods, and you could customize your own. The typical one is `default_wrap` that we have been talking about. There is `auth_wrap` for authentication endpoints which create a DB connection automatically and requires some OAuth specific parameters. See the wrapper service code for more details. The other one is `simple_wrap` which does not implement any annotations other than `auth_required`, `version` and `use`, and does not create a `ctx` (you are called with the traditional (req, res, next)). You must call res.send() and next() yourself.
+#### version: {any: this.getUserRoute, v1: this.getOldUserRoute}
+For endpoint logic versioning, you can assign specific methods to specific requested versions of this endpoint. As stated above for the `route` attribute, an `/api/:Version` string is pretended to your route string. Client requests actually contain this prefix to your route string. The `:Version` value is used to match your HASH values here. If none match exactly, then `any` is used (you typically always include this one.)
+#### sql_conn: true
+When `true` a DB handle will be acquired from the pool before you are called. The wrapper will take care of returning it to the pool and/or destroying it if there are issues with the handle. The wrapper also checks for sane values in the connection handle attributes, and will error if e.g. you return a handle while it is still processing a DB request (you forgot to put `await` on a call maybe).
+#### sql_tx: true
+When `true` a read-isolation level transaction will be started on the DB handle. You must also have set `sql_conn: true`. The wrapper will worry about commit/rollback.
+#### auth_required: true
+When `true` an OAuth token will be expected by the client, and resulting values populated in the `ctx` for your endpoint logic.
+#### pre_load: { HASH: method}
+When you wish to run a common method before the endpoint logic. See examples below.
+#### is_websock: false
+Used on endpoints that map to a web socket implementation. When `true` results in the wrapper not calling req.send() to end the connection.
+#### lamd: true
+When set to `false`, a LAMD endpoint record will not be recorded. Used by the health-check to avoid massive amounts of the same record - such as with AWS EB/ALB healthchecks. Using `false` can be an issue with HIPAA if the endpoint must be audited.
+
+#### roles: []
+An array of strings. The wrapper expects the OAuth token roles list of a user to have at least one of the roles you specify for this endpoint.
+#### domain: ''
+Require the OAuth access_token to have a domain value that matches
+
+    if (endpoint.domain) {
+        if (req.auth.token.domain !== endpoint.domain) {
+            accessDeniedError('INVALID DOMAIN');
+        }
+    }
+#### permit
+Not-implemented fully. A planned extension to RBAC.
+#### mongo_pool
+Not-implemented fully. A planned way to grab a specific DB handle for mongo DB requests.
+
 ### Pre-loads (how / when to use)
 Sometimes a group of endpoints will benefit by the same logic being run prior to the rest of the endpoint logic running. For example, reading a record from the DB or special authorization handling. This can be accomplished by declaring a method in the class, and adding that method to the `this.endpoints` annotations for any or all of your endpoints. The results from that method will go into a preLoad param that is passed to your endpoint logic. As with endpoint logic, you can throw an error in this preLoad method to abort further handling of the request.
 
@@ -39,7 +105,7 @@ Sometimes a group of endpoints will benefit by the same logic being run prior to
 					wrap: 'default_wrap',
 					version: { any: this.eatFruit.bind(this) }
                     pre_load: {
-                        fruit: this.preLoadFruit.bind( this),   <-- Here
+                        fruit: this.preLoadFruit.bind( this),   <--------------- Here
                     }
 				},
 
@@ -47,7 +113,7 @@ Sometimes a group of endpoints will benefit by the same logic being run prior to
 
 	// Preload the Fruit
 	// Assumes 'Fruit/:frid' in the URL
-	preLoadFruit: (ctx, preLoaded)->
+	preLoadFruit(ctx, preLoaded){
 		const f= 'Fruit:preLoadFruit:'
 		const {fruitId: frid}= ctx.p
 		let dbRows
@@ -57,7 +123,7 @@ Sometimes a group of endpoints will benefit by the same logic being run prior to
 		if (dbRows.length!== 1)	throw new this.E.NotFoundError( 'PRELOAD:FRUIT')
 
 		return dbRows[0] // Wrapper places this result in the hash provided by this.endpoints
-
+    }
 ##### src/r_fruit.js endpoint logic has this result
 
 	eatFruit(ctx, preLoaded){ // Or (ctx, {fruit})
@@ -119,7 +185,7 @@ An array of roles that this user has been assigned. If there was a list of roles
 For values in the OAuth token that are not the ident_id or the role list, this object contains those values. A typical value is 'tenant' ID (which you may use to filter results in the DB in a multi-tenant architecture.) This concept (of a token object) allows us to customize what goes into the OAuth token without modifying the common wrapper service.
 #### Popular items (log, p)
 ##### ctx.log
-This is the logger for keeping log lines for a single endpoint request together. Use it like ctx.log.debug( f, object).
+This is the logger for keeping log lines for a single endpoint request together. Use it like `ctx.log.debug( f, object)`.
 ##### ctx.p
 This is the Restify req.params object. It contains a hash of all your inbound params. These will be the combined values from URL placeholders (i.e. /api/:Version/ResourceName/:id invoked with /api/v1/Resourcename/12 yields {Version: 'v1', id: '12'}) the URL querystring, and POSTed values as form-data or as JSON. Note that without JSON, these values will always be strings. When uploading files, see `ctx.files` below.
 
@@ -177,7 +243,7 @@ You declare your need for a service with `static deps() { return services: [ 'SE
 ### The idea of putting security checks here, vs. lower in services or sql.
 Security by obscurity is not how we want to build code - i.e. our security coding should not be obscure or hard to read and reason on. An excellent way to address this is to keep all of our security checks inside the endpoint method itself. Outside of this (in service methods and psql methods) we expose parameters that allow us to restrict the processing of that logic. For example, a tenant ID might be used to restrict what set of records a user is allowed to update. So, the psql layer can require a tenant ID in the params, and use it in the WHERE, even when a record ID is also included.
 The annotations for an endpoint that support security are: `auth_required` (any OAuth user can get this far), `roles: []` at least one of these must be in one of the user's roles list from the ident table (and recorded in the access_token.)
-If your logic allows e.g. 'reader,admin' and you want to allow additional features for 'admin' - you can inspect ctx.roles to see which roles this user has.
+If your logic allows e.g. `['reader','admin']` and you want to allow additional features for 'admin' - you can inspect ctx.roles to see which roles this user has.
 If you wish to perform a Basic auth, or use params for e.g. JWT or shared secrets, this would need to be implemented in the endpoint at this time (not a wrapper feature) or in a pre-load method.
 
 ## DB handling best practices
@@ -191,7 +257,14 @@ The route module declares which psql modules it depends on, and gets access to t
             constructor(kit) {
                 this.sdb = kit.services.db.psql
 
-`sdb` stands for sql database. If we all use this var, our endpoint logic and snippets will be cut-n-paste-able.
+            ...
+
+            endpoint( ctx) {
+                ...
+                dbResult= await this.sdb.junk.delete(ctx,p.id)
+            }
+
+`sdb` stands for sql database. If we all use this var name, our endpoint logic and snippets will be cut-n-paste-able.
 
 ### DB results handling
 There are generally three kinds of responses from the psql module methods that we expect (a) SELECT queries, (b) DML commands such as DELETE or UPDATE without a RETURNING clause, and (c) DML with a RETURNING clause. It works best if we always return the same shape result - for (a,c) an array of rows, (b) a response object.
@@ -204,15 +277,15 @@ If we use common variable names for getting and checking DB methods, our code is
     var dbRows, dbResult, newVals, reread
 
     dbRows= await this.sdb.MOD.read( ctx, id) // Expect exactly one row
-    if (dbRows.length!== 1) throw new this.E.DbError( f+ 'MOD.read:'+ dbRows.length)
-    send.object= dbRows[ 1]
+    if (dbRows.length!== 1) throw new this.E.NotFoundError( f, 'MOD.read:'+ dbRows.length) // Include length to ease misconfiguration debugging
+    send.object= dbRows[ 0]
 
     dbResult= await this.sdb.Mod.deleteMany( ctx, ids)
     // Not idempotent (or we checked for existence above), expect this row to be removed
     if (dbResult.affectedRows!== ids.length) throw new this.E.DbError( f+ 'MOD.deleteMany:'+ dbResult.affectedRows)
 
     newVals= _.pick( ctx.p, [ 'a', 'b', 'c'])
-    dbRows= this.sdb.MOD.updateOne( ctx, id, newVals, reread= true)
+    dbRows= await this.sdb.MOD.updateOne( ctx, id, newVals, reread= true)
     if (dbRows.length!== 1) throw new this.E.DbError( f+ 'MOD.updateOne:'+ dbRows.length) // Mostly copied from above
     send.newObj= dbRows[ 0]
 
