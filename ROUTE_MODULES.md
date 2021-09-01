@@ -3,13 +3,15 @@ The REST model typically involves endpoints that are grouped around the concept 
 
 ### Examples of API/endpoint naming
 The endpoints for a Resource are typically designated by different verbs:
+
 * GET /ResourceName - to get a list of the resource records
 * GET /ResourceName/:id - to get a specific resource record
 * POST /ResourceName - to create a record
 * PUT /ResourceName/:id - to update one specific record
 * DEL /ResourceName/:id - to remove (or mark as such) one specific record
 
-This can cause some issues. Blueprint.Node development over time has found that mobile client networking libraries and frameworks prefer to have unique endpoint paths (also they prefer 200 for all success responses in some libs). The use of a single PUT endpoint on a resource to update any attribute is an anti-pattern - it does not indicate intent, and make business invariants hard to implement. You might be in better place with the idea of 'commands' which replaces the generic path for PUT to contain more specific paths that indicate intent. Going this route allows you to restrict each intent with differnt roles, gives better granularity in LAMD logs and metrics, and will allow you to code specific invariant logic per intent. This is also a best practice for domain driven design.
+This can cause some issues. Blueprint.Node development over time has found that mobile client networking libraries and frameworks prefer to have unique endpoint paths (also they prefer 200 for all success responses in some libs). The use of a single PUT endpoint on a resource to update any attribute is an anti-pattern - it does not indicate intent, and make business invariants hard to implement. You might be in better place with the idea of 'commands' which replaces the generic path for PUT to contain more specific paths that indicate intent. Going this route allows you to restrict each intent with different roles, gives better granularity in LAMD logs and metrics, and will allow you to code specific invariant logic per intent. This is also a best practice for domain driven design.
+
 * PUT /ResourceName/:id/_done - Mark the record as 'done'
 
 Note also that the `Route` service that loads route modules will always add a POST verb to any PUT or DEL verb, so it is important to make your endpoint paths unique with respect to other PUT, DEL and POST endpoints.
@@ -209,7 +211,7 @@ If we use common variable names for getting and checking DB methods, our code is
     // Not idempotent (or we checked for existence above), expect this row to be removed
     if (dbResult.affectedRows!== ids.length) throw new this.E.DbError( f+ 'MOD.deleteMany:'+ dbResult.affectedRows)
 
-    newVals= _.pick( ctx.p, [ 'a', 'b', 'c])
+    newVals= _.pick( ctx.p, [ 'a', 'b', 'c'])
     dbRows= this.sdb.MOD.updateOne( ctx, id, newVals, reread= true)
     if (dbRows.length!== 1) throw new this.E.DbError( f+ 'MOD.updateOne:'+ dbRows.length) // Mostly copied from above
     send.newObj= dbRows[ 0]
@@ -235,16 +237,17 @@ If we use common variable names for getting and checking DB methods, our code is
 
 
 Optional topics for this doc:
-Push logic (how to set up, how to use it in routes w/return handle) - won't include how clients connect to get push results
-Emails (ses service)
-Axios-wrap use
-Adding jobs to the RunQueue (when/why/how)
-Prototype feature using just a config file entry
-TripMgr service (for email links)
-S3 related endpoints (for signed upload, and signed download if needed) and how to track a reference in the DB
-Concerns with commits to 3rd party SaaS (such as Braintree charges and a subsequent error & rollback)
-Support and implementation of alternate security (i.e. Basic auth)
-Related topics from secure coding practices and our Secure Architecture inventory spreadsheet
-Use (and abuse) of JWT in endpoint logic
-Use of moment and dates in the DB (and through endpoint parameters; how to account for client timezone)
-Versioning of endpoints
+
+* Push logic (how to set up, how to use it in routes w/return handle) - won't include how clients connect to get push results
+* Emails (ses service)
+* Axios-wrap use
+* Adding jobs to the RunQueue (when/why/how)
+* Prototype feature using just a config file entry
+* TripMgr service (for email links)
+* S3 related endpoints (for signed upload, and signed download if needed) and how to track a reference in the DB
+* Concerns with commits to 3rd party SaaS (such as Braintree charges and a subsequent error & rollback)
+* Support and implementation of alternate security (i.e. Basic auth)
+* Related topics from secure coding practices and our Secure Architecture inventory spreadsheet
+* Use (and abuse) of JWT in endpoint logic
+* Use of moment and dates in the DB (and through endpoint parameters; how to account for client timezone)
+* Versioning of endpoints
