@@ -23,35 +23,35 @@ The following topics are not specific to endpoint logic, but apply either outsid
 ### Static deps()
 Typically modules depend on each other and Blueprint.Node has a place to declare these, to ensure you needs are met and modules load first for those you depend on. In your class you declare a static method that returns the 3 kinds of dependencies. Note, a route module is never a dependency, therefor it must be loaded in your `src/app.js` `route_modules` list. Notice below the 'S' 'P' and 'myRoute' references ...
 
-class YOUR-ROUTE-NAME {
-    static deps() {
-        return {
-            services: [ 'S'],
-            psql_mods: [ 'P'],
-            config: 'myRoute{a,b}',
+    class YOUR-ROUTE-NAME {
+        static deps() {
+            return {
+                services: [ 'S'],
+                psql_mods: [ 'P'],
+                config: 'myRoute{a,b}',
+            }
         }
-    }
-    constructor(kit){
-        this.S= kit.services.S
-        this.sdb= kit.services.db.psql
-        this.config= this.services.config.myRoute
+        constructor(kit){
+            this.S= kit.services.S
+            this.sdb= kit.services.db.psql
+            this.config= this.services.config.myRoute
 
-        this.endpoints={
-            ...
+            this.endpoints={
+                ...
+            }
+        }
+        service_init(kit){
+            this.S.serviceMethod()
+        }
+        getEndpoint(ctx,preLoad){
+            dbRows= await this.sdb.P.read(ctx, ctx.p.id)
         }
     }
-    service_init(kit){
-        this.S.serviceMethod()
-    }
-    getEndpoint(ctx,preLoad){
-        dbRows= await this.sdb.P.read(ctx, ctx.p.id)
-    }
-}
 
 More details on this structure is given in [SERVICE_MODULES.md](SERVICE_MODULES.md).
 
 ### How to leverage the wrapper with annotations
-In your constructor you define `this.endpoints` for the wrapper service to know how to prepare for you endpoint logic. This structure has a number of attributes as described below.
+In your constructor you define `this.endpoints` for the wrapper service to know how to prepare for your endpoint logic. This structure has a number of attributes as described below.
 #### verb: 'get'
 Should be all lower case. Can be 'get', 'put', 'del', or 'post'. When 'del' or 'put' are given, a 'post' will also be added, so you need to make the `route:` value unique for 'post', 'put' and 'del'.
 #### route: '/User/:usid'
@@ -290,24 +290,74 @@ If we use common variable names for getting and checking DB methods, our code is
     send.newObj= dbRows[ 0]
 
 ### How read-isolation works with transactions for endpoint support; what the wrapper does for us (commit/rollback) (Maybe discussion of DeadLocks too?)
-
-### Use of generic db result vars and need to check results in endpoint logic (try to leave sql layer void of expectations, and always return same object type)
+We use read-isolation to make DB programming easy for everyone while keeping the DB state 'safe.' Once the DB state is incorrect there is almost nothing to fix it, when it occurs as incorrect logic. This method means that any SELECT (read) operations during a transaction on a given connection, will be guaranteed to be unchanged when making DML statements (i.e. DELETE or UPATATE.) You can safely read a value, and then make changes based on that value, knowing it has not changed (i.e. read qty as 10, and write it back as 9, is safe.) When the DB detects that your reads have been changed in the DB before you commit, a DEADLOCK error will occur when you make a DB call. The LAMD logging and health check monitoring system is designed to surface this condition so that it can be addressed. The rollback will keep the DB state safe, but you may have to start doing more involved locking commands to avoid these DEADLOCKS in the future.
 
 ## Endpoint logic
 ### Self documenting endpoints - how it works, options to support it in your endpoint; how some use it for validation to keep it relevant
-### Handling inbound params (don't write on ctx.p object for example; in the same way don't send ctx.p somewhere - copy what you want)
-### Logging best practices (wrapper/LAMD log params; sql layer logs SQL and sometimes their own methods) best to log data before complex data manipulation logic/code
-### why const f= `${className}:function:` is not desireable (i.e. quickly search and find code from LAMD logs)
-### Use of 'error' objects (when to call which ones, etc.) -  needs work to make error objects easier to use
-### Why you can just throw an error when something is wrong (more wrapper/LAMD support)
-### Returning a response (the 'send' hash and other options 'testability' 'audit?' etc.)
-### Best pattern for 'send' object initialization, setting, and final return (include concept of success:true)
-### CORS config/processing and support for avoiding the pre-flight
+When you annotate your endpoint with `use: true` then the `Route` service which loads your route module, will call your endpoint to acquire a "documentation object" which is then used to create the API documentation web page at the URL `/api/v1`. Your endpoint should look for `ctx === 'use'` and return an object such as ...
 
+    const use_doc= {
+        params: {
+            p1: 'description',
+            p2: 'description',
+        }
+        response: {
+            success: 'bool',
+            User: '{Object}', // For example
+            Boats: '[Array]',
+        }
+    }
+    if (ctx=== 'use') return use_doc
+
+You are welcome to put anything into the text values that help users of your API to use it properly.
+
+### Use of 'error' objects (when to call which ones, etc.) -  needs work to make error objects easier to use
+Blueprint.Node provides a set of error types that are common. They are designed to help work backwards to where issues occur. Note: This part of the API server is old and not working well and needs attention. It would be better if the signature is consistant. Sometimes only one value is taken (a code or message) and sometimes both.
+Here is one of each error available. These methods can be accessed via `error` as a service i.e. `this.E= kit.services.error` ...
+
+    throw this.E.NotFoundError( 'code') - Sends a 404
+    throw this.E.ServerControlledException( old_code, title, text, commands, goto) - 420
+    InvalidArg( message) - 400
+    MissingArg( message) - 400
+    NotFoundError( token, message) - 404 (token param ignored)
+    OAuthError( code, error, message) - 401 (code param is ignored)
+    BasicAuthError( error, message) - 401 (err.code is error, err.message is message)
+    AccessDenied( token, message) - 403 (err.code is token, err.message is messagse)
+    DbError( token) - 500
+    ServerError( token, message) - 500
+    MongoDbError( message) - 500
+    TooManyConnectionsError() - 426 (used by the wrapper to tell load balancers - did not work as hopped)
+
+### Why you can just throw an error when something is wrong (more wrapper/LAMD support)
+The wrapper calls your endpoint logic inside of a promise, and will `catch` any errors. In this case, if you have `sql_tx: true` the transaction will be rolled back. if you have `sql_conn: true` the handle will be returned to the database pool. It is almost never required to catch any errors in your logic. Any errors will then be place into the LAMD object and recorded for health check monitoring, and the client will receive the non-200 status and error response object.
+
+### Returning a response (the 'send' hash and other options 'testability' 'audit?' etc.)
+The wrapper expects your endpoint to return an object with a HASH of `send` that contains what should be handed to res.send(). It expects it to be an object, and will set a `.req_uuid` value on this object for the client response to trace back to LAMD logs. (this is done also in error objects.) You can also set other HASH values for other purposes, such as `.testability` that can be validated by automated testing, and left in place in production without affecting the send results.
+A planned feature is to add a HASH of `.audit` to record which records were accessed in a GET request (populate a list of `table-name: [ids...]`).
+
+### Best pattern for 'send' object initialization, setting, and final return (include concept of success:true)
+When client developers use the Blueprint.Node API server, we want a consitent response shape, to allow mobile and web clients to work well, and share code between projects. One feature of the response object is to always include `success: true` for a positive way to ensure the result is good, vs. just using a statusCode. To simplify the endpoint logic, then, here is a good pattern to follow ...
+
+    const use_doc={
+        response: {
+            success: true,
+            User: '{Object}',
+        }
+    }
+    // Put this var close to use_doc to keep them in sync
+    const send= { success: true, User: false} // indicate what the return signature looks like; indicate values that if not set by us will be obvious (use of `false`)
+
+    ...
+    send.User= dbRows[ 0]
+    ...
+    return {send}
+
+### CORS config/processing and support for avoiding the pre-flight
+See [CORS.md](CORS.md).
 
 ## Testing
 ### Note on testing - (a) bypassing restify/wrapper, (b) best to include DB layer (semi-integration or route+sql as a unit)
-
+See [TESTING.md](TESTING.md).
 
 Optional topics for this doc:
 
