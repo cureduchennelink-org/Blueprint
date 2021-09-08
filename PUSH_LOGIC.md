@@ -10,7 +10,7 @@ We start with a REST response that is easy to describe changes to both at the se
     {
         success: true,
         req_uuid: 'UUID',
-        push_handle: { c: N, h: '/ROUTE,N},
+        push_handle: { c: N, h: '/ROUTE,N'},
         SUB_RESOURCE_A: [ { id: N, B_id: N, C_id: N, ...} ...]
         SUB_RESOURCE_B: [ { id: N, D_id: N, ...}, ...]
         SUB_RESOURCE_C: [ { id: N, ...}, ...]
@@ -42,7 +42,7 @@ When a resource is updated, an additional DB call must be made to the push logic
 		// Notify Push Set of Item Change for a boat
 		await this.pushMgr.Create( ctx, this.push_route, 0,{ resource: 'Boats', id: dbResult.insertId, new_record: new_values});
 
-Here we are using several values that will tie back to the one place that the client will need to make a change in the structure that is shown above. The expectation is that a new object is added to the 'Boats" array. To accomplish this, we have used the `this.pushMgr.Create` method to indicate a new record (vs. a delete or an update/modification.) Also, to designate which original GET /Resource call this push records is for, we have earlier defined a unique `this.push_route` value. The `resource` is `Boats` which the client will use to know which SUB_RESOURCE array is being updated. The `id:` is used to target the specific object in a SUB_RESOURCE array. For a `Create` we provide the `new_record` values, whereas for an update it would include both the old and new values, for the client to inspect and utilize. We'll talk more on that third parameter (hard coded as `0`) later.
+Here we are using several values that will tie back to the one place that the client will need to make a change in the structure that is shown above. The expectation is that a new object is added to the 'Boats" array. To accomplish this, we have used the `this.pushMgr.Create` method to indicate a new record (vs. a delete or an update/modification.) Also, to designate which original GET /Resource call this push record is for, we have earlier defined a unique `this.push_route` value. The `resource` is `Boats` which the client will use to know which SUB_RESOURCE array is being updated. The `id:` is used to target the specific object in a SUB_RESOURCE array. For a `Create` we provide the `new_record` values, whereas for an update it would include both the old and new values, for the client to inspect and utilize. We'll talk more on that third parameter (hard coded as `0`) later.
 
 ### Return a push_handle on GET requests
 When clients make a GET request, they will need a `push_handle` value that can be used to request push updates to this same endpoint. The `push_handle` will also contain a high-water mark that represents where in the list of push-updates the client request occurred. This value is guaranteed to keep clients from missing any updates as long as you use DB transactions on POST, PUT, and DEL endpoints. This concept is different than simple 'events' which only give the client current information while the client is connected. Imagine that while one client is doing a GET another is doing a POST. When the first client gets a response, and opens a connection to get 'events' - that POST event would be missed. One might consider connecting for events before making GET calls - however the POST event would have to be merged with the later GET request - a more complicated client solution. Additionally, how would intermittent or longer term connection loss be handled. If you close your laptop and it goes to sleep for a few mins, then you open it back up - did you miss events during that time? All of these issues are addressed by tracking updates using the push_handle. Near the end of your GET endpoint logic, you would include this line ...
@@ -71,7 +71,7 @@ The poller is designed to support multiple GET endpoints multiplexed into a sing
 After this promise is resolved (the GET endpoint response is received) then these `reactive` objects are updated as LongPoll requests come in. The following is an example of setting up the `Cache` class and then requesting a given GET resource to be acquired and continuously updated ...
 
     // You need a function that will return the latest OAuth information, if the Poll endpoint requires authorization
-    let fakeToken= ()=> ({ token: 'FAKE-TOKEN'})
+    let getToken= ()=> ({ token: 'CURRENT-TOKEN'})
 
     import { LongPoll } from "../LongPoll";
     import { Cache } from "../Cache";
@@ -82,11 +82,16 @@ After this promise is resolved (the GET endpoint response is received) then thes
 ### Client side Poll response handling
 When the API poll endpoint returns a response, it wants to update as many push_handles as you have requested. To separate each of these, you send a unique hash for each, and the response matches that unique hash value. For example ...
 
-    POST /Poll state: {}, listen: {people: { c: 3521, h: '/Participants,0}, profile: { c: 410, h: '/Profile,89}}
+    POST /Poll state: {}, listen: {people: { c: 3521, h: '/Participants,0'}, profile: { c: 410, h: '/Profile,89'}}
 
-The response for both an updated to the Boats under `/Participants,0` and a change to this users profile `/Profile,89` might look like ...
+The response for both an update to the Boats under `/Participants,0` and a change to this users profile `/Profile,89` might look like ...
 
-    state: {}, listen: {chat: { c: 4001, h: '/Participants,0}, profile: { c: 4003, h: '/Profile,89}}, sync: {
+    state: {},
+    listen: {
+        chat: { c: 4001, h: '/Participants,0'},
+        profile: { c: 4003, h: '/Profile,89'}
+        },
+    sync: {
         people: [{
             resource: "Boats"
             verb: "create"
@@ -98,7 +103,7 @@ The response for both an updated to the Boats under `/Participants,0` and a chan
         }]
     }
 
-You will notice a few things - the listen structure has updated push_handle values. The state value is a round-trip opaque value sent by the client and the API server sends back to the client. It contains whatever your client wishes to send. The `sync` hash has an entry for any updated push_handles. Inside each is an array of updates, having the sub-resource name, the verb for create/update/delete, the primary key on that sub-resource, and the attributes that are changing.
+You will notice a few things - the listen structure has updated push_handle values. The state value is a round-trip opaque value sent by the client, that the API server sends back to the client. It contains whatever your client wishes to send. The `sync` hash has an entry for any updated push_handles. Inside each is an array of updates, having the sub-resource name, the verb for create/update/delete, the primary key on that sub-resource, and the attributes that are changing.
 
 ### Unique /filtered endpoint responses
 Another thing to consider, from our small example above, is for the `Profile` endpoint, we are not updating this client for the whole set of profiles for all users, but just this one user profile. How can we give each user a unique response (or a response filtered to only their profile record?) To support this we use the primary key on that user record to limit the response to just this row in the table, and we use that 'third' parameter on PushManager methods.
