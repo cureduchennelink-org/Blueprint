@@ -86,21 +86,23 @@ When the API poll endpoint returns a response, it wants to update as many push_h
 
 The response for both an update to the Boats under `/Participants,0` and a change to this users profile `/Profile,89` might look like ...
 
-    state: {},
-    listen: {
-        chat: { c: 4001, h: '/Participants,0'},
-        profile: { c: 4003, h: '/Profile,89'}
-        },
-    sync: {
-        people: [{
-            resource: "Boats"
-            verb: "create"
-            id: 13
-            new_record: {inlet_id: 101, ident_id: 401, name: "The New Boat",…}
-        }],
-        profile: [{
-            ...
-        }]
+    {
+       state: {},
+        listen: {
+            chat: { c: 4001, h: '/Participants,0'},
+            profile: { c: 4003, h: '/Profile,89'}
+            },
+        sync: {
+            people: [{
+                resource: "Boats"
+                verb: "create"
+                id: 13
+                new_record: {inlet_id: 101, ident_id: 401, name: "The New Boat",…}
+            }],
+            profile: [{
+                ...
+            }]
+        }
     }
 
 You will notice a few things - the listen structure has updated push_handle values. The state value is a round-trip opaque value sent by the client, that the API server sends back to the client. It contains whatever your client wishes to send. The `sync` hash has an entry for any updated push_handles. Inside each is an array of updates, having the sub-resource name, the verb for create/update/delete, the primary key on that sub-resource, and the attributes that are changing.
