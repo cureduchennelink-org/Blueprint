@@ -26,6 +26,8 @@ import { ref } from "vue"; // VUE2: '@vue/composition-api'
 import { Cache } from "../Cache";
 import { LongPoll } from "../LongPoll";
 
+// curl -g 'http://localhost:9101/api/v1/RoomEvent?auth_token=eyJpaWQiOjkxLCJyb29tX2lkIjoxMDEsImlyb2xlIjpbImFkbWluIiwiRGV2Il0sInJvbGUiOiJhZG1pbiIsImV4cCI6MTYzMzMwMDM5MH0.osinkfyP90z3qTTO-ZYW55d4eAyZSuRCztUuyZuC-Wc&event=chat&JSON={"payload":{"msg":"Hey,+Dude+-+what+is+up?!"}}' -X POST
+
 let getToken = () => ({
   token:
     //"eyJpaWQiOjkxLCJyb29tX2lkIjoxMDEsImlyb2xlIjpbImFkbWluIiwiRGV2Il0sInJvbGUiOiJhZG1pbiIsImV4cCI6MTYzMzMwMDM5MH0.osinkfyP90z3qTTO-ZYW55d4eAyZSuRCztUuyZuC-Wc",
