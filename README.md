@@ -231,24 +231,19 @@ Reload your browser tab to see the updated fruit inventory.
 
 Documentation:
 
-* Document how to create a Service and where to access
-* Document how to create a MySql Module
-* Document Default Config File
+* Document how Config files work
+* Document SQL layer module support
+* Document Test support and sample code
 
 Features:
 
-* Authenticate Long-Poll Handles
-* Server Analytics Endpoint (Some of this is now in the HealthCheck endpoints based on LAMD)
+* Authenticate Long-Poll Handles (can require a token, but not tied to handles)
 * Testing Framework using Mocha + Chai (Some work has been started)
-* Integrate Grunt
-* Event Logging (This is mostly done now with LAMD)
 * Agnostic Database Interface
 * Agnostic Email Interface (SES specific currently)
-* SSL (We have this now)
 * Param Validator
-* Cron Job Processor (Now exists as RunQ !!)
 * Re-design Role Manager (Roles, ACLS, Permits) (Started, see lib/role_manager)
 
 
 ## License
-Copyright © Dev IQ, Inc 2014 - 2022. All Rights Reserved. [deviq.io](https://www.deviq.io)
+Copyright © Dev IQ, Inc 2014 - 2022. All Rights Reserved. [DevIQ.io](https://www.deviq.io)

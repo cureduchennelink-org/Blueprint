@@ -107,7 +107,7 @@ The response for both an update to the Boats under `/Participants,0` and a chang
 
 You will notice a few things - the listen structure has updated push_handle values. The state value is a round-trip opaque value sent by the client, that the API server sends back to the client. It contains whatever your client wishes to send. The `sync` hash has an entry for any updated push_handles. Inside each is an array of updates, having the sub-resource name, the verb for create/update/delete, the primary key on that sub-resource, and the attributes that are changing.
 
-### Unique /filtered endpoint responses
+### Unique / filtered endpoint responses
 Another thing to consider, from our small example above, is for the `Profile` endpoint, we are not updating this client for the whole set of profiles for all users, but just this one user profile. How can we give each user a unique response (or a response filtered to only their profile record?) To support this we use the primary key on that user record to limit the response to just this row in the table, and we use that 'third' parameter on PushManager methods.
 
 On the GET endpoint, populate the  'third' parameter to `filter` this route by this value (in this case, by the user ident_id from their token) ...

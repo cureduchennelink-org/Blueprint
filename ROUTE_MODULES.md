@@ -361,10 +361,7 @@ See [TESTING.md](TESTING.md).
 
 Optional topics for this doc:
 
-* Push logic (how to set up, how to use it in routes w/return handle) - won't include how clients connect to get push results
 * Emails (ses service)
-* Axios-wrap use
-* Adding jobs to the RunQueue (when/why/how)
 * Prototype feature using just a config file entry
 * TripMgr service (for email links)
 * S3 related endpoints (for signed upload, and signed download if needed) and how to track a reference in the DB
@@ -373,4 +370,3 @@ Optional topics for this doc:
 * Related topics from secure coding practices and our Secure Architecture inventory spreadsheet
 * Use (and abuse) of JWT in endpoint logic
 * Use of moment and dates in the DB (and through endpoint parameters; how to account for client timezone)
-* Versioning of endpoints
