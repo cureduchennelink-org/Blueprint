@@ -85,7 +85,21 @@ module.exports= {
 		elb_redirect: {   class: 'ELBRedirect',   file: 'node_modules/blueprint/lib/elb_redirect'
 	}, // Force HTTPS if enabled
 		server: {   		class: 'Server',   		file: 'node_modules/blueprint/lib/server' },
-		slack: { class: "Slack", file: "node_modules/blueprint/lib/slack"}
+		slack: { class: "Slack", file: "node_modules/blueprint/lib/slack"},
+		aws_timeseries: {
+			class: 'AWS_Timeseries', file: "node_modules/blueprint/lib/aws_timeseries"
+		}
+	},
+
+	aws_timeseries: {
+		accessKeyId: 'ACCESS_KEY_ID',
+		secretAccessKey: 'SECRET_KEY',
+		region: 'us-east-1',
+		databaseName: '',
+		tableName: '',
+		htTTLHours: 24,
+		ctTTLDays: 7,
+		dimensions: {}
 	},
 
 	runqueue: {
