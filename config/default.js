@@ -113,8 +113,6 @@ module.exports = {
     region: 'us-east-1',
     databaseName: '',
     tableName: '',
-    htTTLHours: 24,
-    ctTTLDays: 7,
   },
 
   runqueue: {
