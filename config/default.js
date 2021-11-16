@@ -60,6 +60,9 @@ module.exports = {
 		}
 	},
 	service_modules: {
+		Docusign: {
+			class: 'Docusign', file: 'node_modules/blueprint/lib/Docusign'
+		},
 		PollManager: {
 			"class": 'PollManager', file: 'node_modules/blueprint/lib/PollManager'
 		},
@@ -259,7 +262,7 @@ module.exports = {
 				},
 				runqueue: {
 					class: 'SqlRunQueue', file: 'node_modules/blueprint/lib/db/_mysql/sql_runqueue'
-				}
+				},
 			}
 		},
 
