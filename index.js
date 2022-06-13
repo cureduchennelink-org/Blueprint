@@ -338,6 +338,12 @@ exports.init = function ({ listen, services, routes, mysql, mysql_mods, psql, ps
 
 				if (kit.services.RunQueue != null) kit.services.RunQueue.Drain()
 			});
+			process.on("SIGTERM", function () {
+				const d = new Date();
+				console.log(d.toUTCString() + " SIGTERM");
+
+				if (kit.services.RunQueue != null) kit.services.RunQueue.Drain()
+			});
 			console.log(process.version)
 
 			console.log(
